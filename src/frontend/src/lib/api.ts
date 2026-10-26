@@ -14,6 +14,16 @@ type Db = {
 
 const DB_KEY = "rhhub:db"
 const DEMO_EMAIL = "demo@rhhub.local"
+const EXPLICIT_DEMO_KEY = "rhhub:demo:explicit"
+
+function wasDemoChosen(): boolean {
+  try {
+    return localStorage.getItem(EXPLICIT_DEMO_KEY) === "1"
+  } catch {
+    return false
+  }
+}
+
 const MAX_STORED_PDF = 1_500_000
 
 let memoryDb: Db | null = null
@@ -192,15 +202,25 @@ export const api = {
     // GET /users (quem está logado)
     async me(): Promise<User | null> {
       const db = load()
-      const active = db.users.find((u) => u.public_id === db.session)
-      if (active) return delay(active, 150)
+      const active = db.users.find((u) => u.public_id === db.session) ?? null
 
-      // /login e /cadastro continuam acessiveis para testar os formularios.
-      const publicAuthPage = /^\/(?:login|cadastro)\/?$/.test(window.location.pathname)
-      return delay(publicAuthPage ? null : enterDemoSession(db), 150)
+      // Versoes anteriores criavam uma sessao demo sem consentimento e pulavam
+      // a pagina de login. Invalidamos somente aquelas sessoes antigas.
+      if (active?.email === DEMO_EMAIL && !wasDemoChosen()) {
+        db.session = null
+        save(db)
+        return delay(null, 150)
+      }
+
+      return delay(active, 150)
     },
 
     async enterDemo(): Promise<User> {
+      try {
+        localStorage.setItem(EXPLICIT_DEMO_KEY, "1")
+      } catch {
+        // A demonstracao pode continuar apenas nesta aba.
+      }
       return delay(enterDemoSession(load()), 150)
     },
 
@@ -264,6 +284,11 @@ export const api = {
       const db = load()
       db.session = null
       save(db)
+      try {
+        localStorage.removeItem(EXPLICIT_DEMO_KEY)
+      } catch {
+        // Armazenamento indisponivel.
+      }
       return delay(undefined, 150)
     },
 
