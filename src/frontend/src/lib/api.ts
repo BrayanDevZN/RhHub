@@ -13,6 +13,17 @@ type Db = {
 }
 
 const DB_KEY = "rhhub:db"
+const DEMO_EMAIL = "demo@rhhub.local"
+const EXPLICIT_DEMO_KEY = "rhhub:demo:explicit"
+
+function wasDemoChosen(): boolean {
+  try {
+    return localStorage.getItem(EXPLICIT_DEMO_KEY) === "1"
+  } catch {
+    return false
+  }
+}
+
 const MAX_STORED_PDF = 1_500_000
 
 let memoryDb: Db | null = null
@@ -143,6 +154,19 @@ function findOrCreate(db: Db, email: string, extra: Partial<User> = {}) {
   return user
 }
 
+// Permite navegar pelo prototipo antes da integracao com o back end.
+function enterDemoSession(db: Db): User {
+  const demo = findOrCreate(db, DEMO_EMAIL, {
+    name: "Visitante RhHub",
+    role: "admin",
+    provider: "local",
+  })
+  demo.role = "admin"
+  db.session = demo.public_id
+  save(db)
+  return demo
+}
+
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -178,7 +202,26 @@ export const api = {
     // GET /users (quem está logado)
     async me(): Promise<User | null> {
       const db = load()
-      return delay(db.users.find((u) => u.public_id === db.session) ?? null, 150)
+      const active = db.users.find((u) => u.public_id === db.session) ?? null
+
+      // Versoes anteriores criavam uma sessao demo sem consentimento e pulavam
+      // a pagina de login. Invalidamos somente aquelas sessoes antigas.
+      if (active?.email === DEMO_EMAIL && !wasDemoChosen()) {
+        db.session = null
+        save(db)
+        return delay(null, 150)
+      }
+
+      return delay(active, 150)
+    },
+
+    async enterDemo(): Promise<User> {
+      try {
+        localStorage.setItem(EXPLICIT_DEMO_KEY, "1")
+      } catch {
+        // A demonstracao pode continuar apenas nesta aba.
+      }
+      return delay(enterDemoSession(load()), 150)
     },
 
     // POST /sender: envia código de criação de conta
@@ -241,6 +284,11 @@ export const api = {
       const db = load()
       db.session = null
       save(db)
+      try {
+        localStorage.removeItem(EXPLICIT_DEMO_KEY)
+      } catch {
+        // Armazenamento indisponivel.
+      }
       return delay(undefined, 150)
     },
 

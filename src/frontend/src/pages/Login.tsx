@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { ArrowLeftIcon } from "lucide-react"
+import { ArrowLeftIcon, SparklesIcon } from "lucide-react"
 import { AuthLayout } from "@/components/AuthLayout"
 import { CodeInput } from "@/components/CodeInput"
 import { ForgotPasswordDialog } from "@/components/ForgotPasswordDialog"
@@ -64,10 +64,17 @@ export default function Login() {
     })
   }
 
+  function handleDemo() {
+    run(async () => {
+      setUser(await api.auth.enterDemo())
+      navigate("/")
+    })
+  }
+
   if (step === "twoFactor") {
     return (
       <AuthLayout>
-        <Card className="w-full max-w-sm bg-card/80 backdrop-blur">
+        <Card className="rh-auth-card w-full max-w-sm backdrop-blur">
           <CardHeader>
             <CardTitle>Verificação em duas etapas</CardTitle>
             <CardDescription>Digite o código de 6 dígitos enviado para {email || "o seu e-mail"}.</CardDescription>
@@ -99,7 +106,7 @@ export default function Login() {
 
   return (
     <AuthLayout>
-      <Card className="w-full max-w-sm bg-card/80 backdrop-blur">
+      <Card className="rh-auth-card w-full max-w-sm backdrop-blur">
         <CardHeader>
           <CardTitle>Entrar</CardTitle>
           <CardDescription>Acesse sua conta para acompanhar vagas e candidaturas.</CardDescription>
@@ -137,6 +144,10 @@ export default function Login() {
               <Button type="submit" size="lg" className="w-full" disabled={busy}>
                 {busy && <Spinner data-icon="inline-start" />}
                 Entrar
+              </Button>
+              <Button type="button" variant="outline" size="lg" className="w-full" disabled={busy} onClick={handleDemo}>
+                <SparklesIcon data-icon="inline-start" />
+                Explorar demonstracao sem login
               </Button>
             </FieldGroup>
           </form>
