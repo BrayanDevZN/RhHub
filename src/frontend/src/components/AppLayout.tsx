@@ -1,176 +1,142 @@
+import { useState } from "react"
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import {
-  BriefcaseBusinessIcon,
-  ChevronsUpDownIcon,
-  FileTextIcon,
-  FolderKanbanIcon,
-  LayoutDashboardIcon,
-  LogOutIcon,
-  UserIcon,
-  UsersIcon,
+  ArrowUpRightIcon, BellIcon, BriefcaseBusinessIcon, ChevronDownIcon,
+  CircleHelpIcon, FileTextIcon, LayoutDashboardIcon, LogOutIcon,
+  MenuIcon, SearchIcon, Settings2Icon, ShieldCheckIcon, SparklesIcon,
+  UserRoundIcon, UsersIcon, XIcon,
 } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Separator } from "@/components/ui/separator"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarRail,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
 import { useAuth, useCurrentUser } from "@/lib/auth"
 import { initials } from "@/lib/format"
 
 const NAV = [
-  { to: "/", label: "Painel", icon: LayoutDashboardIcon },
-  { to: "/vagas", label: "Vagas", icon: BriefcaseBusinessIcon },
+  { to: "/", label: "Visão geral", icon: LayoutDashboardIcon },
+  { to: "/vagas", label: "Explorar vagas", icon: BriefcaseBusinessIcon },
   { to: "/candidaturas", label: "Minhas candidaturas", icon: FileTextIcon },
-  { to: "/perfil", label: "Perfil", icon: UserIcon },
+  { to: "/perfil", label: "Meu perfil", icon: UserRoundIcon },
 ]
 
 const ADMIN_NAV = [
-  { to: "/admin/usuarios", label: "Usuários", icon: UsersIcon },
-  { to: "/admin/candidaturas", label: "Todas as candidaturas", icon: FolderKanbanIcon },
+  { to: "/admin/usuarios", label: "Gerenciar usuários", icon: UsersIcon },
+  { to: "/admin/candidaturas", label: "Todas as candidaturas", icon: ShieldCheckIcon },
 ]
 
-const TITLES: Record<string, string> = Object.fromEntries(
-  [...NAV, ...ADMIN_NAV].map((item) => [item.to, item.label]),
-)
-
-function NavGroup({ label, items }: { label: string; items: typeof NAV }) {
-  const { pathname } = useLocation()
-  return (
-    <SidebarGroup>
-      <SidebarGroupLabel>{label}</SidebarGroupLabel>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          {items.map((item) => (
-            <SidebarMenuItem key={item.to}>
-              <SidebarMenuButton
-                render={<NavLink to={item.to} end />}
-                isActive={pathname === item.to}
-                tooltip={item.label}
-              >
-                <item.icon />
-                <span>{item.label}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
-  )
-}
-
-function UserMenu() {
-  const user = useCurrentUser()
-  const { logout } = useAuth()
-  const navigate = useNavigate()
-
-  async function handleLogout() {
-    await logout()
-    navigate("/login")
-  }
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger render={<SidebarMenuButton size="lg" />}>
-        <Avatar className="size-8">
-          <AvatarFallback>{initials(user.name)}</AvatarFallback>
-        </Avatar>
-        <div className="grid flex-1 text-left text-sm leading-tight">
-          <span className="truncate font-medium">{user.name}</span>
-          <span className="truncate text-xs text-muted-foreground">{user.email}</span>
-        </div>
-        <ChevronsUpDownIcon />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent side="top" align="start" className="min-w-56">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>{user.role === "admin" ? "Administrador" : "Candidato"}</DropdownMenuLabel>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem onClick={() => navigate("/perfil")}>
-            <UserIcon />
-            Perfil
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleLogout}>
-            <LogOutIcon />
-            Sair
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
+const TITLES: Record<string, string> = {
+  "/": "Visão geral",
+  "/vagas": "Explorar vagas",
+  "/candidaturas": "Minhas candidaturas",
+  "/perfil": "Meu perfil",
+  "/admin/usuarios": "Gerenciar usuários",
+  "/admin/candidaturas": "Todas as candidaturas",
 }
 
 export function AppLayout() {
   const user = useCurrentUser()
+  const { logout } = useAuth()
   const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+
+  async function handleLogout() {
+    setProfileOpen(false)
+    await logout()
+    navigate("/login")
+  }
+
+  function navGroup(label: string, links: typeof NAV) {
+    return (
+      <div className="rh-nav-group">
+        <p className="rh-nav-label">{label}</p>
+        {links.map(({ to, label: name, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end
+            onClick={() => setMobileOpen(false)}
+            className={({ isActive }) => `rh-nav-item ${isActive ? "is-active" : ""}`}
+          >
+            <Icon className="size-[18px] shrink-0" />
+            <span>{name}</span>
+            {to === "/vagas" && <span className="rh-nav-item-arrow"><ArrowUpRightIcon className="size-3.5" /></span>}
+          </NavLink>
+        ))}
+      </div>
+    )
+  }
 
   return (
-    <SidebarProvider>
-      <Sidebar collapsible="icon">
-        <SidebarHeader>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton size="lg" render={<NavLink to="/" />}>
-                <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <BriefcaseBusinessIcon />
-                </span>
-                <span className="font-semibold">RhHub</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarHeader>
-        <SidebarContent>
-          <NavGroup label="Recrutamento" items={NAV} />
-          {user.role === "admin" && <NavGroup label="Administração" items={ADMIN_NAV} />}
-        </SidebarContent>
-        <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <UserMenu />
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-        <SidebarRail />
-      </Sidebar>
-
-      <SidebarInset>
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger />
-          <Separator orientation="vertical" className="h-4" />
-          <span className="truncate text-sm font-medium">{TITLES[pathname] ?? "RhHub"}</span>
-          {user.role === "admin" && (
-            <Badge variant="outline" className="ml-auto">
-              Admin
-            </Badge>
-          )}
-        </header>
-        <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 p-4 md:p-8">
-          <Outlet />
+    <div className="rh-shell">
+      {mobileOpen && <button className="rh-mobile-shade" onClick={() => setMobileOpen(false)} aria-label="Fechar menu" />}
+      <aside className={`rh-sidebar ${mobileOpen ? "is-open" : ""}`}>
+        <div className="rh-brand">
+          <NavLink to="/" className="rh-brand-link" onClick={() => setMobileOpen(false)}>
+            <span className="rh-brand-mark"><SparklesIcon className="size-[23px]" strokeWidth={2.3} /></span>
+            <span className="rh-brand-name">rh<span>hub</span><span className="rh-brand-period">.</span></span>
+          </NavLink>
+          <button className="rh-icon-button rh-close-mobile" onClick={() => setMobileOpen(false)} aria-label="Fechar menu"><XIcon className="size-5" /></button>
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+
+        <div className="rh-workspace">
+          <span className="rh-workspace-symbol"><BriefcaseBusinessIcon className="size-[18px]" /></span>
+          <div className="min-w-0 flex-1">
+            <span className="rh-workspace-caption">SEU WORKSPACE</span>
+            <span className="rh-workspace-name">Recrutamento</span>
+          </div>
+          <ChevronDownIcon className="size-4 opacity-50" />
+        </div>
+
+        <nav className="rh-sidebar-nav" aria-label="Navegação principal">
+          {navGroup("ESPAÇO DE TRABALHO", NAV)}
+          {user.role === "admin" && navGroup("ADMINISTRAÇÃO", ADMIN_NAV)}
+        </nav>
+
+        <div className="rh-sidebar-bottom">
+          <div className="rh-side-help">
+            <span className="rh-side-help-icon"><CircleHelpIcon className="size-5" /></span>
+            <strong>Precisa de ajuda?</strong>
+            <p>Explore os recursos e acompanhe suas oportunidades por aqui.</p>
+            <NavLink to="/perfil">Ver meu perfil <ArrowUpRightIcon className="size-3.5" /></NavLink>
+          </div>
+          <div className="rh-side-user">
+            <span className="rh-user-avatar">{initials(user.name)}</span>
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-semibold text-[13px]">{user.name}</div>
+              <div className="truncate text-[11px] text-[#8793ae]">{user.role === "admin" ? "Administrador" : "Candidato"}</div>
+            </div>
+            <button onClick={handleLogout} className="rh-sidebar-logout" title="Sair" aria-label="Sair da conta"><LogOutIcon className="size-[17px]" /></button>
+          </div>
+        </div>
+      </aside>
+
+      <div className="rh-main">
+        <header className="rh-topbar">
+          <div className="flex min-w-0 items-center gap-3">
+            <button className="rh-topbar-mobile" onClick={() => setMobileOpen(true)} aria-label="Abrir menu"><MenuIcon className="size-5" /></button>
+            <div className="rh-breadcrumb"><span>Workspace</span><span className="rh-breadcrumb-divider">/</span><strong>{TITLES[pathname] ?? "RhHub"}</strong></div>
+          </div>
+          <div className="rh-top-actions">
+            <NavLink to="/vagas" className="rh-top-search"><SearchIcon className="size-4" /><span>Buscar oportunidades</span><kbd>⌕</kbd></NavLink>
+            <span className="rh-demo-tag">AMBIENTE DEMO</span>
+            <button className="rh-top-icon" title="Notificações (demonstração)" aria-label="Notificações"><BellIcon className="size-[18px]" /><i /></button>
+            <div className="rh-topbar-profile">
+              <button className="rh-top-profile-btn" onClick={() => setProfileOpen((v) => !v)} aria-label="Opções da conta" aria-expanded={profileOpen}>
+                <span className="rh-top-avatar">{initials(user.name)}</span>
+                <ChevronDownIcon className="size-3.5" />
+              </button>
+              {profileOpen && (
+                <div className="rh-profile-menu">
+                  <p className="truncate px-3 pt-2 pb-2 text-xs text-muted-foreground">{user.email}</p>
+                  <button onClick={() => {setProfileOpen(false); navigate("/perfil")}}><Settings2Icon className="size-4" /> Configurações</button>
+                  <button onClick={handleLogout}><LogOutIcon className="size-4" /> Sair</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+        <main className="rh-page" id="conteudo"><Outlet /></main>
+        <footer className="rh-footer"><span>RhHub · Plataforma de recrutamento</span><span>Protótipo de interface · Dados de demonstração</span></footer>
+      </div>
+    </div>
   )
 }
