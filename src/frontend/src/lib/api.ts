@@ -13,6 +13,7 @@ type Db = {
 }
 
 const DB_KEY = "rhhub:db"
+const DEMO_EMAIL = "demo@rhhub.local"
 const MAX_STORED_PDF = 1_500_000
 
 let memoryDb: Db | null = null
@@ -143,6 +144,19 @@ function findOrCreate(db: Db, email: string, extra: Partial<User> = {}) {
   return user
 }
 
+// Permite navegar pelo prototipo antes da integracao com o back end.
+function enterDemoSession(db: Db): User {
+  const demo = findOrCreate(db, DEMO_EMAIL, {
+    name: "Visitante RhHub",
+    role: "admin",
+    provider: "local",
+  })
+  demo.role = "admin"
+  db.session = demo.public_id
+  save(db)
+  return demo
+}
+
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -178,7 +192,16 @@ export const api = {
     // GET /users (quem está logado)
     async me(): Promise<User | null> {
       const db = load()
-      return delay(db.users.find((u) => u.public_id === db.session) ?? null, 150)
+      const active = db.users.find((u) => u.public_id === db.session)
+      if (active) return delay(active, 150)
+
+      // /login e /cadastro continuam acessiveis para testar os formularios.
+      const publicAuthPage = /^\/(?:login|cadastro)\/?$/.test(window.location.pathname)
+      return delay(publicAuthPage ? null : enterDemoSession(db), 150)
+    },
+
+    async enterDemo(): Promise<User> {
+      return delay(enterDemoSession(load()), 150)
     },
 
     // POST /sender: envia código de criação de conta
