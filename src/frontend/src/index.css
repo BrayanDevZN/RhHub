@@ -864,3 +864,32 @@ body { background: #0a1024; color: #f7f9ff; }
 @media (prefers-reduced-motion: reduce) {
   .rh-sidebar { transition: none; }
 }
+
+/* The mobile drawer itself is the vertical scroll container. This allows
+   dragging anywhere inside it on touch devices while the page stays fixed. */
+@media (max-width: 740px) {
+  .rh-sidebar {
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: none;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+  }
+  .rh-sidebar-nav {
+    flex: 0 0 auto;
+    min-height: auto;
+    overflow: visible;
+    overscroll-behavior: auto;
+    -webkit-overflow-scrolling: auto;
+  }
+  .rh-sidebar-bottom {
+    flex: 0 0 auto;
+    margin-top: auto;
+    padding-bottom: max(14px, env(safe-area-inset-bottom, 0px));
+  }
+  .rh-mobile-shade {
+    overscroll-behavior: none;
+    touch-action: none;
+  }
+}
