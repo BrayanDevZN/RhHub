@@ -82,7 +82,7 @@ export default function Dashboard() {
           <div className="rh-orb rh-orb-a" /><div className="rh-orb rh-orb-b" />
           <div className="rh-floating-panel rh-panel-a"><span className="rh-floating-icon"><CheckCircle2Icon className="size-4" /></span><span><strong>Processo inteligente</strong><small>Triagem com IA</small></span></div>
           <div className="rh-floating-panel rh-panel-b"><BriefcaseBusinessIcon className="size-5" /><span>Novas oportunidades</span><ArrowUpRightIcon className="size-3.5" /></div>
-          <div className="rh-hero-center"><SparklesIcon className="size-16" strokeWidth={1.35} /></div>
+          <div className="rh-hero-center"><BriefcaseBusinessIcon className="size-16" strokeWidth={1.35} /></div>
         </div>
       </section>
 
@@ -129,7 +129,7 @@ export default function Dashboard() {
             <span className="rh-panel-head-icon"><TrendingUpIcon className="size-5" /></span>
           </div>
           <div className="rh-progress-summary"><div className="rh-progress-total">{data ? resumes.length : "—"}<span>candidaturas</span></div><span className="rh-progress-summary-icon"><SparklesIcon className="size-6" /></span></div>
-          <div className="rh-progress-stacked">{totals.map(({status,color,count}) => <span key={status} style={{ width: resumes.length ? `${(count / resumes.length) * 100}%` : "0%", background: color }} />)}{resumes.length === 0 && <span style={{ width: "100%", background: "#e9edf5" }} />}</div>
+          <div className="rh-progress-stacked">{totals.map(({status,color,count}) => <span key={status} style={{ width: resumes.length ? `${(count / resumes.length) * 100}%` : "0%", background: color }} />)}{resumes.length === 0 && <span style={{ width: "100%", background: "var(--rh-track)" }} />}</div>
           <div className="rh-status-list">{totals.map(({status,label,color,count}) => <div key={status}><span><i style={{ background: color }} />{label}</span><strong>{data ? count : "—"}</strong></div>)}</div>
           <Link className="rh-status-more" to={isAdmin ? "/admin/candidaturas" : "/candidaturas"}>Acompanhar detalhes <ArrowRightIcon className="size-4" /></Link>
         </section>
