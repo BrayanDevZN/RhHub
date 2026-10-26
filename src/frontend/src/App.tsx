@@ -35,7 +35,8 @@ function AdminRoute() {
 function PublicRoute() {
   const { user, loading } = useAuth()
   if (loading) return <Loading />
-  return user ? <Navigate to="/" replace /> : <Outlet />
+  // A conta de demonstracao tambem pode abrir os formularios de autenticacao.
+  return user && user.email !== "demo@rhhub.local" ? <Navigate to="/" replace /> : <Outlet />
 }
 
 export default function App() {
