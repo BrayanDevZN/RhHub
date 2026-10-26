@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import {
   ArrowUpRightIcon, BellIcon, BriefcaseBusinessIcon, ChevronDownIcon,
   CircleHelpIcon, FileTextIcon, LayoutDashboardIcon, LogOutIcon,
-  MenuIcon, SearchIcon, Settings2Icon, ShieldCheckIcon, SparklesIcon,
+  MenuIcon, SearchIcon, Settings2Icon, ShieldCheckIcon,
   UserRoundIcon, UsersIcon, XIcon,
 } from "lucide-react"
 import { useAuth, useCurrentUser } from "@/lib/auth"
