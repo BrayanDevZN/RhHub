@@ -1,28 +1,100 @@
 import { useState, type FormEvent } from "react"
 import { Link, useNavigate } from "react-router-dom"
+import { ArrowLeftIcon } from "lucide-react"
 import { AuthLayout } from "@/components/AuthLayout"
+import { CodeInput } from "@/components/CodeInput"
+import { ForgotPasswordDialog } from "@/components/ForgotPasswordDialog"
 import { GoogleButton } from "@/components/GoogleButton"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Field, FieldGroup, FieldLabel, FieldSeparator } from "@/components/ui/field"
+import { Field, FieldDescription, FieldGroup, FieldLabel, FieldSeparator } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { Spinner } from "@/components/ui/spinner"
+import { toast } from "@/components/ui/toast"
+import { api, errorMessage } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 
 export default function Login() {
-  const { login, loginWithGoogle } = useAuth()
+  const { setUser } = useAuth()
   const navigate = useNavigate()
+  const [step, setStep] = useState<"credentials" | "twoFactor">("credentials")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [code, setCode] = useState("")
+  const [busy, setBusy] = useState(false)
 
-  function handleSubmit(event: FormEvent) {
+  async function run(action: () => Promise<void>) {
+    setBusy(true)
+    try {
+      await action()
+    } catch (error) {
+      toast.add({ title: "Erro", description: errorMessage(error), type: "error" })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  function handleCredentials(event: FormEvent) {
     event.preventDefault()
-    login(email)
-    navigate("/")
+    run(async () => {
+      const result = await api.auth.login(email, password)
+      if (result.twoFactor) {
+        const { code: sent } = await api.auth.sendTwoFactorCode(email)
+        toast.add({ title: "Código enviado para o seu e-mail", description: `Simulação: o código é ${sent}.` })
+        setStep("twoFactor")
+        return
+      }
+      setUser(result.user)
+      navigate("/")
+    })
+  }
+
+  function handleTwoFactor(event: FormEvent) {
+    event.preventDefault()
+    run(async () => {
+      setUser(await api.auth.verifyTwoFactor(email, code))
+      navigate("/")
+    })
   }
 
   function handleGoogle() {
-    loginWithGoogle()
-    navigate("/")
+    run(async () => {
+      setUser(await api.auth.loginWithGoogle())
+      navigate("/")
+    })
+  }
+
+  if (step === "twoFactor") {
+    return (
+      <AuthLayout>
+        <Card className="w-full max-w-sm bg-card/80 backdrop-blur">
+          <CardHeader>
+            <CardTitle>Verificação em duas etapas</CardTitle>
+            <CardDescription>Digite o código de 6 dígitos enviado para {email || "o seu e-mail"}.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleTwoFactor}>
+              <FieldGroup>
+                <Field>
+                  <FieldLabel htmlFor="code">Código</FieldLabel>
+                  <CodeInput id="code" value={code} onChange={setCode} />
+                </Field>
+                <Button type="submit" size="lg" className="w-full" disabled={busy}>
+                  {busy && <Spinner data-icon="inline-start" />}
+                  Verificar
+                </Button>
+              </FieldGroup>
+            </form>
+          </CardContent>
+          <CardFooter className="justify-center">
+            <Button variant="ghost" size="sm" onClick={() => setStep("credentials")}>
+              <ArrowLeftIcon data-icon="inline-start" />
+              Voltar
+            </Button>
+          </CardFooter>
+        </Card>
+      </AuthLayout>
+    )
   }
 
   return (
@@ -33,7 +105,7 @@ export default function Login() {
           <CardDescription>Acesse sua conta para acompanhar vagas e candidaturas.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleCredentials}>
             <FieldGroup>
               <GoogleButton onClick={handleGoogle}>Continuar com Google</GoogleButton>
               <FieldSeparator>ou</FieldSeparator>
@@ -47,9 +119,13 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
+                <FieldDescription>Na demonstração, e-mails com "admin" entram como administrador.</FieldDescription>
               </Field>
               <Field>
-                <FieldLabel htmlFor="password">Senha</FieldLabel>
+                <div className="flex items-center justify-between">
+                  <FieldLabel htmlFor="password">Senha</FieldLabel>
+                  <ForgotPasswordDialog defaultEmail={email} />
+                </div>
                 <Input
                   id="password"
                   type="password"
@@ -58,7 +134,8 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </Field>
-              <Button type="submit" size="lg" className="w-full">
+              <Button type="submit" size="lg" className="w-full" disabled={busy}>
+                {busy && <Spinner data-icon="inline-start" />}
                 Entrar
               </Button>
             </FieldGroup>
