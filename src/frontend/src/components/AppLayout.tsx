@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import {
   ArrowUpRightIcon, BellIcon, BriefcaseBusinessIcon, ChevronDownIcon,
@@ -44,12 +44,38 @@ export function AppLayout() {
     setProfileOpen(false)
   }, [pathname])
 
-  useEffect(() => {
-    if (!mobileOpen) return
+  useLayoutEffect(() => {
+    if (!mobileOpen || window.innerWidth > 740) return
 
-    const originalOverflow = document.body.style.overflow
-    document.body.style.overflow = "hidden"
-    sidebarRef.current?.querySelector<HTMLButtonElement>(".rh-close-mobile")?.focus()
+    // No Safari do iPhone, overflow:hidden sozinho nao impede a pagina
+    // de rolar por tras de um drawer com position:fixed.
+    const scrollY = window.scrollY
+    const body = document.body
+    const html = document.documentElement
+    const oldBody = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overflow: body.style.overflow,
+      overscrollBehavior: body.style.overscrollBehavior,
+    }
+    const oldHtmlOverflow = html.style.overflow
+    const oldHtmlOverscroll = html.style.overscrollBehavior
+
+    html.style.overflow = "hidden"
+    html.style.overscrollBehavior = "none"
+    body.style.position = "fixed"
+    body.style.top = `-${scrollY}px`
+    body.style.left = "0"
+    body.style.right = "0"
+    body.style.width = "100%"
+    body.style.overflow = "hidden"
+    body.style.overscrollBehavior = "none"
+
+    // Focar o X sem deslocar o documento (causa frequente do salto no iOS).
+    sidebarRef.current?.querySelector<HTMLButtonElement>(".rh-close-mobile")?.focus({ preventScroll: true })
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setMobileOpen(false)
@@ -61,9 +87,12 @@ export function AppLayout() {
     window.addEventListener("keydown", onKeyDown)
     window.addEventListener("resize", onResize)
     return () => {
-      document.body.style.overflow = originalOverflow
+      Object.assign(body.style, oldBody)
+      html.style.overflow = oldHtmlOverflow
+      html.style.overscrollBehavior = oldHtmlOverscroll
       window.removeEventListener("keydown", onKeyDown)
       window.removeEventListener("resize", onResize)
+      window.scrollTo(0, scrollY)
     }
   }, [mobileOpen])
 
