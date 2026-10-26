@@ -73,7 +73,7 @@ export default function Register() {
   if (step === "code") {
     return (
       <AuthLayout>
-        <Card className="w-full max-w-sm bg-card/80 backdrop-blur">
+        <Card className="rh-auth-card w-full max-w-sm backdrop-blur">
           <CardHeader>
             <CardTitle>Confirme seu e-mail</CardTitle>
             <CardDescription>Digite o código enviado para {email || "o seu e-mail"}. Ele vale por 15 minutos.</CardDescription>
@@ -105,7 +105,7 @@ export default function Register() {
 
   return (
     <AuthLayout>
-      <Card className="w-full max-w-md bg-card/80 backdrop-blur">
+      <Card className="rh-auth-card w-full max-w-md backdrop-blur">
         <CardHeader>
           <CardTitle>Criar conta</CardTitle>
           <CardDescription>Cadastre-se para se candidatar às vagas.</CardDescription>

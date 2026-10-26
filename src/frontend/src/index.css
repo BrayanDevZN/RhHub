@@ -480,3 +480,76 @@ body { background: #0a1024; color: #f7f9ff; }
   .rh-sidebar { box-shadow: 16px 0 44px rgb(0 0 0 / 45%); }
   .rh-hero { border-color: rgb(129 140 248 / 30%); }
 }
+
+
+/* RhHub visual identity: the login is the source of truth for the site palette. */
+:root {
+  --rhhub-midnight: #0a1024;
+  --rhhub-indigo: #818cf8;
+  --rhhub-violet: #a78bfa;
+  --rhhub-cyan: #22d3ee;
+  --rhhub-pink: #f472b6;
+}
+.rh-auth,
+.rh-shell {
+  accent-color: var(--rhhub-indigo);
+}
+.rh-auth .rh-brand-mark,
+.rh-shell .rh-brand-mark,
+.rh-shell .rh-hero-center {
+  background: linear-gradient(130deg,
+    var(--rhhub-indigo) 0%,
+    var(--rhhub-violet) 65%,
+    var(--rhhub-cyan) 135%);
+}
+.rh-shell .rh-primary-action {
+  background: linear-gradient(115deg, var(--rhhub-indigo), var(--rhhub-violet));
+  color: #fff;
+}
+.rh-shell .rh-nav-item:focus-visible,
+.rh-shell .rh-primary-action:focus-visible,
+.rh-auth :is(button, input, a):focus-visible {
+  outline: 2px solid var(--rhhub-cyan);
+  outline-offset: 3px;
+}
+/* Keep the title, descriptions, labels, hints and links white at every
+   authentication step: login, 2FA, signup, and email verification. */
+.rh-auth .rh-auth-card[data-slot="card"] {
+  color: #fff;
+  background: rgba(15, 23, 49, .92);
+  border: 1px solid rgba(167, 139, 250, .32);
+  box-shadow: 0 24px 75px rgba(1, 5, 25, .48);
+}
+.rh-auth .rh-auth-card :is(
+  [data-slot="card-title"],
+  [data-slot="card-description"],
+  [data-slot="field-label"],
+  [data-slot="field-description"],
+  [data-slot="field-separator"],
+  [data-slot="card-footer"]
+) {
+  color: #fff;
+}
+.rh-auth .rh-auth-card [data-slot="input"],
+.rh-auth .rh-auth-card [data-slot="select-trigger"] {
+  color: #fff;
+  background: rgba(12, 21, 46, .78);
+  border-color: rgba(165, 180, 252, .38);
+}
+.rh-auth .rh-auth-card [data-slot="input"]::placeholder {
+  color: rgba(255,255,255,.78);
+}
+.rh-auth .rh-auth-card :is(a, [data-slot="button"]) {
+  color: #fff;
+}
+.rh-auth .rh-auth-card [data-slot="button"].bg-primary {
+  background: linear-gradient(115deg, var(--rhhub-indigo), var(--rhhub-violet));
+  color: #fff;
+}
+.rh-auth .rh-auth-card [data-slot="button"].bg-primary:hover {
+  filter: brightness(1.08);
+}
+.rh-auth .rh-auth-card a:hover {
+  color: #fff;
+  text-decoration-color: var(--rhhub-cyan);
+}

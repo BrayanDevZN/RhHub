@@ -74,7 +74,7 @@ export default function Login() {
   if (step === "twoFactor") {
     return (
       <AuthLayout>
-        <Card className="w-full max-w-sm bg-card/80 backdrop-blur">
+        <Card className="rh-auth-card w-full max-w-sm backdrop-blur">
           <CardHeader>
             <CardTitle>Verificação em duas etapas</CardTitle>
             <CardDescription>Digite o código de 6 dígitos enviado para {email || "o seu e-mail"}.</CardDescription>
@@ -106,7 +106,7 @@ export default function Login() {
 
   return (
     <AuthLayout>
-      <Card className="w-full max-w-sm bg-card/80 backdrop-blur">
+      <Card className="rh-auth-card w-full max-w-sm backdrop-blur">
         <CardHeader>
           <CardTitle>Entrar</CardTitle>
           <CardDescription>Acesse sua conta para acompanhar vagas e candidaturas.</CardDescription>
