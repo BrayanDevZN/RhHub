@@ -71,7 +71,7 @@ export function AppLayout() {
       <aside className={`rh-sidebar ${mobileOpen ? "is-open" : ""}`}>
         <div className="rh-brand">
           <NavLink to="/" className="rh-brand-link" onClick={() => setMobileOpen(false)}>
-            <span className="rh-brand-mark"><SparklesIcon className="size-[23px]" strokeWidth={2.3} /></span>
+            <span className="rh-brand-mark"><BriefcaseBusinessIcon className="size-[21px]" strokeWidth={2.1} /></span>
             <span className="rh-brand-name">rh<span>hub</span><span className="rh-brand-period">.</span></span>
           </NavLink>
           <button className="rh-icon-button rh-close-mobile" onClick={() => setMobileOpen(false)} aria-label="Fechar menu"><XIcon className="size-5" /></button>
