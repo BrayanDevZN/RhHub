@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { ArrowLeftIcon } from "lucide-react"
+import { ArrowLeftIcon, SparklesIcon } from "lucide-react"
 import { AuthLayout } from "@/components/AuthLayout"
 import { CodeInput } from "@/components/CodeInput"
 import { ForgotPasswordDialog } from "@/components/ForgotPasswordDialog"
@@ -60,6 +60,13 @@ export default function Login() {
   function handleGoogle() {
     run(async () => {
       setUser(await api.auth.loginWithGoogle())
+      navigate("/")
+    })
+  }
+
+  function handleDemo() {
+    run(async () => {
+      setUser(await api.auth.enterDemo())
       navigate("/")
     })
   }
@@ -137,6 +144,10 @@ export default function Login() {
               <Button type="submit" size="lg" className="w-full" disabled={busy}>
                 {busy && <Spinner data-icon="inline-start" />}
                 Entrar
+              </Button>
+              <Button type="button" variant="outline" size="lg" className="w-full" disabled={busy} onClick={handleDemo}>
+                <SparklesIcon data-icon="inline-start" />
+                Explorar demonstracao sem login
               </Button>
             </FieldGroup>
           </form>
