@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import reactor.core.publisher.Mono;
 
 /**
- * Escolhe o envio: ENVIRONMENT=test não envia nada (só registra no log); com N8N_JWT_SECRET usa o n8n;
+ * Escolhe o envio: ENVIRONMENT=test não envia nada (só registra no log); com gmail_secret usa o n8n;
  * sem o segredo a aplicação sobe, mas cada envio falha com EmailException.
  */
 @Configuration
@@ -23,6 +23,8 @@ public class EmailConfig {
     @Bean
     EmailSender emailSender(AppProperties props, Clock clock, ObjectMapper mapper) {
         var email = props.email();
+        log.info("Envio de e-mail: {}", props.isTest() ? "teste (não envia)"
+                : (email.jwtSecret() != null && !email.jwtSecret().isBlank()) ? "n8n" : "desligado (falta gmail_secret)");
         if (props.isTest()) {
             return new EmailSender() {
                 @Override
@@ -43,7 +45,7 @@ public class EmailConfig {
         return new EmailSender() {
             @Override
             public Mono<Void> send(EmailMessage message) {
-                return Mono.error(new EmailException("N8N_JWT_SECRET não configurado: e-mail não enviado"));
+                return Mono.error(new EmailException("gmail_secret não configurado: e-mail não enviado"));
             }
 
             @Override

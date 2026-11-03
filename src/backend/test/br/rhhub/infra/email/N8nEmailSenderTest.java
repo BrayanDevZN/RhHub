@@ -146,7 +146,7 @@ class N8nEmailSenderTest {
         var none = config.emailSender(noSecret, Clock.systemUTC(), mapper);
         assertThat(none.name()).isEqualTo("none");
         assertThatThrownBy(() -> none.send(EmailMessage.html("a@b.co", "S", "c")).block())
-                .isInstanceOf(EmailSender.EmailException.class).hasMessageContaining("N8N_JWT_SECRET");
+                .isInstanceOf(EmailSender.EmailException.class).hasMessageContaining("gmail_secret");
         assertThat(config.emailSender(base, Clock.systemUTC(), mapper).send(EmailMessage.html("a@b.co", "S", "c")).block())
                 .isNull();
     }

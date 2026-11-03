@@ -23,5 +23,5 @@ app:
   email:
     # Workflow "gmail" do n8n: POST com JWT (HS256) e corpo {type, to, subject, content}
     webhook-url: ${N8N_EMAIL_WEBHOOK_URL:https://n8n.nexoaicompany.com/webhook/a043ad9f-9a0c-4bbd-a142-f64a1cd524c0}
-    jwt-secret: ${N8N_JWT_SECRET:}
+    jwt-secret: ${gmail_secret:}
     timeout: 15s
