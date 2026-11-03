@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
  * Web (prefixo app.web).
- * frontendOrigin: FRONTEND_ORIGIN, uma ou mais origens separadas por vírgula, liberadas no CORS (vazio: nenhuma).
+ * frontendOrigin: FRONTEND_URL (nome antigo: FRONTEND_ORIGIN), uma ou mais origens separadas por vírgula, liberadas no CORS (vazio: nenhuma).
  * cookieSecure: COOKIE_SECURE. Vazio: Secure ligado, exceto em ENVIRONMENT=test. Em http local use false.
  * cookieSameSite: COOKIE_SAMESITE (Strict, Lax ou None). Strict exige front e API no mesmo domínio.
  */

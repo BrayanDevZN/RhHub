@@ -1,4 +1,4 @@
-// Formatos espelhando os models do back end (users, vancancies, resumes).
+// Formatos que a API devolve (campos em snake_case). Ver a seção 4.5 da DOCUMENTACAO.md.
 
 export type Role = "admin" | "user"
 export type Gender = "male" | "female" | "other"
@@ -13,9 +13,10 @@ export type User = {
   cpf: string | null
   age: number | null
   gender: Gender | null
-  permission: boolean // 2FA por e-mail ativado
+  two_factor: boolean // verificação em duas etapas por e-mail
   role: Role
   provider: Provider
+  has_photo?: boolean // só vem em GET /users/me
   created_at: string
 }
 
@@ -23,18 +24,18 @@ export type Vacancy = {
   id: number
   name: string
   description: string
-  created_by: number
+  created_by?: number // só admins recebem
   created_at: string
 }
 
 export type Resume = {
   id: number
   user_id: number
-  vancancie_id: number
+  vacancy_id: number
   file_name: string
-  pdf: string | null // base64, como o GET /resumes devolve
+  content_type: string // application/pdf ou DOCX
   status: ResumeStatus
-  reason: string
+  reason: string | null
   created_at: string
 }
 

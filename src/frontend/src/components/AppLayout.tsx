@@ -7,6 +7,7 @@ import {
   UserRoundIcon, UsersIcon, XIcon,
 } from "lucide-react"
 import { useAuth, useCurrentUser } from "@/lib/auth"
+import { api } from "@/lib/api"
 import { initials } from "@/lib/format"
 
 const NAV = [
@@ -32,7 +33,9 @@ const TITLES: Record<string, string> = {
 
 export function AppLayout() {
   const user = useCurrentUser()
-  const { logout } = useAuth()
+  const { logout, photoVersion } = useAuth()
+  const photo = user.has_photo ? api.users.photoUrl(photoVersion) : null
+  const avatar = photo ? <img src={photo} alt="" className="size-full object-cover" /> : initials(user.name)
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -99,7 +102,7 @@ export function AppLayout() {
             <NavLink to="/perfil">Ver meu perfil <ArrowUpRightIcon className="size-3.5" /></NavLink>
           </div>
           <div className="rh-side-user">
-            <span className="rh-user-avatar">{initials(user.name)}</span>
+            <span className="rh-user-avatar" style={{ overflow: "hidden" }}>{avatar}</span>
             <div className="min-w-0 flex-1">
               <div className="truncate font-semibold text-[13px]">{user.name}</div>
               <div className="truncate text-[11px] text-[#8793ae]">{user.role === "admin" ? "Administrador" : "Candidato"}</div>
@@ -117,11 +120,10 @@ export function AppLayout() {
           </div>
           <div className="rh-top-actions">
             <NavLink to="/vagas" className="rh-top-search"><SearchIcon className="size-4" /><span>Buscar oportunidades</span><kbd>⌕</kbd></NavLink>
-            <span className="rh-demo-tag">AMBIENTE DEMO</span>
-            <button className="rh-top-icon" title="Notificações (demonstração)" aria-label="Notificações"><BellIcon className="size-[18px]" /><i /></button>
+            <button className="rh-top-icon" title="Notificações" aria-label="Notificações"><BellIcon className="size-[18px]" /><i /></button>
             <div className="rh-topbar-profile">
               <button className="rh-top-profile-btn" onClick={() => setProfileOpen((v) => !v)} aria-label="Opções da conta" aria-expanded={profileOpen}>
-                <span className="rh-top-avatar">{initials(user.name)}</span>
+                <span className="rh-top-avatar" style={{ overflow: "hidden" }}>{avatar}</span>
                 <ChevronDownIcon className="size-3.5" />
               </button>
               {profileOpen && (
@@ -135,7 +137,7 @@ export function AppLayout() {
           </div>
         </header>
         <main className="rh-page" id="conteudo"><Outlet /></main>
-        <footer className="rh-footer"><span>RhHub · Plataforma de recrutamento</span><span>Protótipo de interface · Dados de demonstração</span></footer>
+        <footer className="rh-footer"><span>RhHub · Plataforma de recrutamento</span><span>Seus dados ficam protegidos</span></footer>
       </div>
     </div>
   )

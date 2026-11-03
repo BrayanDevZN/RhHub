@@ -39,7 +39,7 @@ Todas em `/api`, JSON em snake_case, sessão por cookie `HttpOnly`. A lista comp
 | API | `Dockerfile.Api` | `railway.api.json` |
 | Consumers (análise e e-mail) | `Dockerfile.Consumer` | `railway.consumer.json` |
 | Kafka | `Dockerfile.kafka` | `railway.kafka.json` |
-| Front (nginx, repassa `/api` para a API com `API_UPSTREAM`) | `Dockerfile.front` | `railway.json` |
+| Front (nginx, repassa `/api` para a API; lê `BACKEND_URL`) | `Dockerfile.front` | `railway.json` |
 
 `docker compose up --build` sobe tudo local (veja `.env.compose.example` na raiz). Front e API precisam estar no **mesmo domínio**: os cookies são `SameSite=Strict`.
 

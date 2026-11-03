@@ -19,7 +19,7 @@ COPY --from=build /app/app.jar app.jar
 USER rhhub
 
 # Variáveis lidas: DATABASE_URL, REDIS_*, KAFKA_URL, KAFKA_API_KEY, gmail_secret, JWT_SECRET, ADMIN_EMAIL,
-# ADMIN_PASSWORD, FRONTEND_ORIGIN, COOKIE_SECURE, COOKIE_SAMESITE e, se ligar o Google, GOOGLE_*.
+# ADMIN_PASSWORD, FRONTEND_URL, COOKIE_SECURE, COOKIE_SAMESITE e, se ligar o Google, GOOGLE_*.
 # O Railway injeta a PORT; sem ela a API ouve na 8080.
 ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75"
 EXPOSE 8080

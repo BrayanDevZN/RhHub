@@ -114,7 +114,7 @@ export default function Dashboard() {
               {recent.map((resume) => (
                 <div key={resume.id} className="rh-activity-item">
                   <span className="rh-activity-icon"><FileTextIcon className="size-5" /></span>
-                  <div className="min-w-0 flex-1"><h3 className="truncate">{vacancyName(resume.vancancie_id)}</h3><p>{formatDate(resume.created_at)} · {resume.file_name}</p></div>
+                  <div className="min-w-0 flex-1"><h3 className="truncate">{vacancyName(resume.vacancy_id)}</h3><p>{formatDate(resume.created_at)} · {resume.file_name}</p></div>
                   <StatusBadge status={resume.status} />
                   <ChevronRightIcon className="size-4 text-[#a0aac0]" />
                 </div>

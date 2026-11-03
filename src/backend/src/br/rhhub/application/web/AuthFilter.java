@@ -27,6 +27,7 @@ public class AuthFilter implements WebFilter, Ordered {
             "POST /api/auth/2fa/send",
             "POST /api/auth/2fa/verify",
             "POST /api/auth/refresh",
+            "POST /api/auth/logout",
             "POST /api/auth/password/reset-code",
             "POST /api/auth/password/reset",
             "GET /api/auth/providers",

@@ -1,471 +1,283 @@
-// API simulada. Cada função corresponde a uma rota do back end e devolve o mesmo
-// formato; quando o back end Java existir, basta trocar o corpo por fetch(..., { credentials: "include" }).
-// Por enquanto qualquer credencial e qualquer código são aceitos.
+// Cliente da API real. Todas as chamadas vão para /api no mesmo domínio do front (o nginx repassa para o back end,
+// por isso os cookies HttpOnly de sessão funcionam). Os tokens nunca passam pelo JavaScript.
 
 import type { Gender, Resume, ResumeStatus, Role, SignupData, User, Vacancy } from "@/lib/types"
 
-type Db = {
-  users: User[]
-  vacancies: Vacancy[]
-  resumes: Resume[]
-  session: string | null // public_id do usuário logado (no back end: cookie X-user_token)
-  seq: number
+const BASE = "/api"
+
+export class ApiError extends Error {
+  status: number
+
+  constructor(message: string, status = 0) {
+    super(message)
+    this.status = status
+  }
 }
 
-const DB_KEY = "rhhub:db"
-const DEMO_EMAIL = "demo@rhhub.local"
-const EXPLICIT_DEMO_KEY = "rhhub:demo:explicit"
+/** Disparado quando a sessão acabou de vez (o refresh também falhou): o AuthProvider volta para o login. */
+export const UNAUTHORIZED_EVENT = "rhhub:unauthorized"
 
-function wasDemoChosen(): boolean {
+const FALLBACK: Record<number, string> = {
+  400: "Confira os dados e tente de novo.",
+  401: "Sessão expirada. Entre novamente.",
+  403: "Você não tem permissão para isso.",
+  404: "Não encontrado.",
+  409: "Esse registro já existe.",
+  422: "Não foi possível concluir.",
+  429: "Muitas tentativas. Aguarde um instante.",
+  502: "O servidor está indisponível no momento.",
+  503: "O servidor está indisponível no momento.",
+}
+
+async function toError(response: Response): Promise<ApiError> {
+  let message = ""
   try {
-    return localStorage.getItem(EXPLICIT_DEMO_KEY) === "1"
+    const body = await response.json()
+    if (body && typeof body.message === "string") message = body.message
   } catch {
-    return false
+    // corpo que não é JSON (por exemplo, página de erro do proxy)
   }
+  return new ApiError(message || FALLBACK[response.status] || "Algo deu errado. Tente de novo.", response.status)
 }
 
-const MAX_STORED_PDF = 1_500_000
+let refreshing: Promise<boolean> | null = null
 
-let memoryDb: Db | null = null
-
-function now() {
-  return new Date().toISOString()
+/** Renova o token de acesso uma vez, mesmo que várias chamadas falhem juntas. */
+function refreshSession(): Promise<boolean> {
+  refreshing ??= fetch(`${BASE}/auth/refresh`, { method: "POST", credentials: "include" })
+    .then((response) => response.ok)
+    .catch(() => false)
+    .finally(() => {
+      refreshing = null
+    })
+  return refreshing
 }
 
-function seed(): Db {
-  const admin: User = {
-    id: 1,
-    public_id: crypto.randomUUID(),
-    name: "Admin RhHub",
-    email: "admin@gmail.com",
-    cpf: "00000000000",
-    age: 30,
-    gender: "other",
-    permission: false,
-    role: "admin",
-    provider: "local",
-    created_at: now(),
-  }
-  const vacancies: Vacancy[] = [
-    {
-      id: 2,
-      name: "Desenvolvedor Java Júnior",
-      description:
-        "Desenvolvimento de APIs REST com Spring Boot, JPA e PostgreSQL. Desejável: Docker, Kafka e testes com JUnit.",
-      created_by: 1,
-      created_at: now(),
-    },
-    {
-      id: 3,
-      name: "Analista de Dados",
-      description: "SQL avançado, Python e construção de dashboards. Experiência com modelagem de dados e ETL.",
-      created_by: 1,
-      created_at: now(),
-    },
-    {
-      id: 4,
-      name: "Designer UX/UI",
-      description: "Pesquisa com usuários, prototipação no Figma e design systems. Portfólio obrigatório.",
-      created_by: 1,
-      created_at: now(),
-    },
-  ]
-  return { users: [admin], vacancies, resumes: [], session: null, seq: 5 }
-}
-
-function load(): Db {
-  if (memoryDb) return memoryDb
+async function request(path: string, init: RequestInit = {}, retry = true): Promise<Response> {
+  let response: Response
   try {
-    const raw = localStorage.getItem(DB_KEY)
-    memoryDb = raw ? (JSON.parse(raw) as Db) : seed()
+    response = await fetch(`${BASE}${path}`, { credentials: "include", ...init })
   } catch {
-    memoryDb = seed()
+    throw new ApiError("Sem conexão com o servidor. Verifique sua internet.")
   }
-  return memoryDb
-}
-
-function save(db: Db) {
-  memoryDb = db
-  try {
-    localStorage.setItem(DB_KEY, JSON.stringify(db))
-  } catch {
-    // sem espaço ou armazenamento bloqueado: mantém só em memória
+  if (response.status === 401 && retry && !path.startsWith("/auth/")) {
+    if (await refreshSession()) return request(path, init, false)
+    if (path !== "/users/me") window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
   }
+  if (!response.ok) throw await toError(response)
+  return response
 }
 
-function nextId(db: Db) {
-  db.seq += 1
-  return db.seq
-}
-
-function delay<T>(value: T, ms = 350): Promise<T> {
-  return new Promise((resolve) => setTimeout(() => resolve(structuredClone(value)), ms))
-}
-
-export class ApiError extends Error {}
-
-function fail(message: string): never {
-  throw new ApiError(message)
-}
-
-function code() {
-  return String(Math.floor(100000 + Math.random() * 900000))
-}
-
-function nameFromEmail(email: string) {
-  const local = email.split("@")[0]?.trim()
-  if (!local) return "Candidato"
-  return local.charAt(0).toUpperCase() + local.slice(1)
-}
-
-function currentUser(db: Db) {
-  const user = db.users.find((u) => u.public_id === db.session)
-  if (!user) fail("Sessão expirada. Entre novamente.")
-  return user
-}
-
-function requireAdmin(db: Db) {
-  const user = currentUser(db)
-  if (user.role !== "admin") fail("Sem permissão.")
-  return user
-}
-
-// Na simulação, e-mails com "admin" entram como administrador.
-function findOrCreate(db: Db, email: string, extra: Partial<User> = {}) {
-  const normalized = (email || "candidato@gmail.com").trim().toLowerCase()
-  let user = db.users.find((u) => u.email === normalized)
-  if (!user) {
-    user = {
-      id: nextId(db),
-      public_id: crypto.randomUUID(),
-      name: nameFromEmail(normalized),
-      email: normalized,
-      cpf: null,
-      age: null,
-      gender: null,
-      permission: false,
-      role: normalized.includes("admin") ? "admin" : "user",
-      provider: "local",
-      created_at: now(),
-      ...extra,
-    }
-    db.users.push(user)
+async function call<T = void>(path: string, method = "GET", body?: unknown): Promise<T> {
+  const init: RequestInit = { method }
+  if (body !== undefined) {
+    init.headers = { "Content-Type": "application/json" }
+    init.body = JSON.stringify(body)
   }
-  return user
+  const response = await request(path, init)
+  if (response.status === 204) return undefined as T
+  const text = await response.text()
+  return (text ? JSON.parse(text) : undefined) as T
 }
 
-// Permite navegar pelo prototipo antes da integracao com o back end.
-function enterDemoSession(db: Db): User {
-  const demo = findOrCreate(db, DEMO_EMAIL, {
-    name: "Visitante RhHub",
-    role: "admin",
-    provider: "local",
-  })
-  demo.role = "admin"
-  db.session = demo.public_id
-  save(db)
-  return demo
-}
-
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "")
-    reader.onerror = () => reject(reader.error)
-    reader.readAsDataURL(file)
+function upload<T = void>(path: string, method: string, form: FormData): Promise<T> {
+  return request(path, { method, body: form }).then(async (response) => {
+    const text = await response.text()
+    return (text ? JSON.parse(text) : undefined) as T
   })
 }
 
-const ANALYSIS_MS = 6000
-
-// Simula o consumer do topic resume.analysis: depois de alguns segundos a IA decide.
-// Roda a cada leitura, então funciona mesmo se a página for recarregada no meio.
-function settleAnalyses(db: Db) {
-  let changed = false
-  for (const resume of db.resumes) {
-    if (resume.status !== "pending") continue
-    if (Date.now() - new Date(resume.created_at).getTime() < ANALYSIS_MS) continue
-    const vacancy = db.vacancies.find((v) => v.id === resume.vancancie_id)
-    const approved = resume.file_name.length % 3 !== 0
-    const status: ResumeStatus = approved ? "aproved" : "recuse"
-    resume.status = status
-    resume.reason = approved
-      ? `Candidatura aprovada para ${vacancy?.name ?? "a vaga"}. Seu currículo mostra experiência alinhada aos requisitos principais. Nossa equipe entrará em contato para a próxima etapa.`
-      : `Candidatura não aprovada para ${vacancy?.name ?? "a vaga"}. O currículo não evidenciou os requisitos obrigatórios da vaga. Agradecemos o interesse e incentivamos novas candidaturas.`
-    changed = true
-  }
-  if (changed) save(db)
-}
+type CodeSent = { code?: string } // o código só vem na resposta em ambiente de teste; em produção chega por e-mail
 
 export const api = {
   auth: {
-    // GET /users (quem está logado)
+    // GET /users/me (quem está logado); null se não houver sessão
     async me(): Promise<User | null> {
-      const db = load()
-      const active = db.users.find((u) => u.public_id === db.session) ?? null
-
-      // Versoes anteriores criavam uma sessao demo sem consentimento e pulavam
-      // a pagina de login. Invalidamos somente aquelas sessoes antigas.
-      if (active?.email === DEMO_EMAIL && !wasDemoChosen()) {
-        db.session = null
-        save(db)
-        return delay(null, 150)
-      }
-
-      return delay(active, 150)
-    },
-
-    async enterDemo(): Promise<User> {
       try {
-        localStorage.setItem(EXPLICIT_DEMO_KEY, "1")
+        return await call<User>("/users/me")
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) return null
+        throw error
+      }
+    },
+
+    // GET /auth/providers: quais logins externos estão ligados
+    async providers(): Promise<{ google: boolean }> {
+      try {
+        return await call<{ google: boolean }>("/auth/providers")
       } catch {
-        // A demonstracao pode continuar apenas nesta aba.
+        return { google: false }
       }
-      return delay(enterDemoSession(load()), 150)
     },
 
-    // POST /sender: envia código de criação de conta
-    async sendSignupCode(_name: string, _email: string): Promise<{ code: string }> {
-      return delay({ code: code() })
+    // POST /sender/signup-code
+    sendSignupCode(name: string, email: string): Promise<CodeSent> {
+      return call<CodeSent>("/sender/signup-code", "POST", { name, email })
     },
 
-    // POST /users
-    async signup(data: Partial<SignupData>, _code: string): Promise<User> {
-      const db = load()
-      const user = findOrCreate(db, data.email ?? "", {
-        name: data.name || nameFromEmail(data.email ?? ""),
-        cpf: data.cpf || null,
-        age: data.age ?? null,
-        gender: data.gender ?? null,
-      })
-      db.session = user.public_id
-      save(db)
-      return delay(user)
+    // POST /users (já abre a sessão)
+    signup(data: Partial<SignupData>, code: string): Promise<User> {
+      return call<User>("/users", "POST", { ...data, code })
     },
 
-    // GET /auth: devolve se precisa de 2FA
-    async login(email: string, _password: string): Promise<{ twoFactor: boolean; user: User | null }> {
-      const db = load()
-      const user = findOrCreate(db, email)
-      if (user.permission) {
-        save(db)
-        return delay({ twoFactor: true, user: null })
-      }
-      db.session = user.public_id
-      save(db)
-      return delay({ twoFactor: false, user })
+    // POST /auth/login: sem 2FA abre a sessão; com 2FA devolve só o cookie temporário
+    async login(email: string, password: string): Promise<{ twoFactor: boolean; user: User | null }> {
+      const result = await call<{ auth: boolean | string }>("/auth/login", "POST", { email, password })
+      if (result.auth === "required") return { twoFactor: true, user: null }
+      return { twoFactor: false, user: await call<User>("/users/me") }
     },
 
-    // POST /sender/2fa
-    async sendTwoFactorCode(_email: string): Promise<{ code: string }> {
-      return delay({ code: code() })
+    // POST /auth/2fa/send (usa o cookie temporário do login)
+    sendTwoFactorCode(): Promise<CodeSent> {
+      return call<CodeSent>("/auth/2fa/send", "POST")
     },
 
-    // GET /auth com code
-    async verifyTwoFactor(email: string, _code: string): Promise<User> {
-      const db = load()
-      const user = findOrCreate(db, email)
-      db.session = user.public_id
-      save(db)
-      return delay(user)
+    // POST /auth/2fa/verify
+    verifyTwoFactor(code: string): Promise<User> {
+      return call<User>("/auth/2fa/verify", "POST", { code })
     },
 
-    // GET /oauth2/authorization/google (simulado: não abre o Google)
-    async loginWithGoogle(): Promise<User> {
-      const db = load()
-      const user = findOrCreate(db, "usuario.google@gmail.com", { name: "Usuário Google", provider: "google" })
-      db.session = user.public_id
-      save(db)
-      return delay(user, 600)
+    // Login com Google: sai do app e volta logado pelo back end (/oauth2/authorization/google)
+    loginWithGoogle(): void {
+      window.location.assign("/oauth2/authorization/google")
     },
 
-    // DELETE /auth
+    // POST /auth/logout
     async logout(): Promise<void> {
-      const db = load()
-      db.session = null
-      save(db)
       try {
-        localStorage.removeItem(EXPLICIT_DEMO_KEY)
+        await call("/auth/logout", "POST")
       } catch {
-        // Armazenamento indisponivel.
+        // sem sessão ou sem rede: o cookie some de qualquer forma quando expira
       }
-      return delay(undefined, 150)
     },
 
-    // PATCH /sender: código para trocar senha
-    async sendPasswordResetCode(_email: string): Promise<{ code: string }> {
-      return delay({ code: code() })
+    // POST /auth/password/reset-code
+    sendPasswordResetCode(email: string): Promise<CodeSent> {
+      return call<CodeSent>("/auth/password/reset-code", "POST", { email })
     },
 
-    // PATCH /auth com sender=true
-    async resetPassword(_email: string, _code: string, _newPassword: string): Promise<void> {
-      return delay(undefined)
+    // POST /auth/password/reset
+    resetPassword(email: string, code: string, newPassword: string): Promise<void> {
+      return call("/auth/password/reset", "POST", { email, code, newPassword })
     },
 
-    // PATCH /auth com a senha atual
-    async changePassword(_current: string, _next: string): Promise<void> {
-      currentUser(load())
-      return delay(undefined)
+    // PATCH /auth/password (a troca encerra as sessões: é preciso entrar de novo)
+    changePassword(current: string, next: string): Promise<void> {
+      return call("/auth/password", "PATCH", { password: current, newPassword: next })
     },
   },
 
   users: {
-    // PATCH /users: set em permission, age ou gender
-    async update(set: "permission" | "age" | "gender", value: boolean | number | Gender): Promise<User> {
-      const db = load()
-      const user = currentUser(db)
-      if (set === "permission") user.permission = value as boolean
-      if (set === "age") user.age = value as number
-      if (set === "gender") user.gender = value as Gender
-      save(db)
-      return delay(user)
+    // PATCH /users/me: set em age, gender, two_factor ou cpf (o CPF só pode ser preenchido uma vez)
+    update(set: "two_factor" | "age" | "gender" | "cpf", value: boolean | number | string | Gender): Promise<User> {
+      return call<User>("/users/me", "PATCH", { set, value })
     },
 
-    // DELETE /users
-    async deleteMe(_password: string): Promise<void> {
-      const db = load()
-      const user = currentUser(db)
-      db.users = db.users.filter((u) => u.id !== user.id)
-      db.resumes = db.resumes.filter((r) => r.user_id !== user.id)
-      db.session = null
-      save(db)
-      return delay(undefined)
+    // DELETE /users/me
+    deleteMe(password: string): Promise<void> {
+      return call("/users/me", "DELETE", { password })
+    },
+
+    // PUT /users/me/photo (JPEG, PNG ou WebP, até 2 MB)
+    async uploadPhoto(file: File): Promise<void> {
+      const form = new FormData()
+      form.append("file", file)
+      await upload("/users/me/photo", "PUT", form)
+    },
+
+    // DELETE /users/me/photo
+    deletePhoto(): Promise<void> {
+      return call("/users/me/photo", "DELETE")
+    },
+
+    // GET /users/me/photo. O parâmetro v força o navegador a buscar de novo depois de uma troca.
+    photoUrl(version: number | string = 0): string {
+      return `${BASE}/users/me/photo?v=${version}`
     },
   },
 
   admin: {
-    // GET /admin com is_all
-    async listUsers(): Promise<User[]> {
-      const db = load()
-      requireAdmin(db)
-      return delay(db.users)
+    // GET /admin/users
+    listUsers(): Promise<User[]> {
+      return call<User[]>("/admin/users")
     },
 
-    // PATCH /admin
+    // PATCH /admin/users/{publicId}/role (rebaixar é só do admin raiz)
     async setRole(publicId: string, role: Role): Promise<void> {
-      const db = load()
-      requireAdmin(db)
-      const user = db.users.find((u) => u.public_id === publicId) ?? fail("Usuário não encontrado.")
-      user.role = role
-      save(db)
-      return delay(undefined)
+      await call(`/admin/users/${publicId}/role`, "PATCH", { role })
     },
 
-    // DELETE /admin
-    async deleteUser(publicId: string): Promise<void> {
-      const db = load()
-      const admin = requireAdmin(db)
-      if (admin.public_id === publicId) fail("Use o seu perfil para excluir a própria conta.")
-      const user = db.users.find((u) => u.public_id === publicId) ?? fail("Usuário não encontrado.")
-      db.users = db.users.filter((u) => u.id !== user.id)
-      db.resumes = db.resumes.filter((r) => r.user_id !== user.id)
-      save(db)
-      return delay(undefined)
+    // DELETE /admin/users/{publicId} (só do admin raiz)
+    deleteUser(publicId: string): Promise<void> {
+      return call(`/admin/users/${publicId}`, "DELETE")
+    },
+
+    // GET /admin/users/{publicId}/photo
+    photoUrl(publicId: string): string {
+      return `${BASE}/admin/users/${publicId}/photo`
     },
   },
 
   vacancies: {
-    // GET /vancancies com search=all
-    async list(): Promise<Vacancy[]> {
-      const db = load()
-      currentUser(db)
-      return delay([...db.vacancies].sort((a, b) => b.created_at.localeCompare(a.created_at)))
+    // GET /vacancies
+    list(): Promise<Vacancy[]> {
+      return call<Vacancy[]>("/vacancies")
     },
 
-    // POST /vancancies
-    async create(name: string, description: string): Promise<Vacancy> {
-      const db = load()
-      const admin = requireAdmin(db)
-      if (db.vacancies.some((v) => v.name.toLowerCase() === name.trim().toLowerCase())) {
-        fail(`Já existe uma vaga chamada ${name}.`)
-      }
-      const vacancy: Vacancy = {
-        id: nextId(db),
-        name: name.trim() || "Nova vaga",
-        description: description.trim(),
-        created_by: admin.id,
-        created_at: now(),
-      }
-      db.vacancies.push(vacancy)
-      save(db)
-      return delay(vacancy)
+    // POST /vacancies
+    create(name: string, description: string): Promise<Vacancy> {
+      return call<Vacancy>("/vacancies", "POST", { name, description })
     },
 
-    // PATCH /vancancies
-    async update(id: number, data: { name: string; description: string }): Promise<Vacancy> {
-      const db = load()
-      requireAdmin(db)
-      const vacancy = db.vacancies.find((v) => v.id === id) ?? fail("Vaga não encontrada.")
-      vacancy.name = data.name.trim() || vacancy.name
-      vacancy.description = data.description.trim()
-      save(db)
-      return delay(vacancy)
+    // PATCH /vacancies/{id}
+    update(id: number, data: { name: string; description: string }): Promise<Vacancy> {
+      return call<Vacancy>(`/vacancies/${id}`, "PATCH", data)
     },
 
-    // DELETE /vancancies (as candidaturas da vaga vão junto, como o cascade do model)
-    async remove(id: number): Promise<void> {
-      const db = load()
-      requireAdmin(db)
-      db.vacancies = db.vacancies.filter((v) => v.id !== id)
-      db.resumes = db.resumes.filter((r) => r.vancancie_id !== id)
-      save(db)
-      return delay(undefined)
+    // DELETE /vacancies/{id} (as candidaturas da vaga vão junto)
+    remove(id: number): Promise<void> {
+      return call(`/vacancies/${id}`, "DELETE")
     },
   },
 
   resumes: {
-    // GET /resumes do usuário logado
-    async listMine(): Promise<Resume[]> {
-      const db = load()
-      const user = currentUser(db)
-      settleAnalyses(db)
-      return delay(db.resumes.filter((r) => r.user_id === user.id), 150)
+    // GET /resumes/me
+    listMine(): Promise<Resume[]> {
+      return call<Resume[]>("/resumes/me")
     },
 
-    // GET /resumes com get_all (admin)
-    async listAll(): Promise<Resume[]> {
-      const db = load()
-      requireAdmin(db)
-      settleAnalyses(db)
-      return delay(db.resumes, 150)
+    // GET /resumes (admin)
+    listAll(): Promise<Resume[]> {
+      return call<Resume[]>("/resumes")
     },
 
-    // POST /resumes (multipart) e publica em resume.analysis
-    async create(vacancyId: number, file: File): Promise<Resume> {
-      const db = load()
-      const user = currentUser(db)
-      if (!db.vacancies.some((v) => v.id === vacancyId)) fail("Vaga não encontrada.")
-      if (db.resumes.some((r) => r.user_id === user.id && r.vancancie_id === vacancyId)) {
-        fail("Você já se candidatou a essa vaga.")
-      }
-      const pdf = file.size <= MAX_STORED_PDF ? await fileToBase64(file) : null
-      const resume: Resume = {
-        id: nextId(db),
-        user_id: user.id,
-        vancancie_id: vacancyId,
-        file_name: file.name,
-        pdf,
-        status: "pending",
-        reason: "null",
-        created_at: now(),
-      }
-      db.resumes.push(resume)
-      save(db)
-      return delay(resume, 600)
+    // POST /resumes (multipart: vacancyId e file, PDF ou DOCX). A análise da IA começa em seguida.
+    create(vacancyId: number, file: File): Promise<Resume> {
+      const form = new FormData()
+      form.append("vacancyId", String(vacancyId))
+      form.append("file", file)
+      return upload<Resume>("/resumes", "POST", form)
     },
 
-    // DELETE /resumes
-    async remove(id: number): Promise<void> {
-      const db = load()
-      const user = currentUser(db)
-      const resume = db.resumes.find((r) => r.id === id) ?? fail("Candidatura não encontrada.")
-      if (resume.user_id !== user.id && user.role !== "admin") fail("Sem permissão.")
-      db.resumes = db.resumes.filter((r) => r.id !== id)
-      save(db)
-      return delay(undefined)
+    // GET /resumes/{id}/file: baixa o arquivo original
+    async download(resume: Resume): Promise<void> {
+      const response = await request(`/resumes/${resume.id}/file`)
+      const url = URL.createObjectURL(await response.blob())
+      const link = document.createElement("a")
+      link.href = url
+      link.download = resume.file_name
+      link.click()
+      URL.revokeObjectURL(url)
+    },
+
+    // DELETE /resumes/{id}
+    remove(id: number): Promise<void> {
+      return call(`/resumes/${id}`, "DELETE")
     },
   },
 }
+
+export type { ResumeStatus }
 
 export function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Algo deu errado. Tente de novo."

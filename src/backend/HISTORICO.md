@@ -116,6 +116,7 @@ Etapas feitas depois da primeira versão deste histórico (todas na `main`):
 | 4. `service` | `VacancyService`, `ResumeService`, `AdminService` e `ProfilePhotoService` (tabela `user_photos`). |
 | 5. `application` | Controllers, filtros (login, limite, cabeçalhos), CORS e erros padronizados. |
 | 6. Entrega | `Dockerfile.Api`, `docker-compose.yml`, proxy `/api` no nginx do front e GitHub Actions. |
+| 7. Front | O front passou a usar a API real (`BACKEND_URL` no nginx, `FRONTEND_URL` no back end), com foto de perfil, download de currículo e login com Google. Um teste de navegador contra o back end real achou que o logout não apagava os cookies na resposta; corrigido. |
 
 Decisões tomadas nessas etapas: limite de reenvio de código de 1 minuto; 5 tentativas por código; um único admin raiz (`ADMIN_EMAIL`); BCrypt fora da thread do servidor; o IP do cliente é a última entrada do `X-Forwarded-For`.
 
@@ -123,7 +124,6 @@ Decisões tomadas nessas etapas: limite de reenvio de código de 1 minuto; 5 ten
 
 ## 8. O que falta
 
-- Trocar a API simulada do front pela real (seção 6 da `DOCUMENTACAO.md`).
 - Credenciais do Google Cloud e `GOOGLE_OAUTH_ENABLED=true`, quando houver URL pública.
 - O workflow `gmail` do n8n responde 200 antes de enviar: uma falha do Gmail passa despercebida.
 - O campo `attempts` da DLQ é uma constante (retries + 1), não a contagem real de tentativas.

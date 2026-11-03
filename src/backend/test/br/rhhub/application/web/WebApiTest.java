@@ -291,10 +291,37 @@ class WebApiTest {
         post("/api/auth/refresh", null, null).expectStatus().isUnauthorized();
         post("/api/auth/refresh", null, new Cookies(Map.of("X-user_refresh_token", ana.get("X-user_token")))).expectStatus().isUnauthorized();
 
-        post("/api/auth/logout", null, ana).expectStatus().isOk();
+        var out = post("/api/auth/logout", null, ana).expectStatus().isOk().returnResult(String.class);
+        // os três cookies saem expirados NA resposta do logout (senão o token de acesso continuaria valendo no navegador)
+        for (String name : new String[] {"X-user_token", "X-user_refresh_token", "X-auth2_token"}) {
+            var cleared = out.getResponseCookies().getFirst(name);
+            assertThat(cleared).as(name).isNotNull();
+            assertThat(cleared.getMaxAge().isZero()).as(name + " expira na hora").isTrue();
+            assertThat(cleared.getValue()).isEmpty();
+        }
         post("/api/auth/refresh", null, new Cookies(Map.of("X-user_refresh_token", ana.get("X-user_refresh_token"))))
                 .expectStatus().isUnauthorized();
-        post("/api/auth/logout", null, null).expectStatus().isUnauthorized();
+        // sair sem nenhuma sessão não é erro e também limpa os cookies
+        var none = post("/api/auth/logout", null, null).expectStatus().isOk().returnResult(String.class);
+        assertThat(none.getResponseCookies().getFirst("X-user_token").getMaxAge().isZero()).isTrue();
+    }
+
+    @Test
+    void logoutWorksWithAnExpiredAccessTokenUsingTheRefreshCookieAndRevokesIt() throws Exception {
+        var ana = signup("Ana", "ana@gmail.com", "12345678901");
+        // só o refresh cookie (o de acesso já venceu): o logout identifica a pessoa por ele e revoga a sessão
+        var onlyRefresh = new Cookies(Map.of("X-user_refresh_token", ana.get("X-user_refresh_token")));
+        post("/api/auth/logout", null, onlyRefresh).expectStatus().isOk();
+        post("/api/auth/refresh", null, onlyRefresh).expectStatus().isUnauthorized();
+    }
+
+    @Test
+    void deleteAccountAlsoClearsTheCookies() throws Exception {
+        var ana = signup("Ana", "ana@gmail.com", "12345678901");
+        var res = client.method(org.springframework.http.HttpMethod.DELETE).uri("/api/users/me").cookies(ana::apply)
+                .contentType(MediaType.APPLICATION_JSON).bodyValue(Map.of("password", "Senha123")).exchange()
+                .expectStatus().isNoContent().returnResult(String.class);
+        assertThat(res.getResponseCookies().getFirst("X-user_token").getMaxAge().isZero()).isTrue();
     }
 
     @Test

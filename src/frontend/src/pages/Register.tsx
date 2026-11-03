@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react"
+import { useEffect, useState, type FormEvent } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { ArrowLeftIcon } from "lucide-react"
 import { AuthLayout } from "@/components/AuthLayout"
@@ -29,6 +29,11 @@ export default function Register() {
   const [password, setPassword] = useState("")
   const [code, setCode] = useState("")
   const [busy, setBusy] = useState(false)
+  const [googleEnabled, setGoogleEnabled] = useState(false)
+
+  useEffect(() => {
+    api.auth.providers().then((p) => setGoogleEnabled(p.google))
+  }, [])
 
   async function run(action: () => Promise<void>) {
     setBusy(true)
@@ -44,8 +49,8 @@ export default function Register() {
   function handleForm(event: FormEvent) {
     event.preventDefault()
     run(async () => {
-      const { code: sent } = await api.auth.sendSignupCode(name, email)
-      toast.add({ title: "Código enviado para o seu e-mail", description: `Simulação: o código é ${sent}.` })
+      await api.auth.sendSignupCode(name, email)
+      toast.add({ title: "Código enviado para o seu e-mail", description: "Ele vale por 15 minutos." })
       setStep("code")
     })
   }
@@ -64,10 +69,7 @@ export default function Register() {
   }
 
   function handleGoogle() {
-    run(async () => {
-      setUser(await api.auth.loginWithGoogle())
-      navigate("/")
-    })
+    api.auth.loginWithGoogle()
   }
 
   if (step === "code") {
@@ -113,8 +115,12 @@ export default function Register() {
         <CardContent>
           <form onSubmit={handleForm}>
             <FieldGroup>
-              <GoogleButton onClick={handleGoogle}>Cadastrar com Google</GoogleButton>
-              <FieldSeparator>ou</FieldSeparator>
+              {googleEnabled && (
+                <>
+                  <GoogleButton onClick={handleGoogle}>Cadastrar com Google</GoogleButton>
+                  <FieldSeparator>ou</FieldSeparator>
+                </>
+              )}
               <Field>
                 <FieldLabel htmlFor="name">Nome</FieldLabel>
                 <Input id="name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />

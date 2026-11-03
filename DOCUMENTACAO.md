@@ -524,7 +524,8 @@ No AgentRH todo erro virava `501`. Aqui cada caso tem o seu código:
 | `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` | Redis |
 | `KAFKA_BOOTSTRAP_SERVERS` | Endereço do Kafka |
 | `JWT_SECRET` | Chave de assinatura dos tokens (`sing` no AgentRH) |
-| `FRONTEND_ORIGIN` | Origem liberada no CORS (`origin` no AgentRH) |
+| `FRONTEND_URL` | URL do front: origem liberada no CORS e destino do login com Google (`origin` no AgentRH; o nome antigo `FRONTEND_ORIGIN` ainda vale) |
+| `BACKEND_URL` | Lida pelo **front** (nginx): endereço da API para onde `/api`, `/oauth2` e `/login/oauth2` são repassados (`http://api.railway.internal:8080` ou a URL pública) |
 | `RATE_LIMIT`, `GLOBAL_RATE_LIMIT` | Limites por minuto |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Admin raiz criado na primeira execução (`email_user` e `password_user`) |
 | `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASSWORD` | SMTP |
@@ -679,20 +680,22 @@ Quem está logado e abre `/login` vai para `/`; quem não está logado vai para 
 
 ## 6. Integração front e back
 
-Para trocar a API simulada pela real, só o corpo de cada função em `src/lib/api.ts` muda. As telas ficam como estão.
+![Status](https://img.shields.io/badge/STATUS-INTEGRADO-brightgreen?style=flat-square)
 
-| Ponto | O que fazer |
+O front usa a API real. `src/frontend/src/lib/api.ts` faz `fetch` em `/api` com `credentials: "include"`; não existe mais a API simulada.
+
+| Ponto | Como é |
 | --- | --- |
-| Chamadas | `fetch` com `credentials: "include"` e base `/api` |
-| CORS | O back end libera `FRONTEND_ORIGIN` com `allowCredentials(true)` |
-| Cookies entre domínios | Em produção, servir front e API no **mesmo domínio** (proxy do nginx em `/api`) por causa do `SameSite=Strict` |
-| Nomes de campos | O front usa `vancancie_id` e `/vancancies` (grafia do AgentRH). Trocar por `vacancy_id` e `/vacancies` em `types.ts` e `api.ts` |
-| Arquivo | Remover o campo `pdf` em Base64 de `Resume`, usar `GET /resumes/{id}/file` e aceitar também DOCX no upload (campo `file`, com `file_name` e `content_type`) |
-| Papel de admin | Ler `role` de `GET /users/me`. Esconder, para admins que não são raiz, as ações de rebaixar e excluir |
-| 2FA | O código vem só por e-mail. Remover o aviso "Simulação: o código é..." |
-| Login com Google | Ler `GET /auth/providers` e mostrar o botão só se `google` for `true`. Nesse caso, `loginWithGoogle()` vira `window.location.href = "/oauth2/authorization/google"`. Localmente o botão fica oculto |
-| Aviso de demonstração | Remover do login o texto sobre e-mails com `admin` |
-| Renovação | Interceptar o `401`, chamar `POST /auth/refresh` e repetir a requisição |
+| Mesmo domínio | O nginx do front repassa `/api`, `/oauth2` e `/login/oauth2` para o back end, lendo `BACKEND_URL`. Por isso os cookies `SameSite=Strict` funcionam. Sem `BACKEND_URL` o front sobe sozinho, sem `/api` |
+| URLs | Front: `BACKEND_URL`. Back end: `FRONTEND_URL` (CORS e retorno do login com Google). Ver a seção 4.12 |
+| Renovação | Um `401` chama `POST /api/auth/refresh` uma vez e repete a requisição. Se o refresh também falha, o app volta para o login |
+| Nomes | `vacancy_id` e `/vacancies` (a grafia `vancancie` do AgentRH saiu); `two_factor` no lugar de `permission` |
+| Arquivos | Currículo em PDF ou DOCX (campo `file`, até 5 MB); o download usa `GET /api/resumes/{id}/file`, sem Base64 |
+| Foto de perfil | `PUT/GET/DELETE /api/users/me/photo` (JPEG, PNG ou WebP, até 2 MB); aparece no perfil e nos avatares do layout |
+| Login com Google | O botão só aparece se `GET /api/auth/providers` devolver `google: true`; o clique leva a `/oauth2/authorization/google`. Contas do Google nascem sem CPF: o perfil deixa informá-lo uma única vez |
+| 2FA e códigos | O código vem só por e-mail. A tela não mostra mais o código |
+| Papel de admin | Lido de `GET /api/users/me`. Rebaixar e excluir contas é só do admin raiz: a API responde `403` e a tela mostra a mensagem |
+| Senha | Trocar a senha encerra as sessões: o app volta ao login |
 
 ---
 

@@ -86,7 +86,7 @@ public class UserController {
     Mono<Void> delete(@RequestBody(required = false) DeleteRequest body, ServerWebExchange exchange) {
         return web.actor(exchange)
                 .flatMap(actor -> users.deleteOwn(actor.publicId(), body == null ? null : body.password()))
-                .doOnSuccess(done -> web.clearSession(exchange));
+                .then(Mono.fromRunnable(() -> web.clearSession(exchange)));
     }
 
     // ---- foto de perfil ----

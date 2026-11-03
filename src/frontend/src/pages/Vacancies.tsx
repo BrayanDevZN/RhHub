@@ -162,14 +162,14 @@ function ApplyDialog({
             <DialogDescription>{vacancy?.name}</DialogDescription>
           </DialogHeader>
           <Field>
-            <FieldLabel htmlFor="resume-file">Currículo (PDF)</FieldLabel>
+            <FieldLabel htmlFor="resume-file">Currículo (PDF ou DOCX)</FieldLabel>
             <Input
               id="resume-file"
               type="file"
-              accept="application/pdf,.pdf"
+              accept="application/pdf,.pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             />
-            <FieldDescription>Você pode se candidatar uma vez por vaga.</FieldDescription>
+            <FieldDescription>Até 5 MB. Você pode se candidatar uma vez por vaga.</FieldDescription>
           </Field>
           <DialogFooter>
             <Button type="submit" disabled={busy || !file}>
@@ -204,7 +204,7 @@ export default function Vacancies() {
     )
   }, [data, search])
 
-  const myResume = (vacancyId: number) => data?.resumes.find((r) => r.vancancie_id === vacancyId)
+  const myResume = (vacancyId: number) => data?.resumes.find((r) => r.vacancy_id === vacancyId)
 
   function openCreate() {
     setEditing(null)

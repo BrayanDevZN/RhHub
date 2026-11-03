@@ -68,7 +68,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-}
       ADMIN_EMAIL: ${ADMIN_EMAIL:?defina ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?defina ADMIN_PASSWORD}
-      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:9000}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:9000}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       GOOGLE_OAUTH_ENABLED: ${GOOGLE_OAUTH_ENABLED:-false}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
@@ -102,7 +102,7 @@ services:
       context: .
       dockerfile: Dockerfile.front
     environment:
-      API_UPSTREAM: http://api:8080
+      BACKEND_URL: http://api:8080
     ports:
       - "9000:9000"
     depends_on:

@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from "react"
+import { useRef, useState, type FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +33,7 @@ const GENDER_ITEMS = Object.entries(GENDER_LABEL).map(([value, label]) => ({ val
 function PersonalData() {
   const user = useCurrentUser()
   const { setUser } = useAuth()
+  const [cpf, setCpf] = useState("")
   const [age, setAge] = useState(user.age ? String(user.age) : "")
   const [gender, setGender] = useState<Gender | null>(user.gender)
   const [busy, setBusy] = useState(false)
@@ -42,6 +43,8 @@ function PersonalData() {
     setBusy(true)
     try {
       let updated = user
+      // Contas do Google nascem sem CPF: ele pode ser informado uma única vez.
+      if (!user.cpf && cpf.trim()) updated = await api.users.update("cpf", cpf.trim())
       if (age && Number(age) !== user.age) updated = await api.users.update("age", Number(age))
       if (gender && gender !== user.gender) updated = await api.users.update("gender", gender)
       setUser(updated)
@@ -58,7 +61,7 @@ function PersonalData() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <CardHeader>
           <CardTitle>Dados pessoais</CardTitle>
-          <CardDescription>Nome, e-mail e CPF não podem ser alterados.</CardDescription>
+          <CardDescription>Nome e e-mail não podem ser alterados. O CPF só pode ser informado uma vez.</CardDescription>
         </CardHeader>
         <CardContent>
           <FieldGroup>
@@ -71,10 +74,25 @@ function PersonalData() {
                 <FieldLabel htmlFor="profile-email">E-mail</FieldLabel>
                 <Input id="profile-email" value={user.email} disabled />
               </Field>
-              <Field data-disabled>
-                <FieldLabel htmlFor="profile-cpf">CPF</FieldLabel>
-                <Input id="profile-cpf" value={user.cpf ?? "Não informado"} disabled />
-              </Field>
+              {user.cpf ? (
+                <Field data-disabled>
+                  <FieldLabel htmlFor="profile-cpf">CPF</FieldLabel>
+                  <Input id="profile-cpf" value={user.cpf} disabled />
+                </Field>
+              ) : (
+                <Field>
+                  <FieldLabel htmlFor="profile-cpf">CPF</FieldLabel>
+                  <Input
+                    id="profile-cpf"
+                    inputMode="numeric"
+                    placeholder="Somente números"
+                    maxLength={14}
+                    value={cpf}
+                    onChange={(e) => setCpf(e.target.value)}
+                  />
+                  <FieldDescription>Complete seu cadastro. Depois de salvo, não dá para alterar.</FieldDescription>
+                </Field>
+              )}
               <Field>
                 <FieldLabel htmlFor="profile-age">Idade</FieldLabel>
                 <Input id="profile-age" type="number" min={18} value={age} onChange={(e) => setAge(e.target.value)} />
@@ -113,13 +131,14 @@ function PersonalData() {
 function Security() {
   const user = useCurrentUser()
   const { setUser } = useAuth()
+  const navigate = useNavigate()
   const [current, setCurrent] = useState("")
   const [next, setNext] = useState("")
   const [busy, setBusy] = useState(false)
 
   async function toggleTwoFactor(checked: boolean) {
     try {
-      setUser(await api.users.update("permission", checked))
+      setUser(await api.users.update("two_factor", checked))
       toast.add({
         title: checked ? "Verificação em duas etapas ativada" : "Verificação em duas etapas desativada",
         type: "success",
@@ -136,7 +155,10 @@ function Security() {
       await api.auth.changePassword(current, next)
       setCurrent("")
       setNext("")
-      toast.add({ title: "Senha alterada", type: "success" })
+      // Trocar a senha encerra as sessões: entra de novo com a nova.
+      setUser(null)
+      toast.add({ title: "Senha alterada", description: "Entre de novo com a nova senha.", type: "success" })
+      navigate("/login")
     } catch (error) {
       toast.add({ title: "Erro", description: errorMessage(error), type: "error" })
     } finally {
@@ -161,7 +183,7 @@ function Security() {
             </FieldContent>
             <Switch
               id="two-factor"
-              checked={user.permission}
+              checked={user.two_factor}
               disabled={user.provider === "google"}
               onCheckedChange={toggleTwoFactor}
             />
@@ -265,15 +287,89 @@ function DangerZone() {
   )
 }
 
+const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"]
+const PHOTO_MAX = 2 * 1024 * 1024
+
+function PhotoActions() {
+  const user = useCurrentUser()
+  const { setUser, bumpPhoto } = useAuth()
+  const input = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+
+  async function reload() {
+    setUser(await api.auth.me())
+    bumpPhoto()
+  }
+
+  async function handleFile(file: File | undefined) {
+    if (!file) return
+    if (!PHOTO_TYPES.includes(file.type)) {
+      toast.add({ title: "Formato não aceito", description: "Use uma imagem JPEG, PNG ou WebP.", type: "error" })
+      return
+    }
+    if (file.size > PHOTO_MAX) {
+      toast.add({ title: "Imagem grande demais", description: "A foto pode ter no máximo 2 MB.", type: "error" })
+      return
+    }
+    setBusy(true)
+    try {
+      await api.users.uploadPhoto(file)
+      await reload()
+      toast.add({ title: "Foto atualizada", type: "success" })
+    } catch (error) {
+      toast.add({ title: "Erro", description: errorMessage(error), type: "error" })
+    } finally {
+      setBusy(false)
+      if (input.current) input.current.value = ""
+    }
+  }
+
+  async function handleRemove() {
+    setBusy(true)
+    try {
+      await api.users.deletePhoto()
+      await reload()
+      toast.add({ title: "Foto removida", type: "success" })
+    } catch (error) {
+      toast.add({ title: "Erro", description: errorMessage(error), type: "error" })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="flex gap-2">
+      <input
+        ref={input}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={(e) => handleFile(e.target.files?.[0])}
+      />
+      <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => input.current?.click()}>
+        {busy && <Spinner data-icon="inline-start" />}
+        {user.has_photo ? "Trocar foto" : "Enviar foto"}
+      </Button>
+      {user.has_photo && (
+        <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={handleRemove}>
+          Remover
+        </Button>
+      )}
+    </div>
+  )
+}
+
 export default function Profile() {
   const user = useCurrentUser()
+  const { photoVersion } = useAuth()
 
   return (
     <>
       <PageHeader title="Perfil" description="Seus dados, segurança e conta." />
       <Card>
         <CardHeader className="flex flex-row items-center gap-4">
-          <Avatar className="size-12">
+          <Avatar className="size-16">
+            {user.has_photo && <AvatarImage src={api.users.photoUrl(photoVersion)} alt="" />}
             <AvatarFallback>{initials(user.name)}</AvatarFallback>
           </Avatar>
           <div className="flex min-w-0 flex-col gap-1">
@@ -282,9 +378,12 @@ export default function Profile() {
               {user.email} · desde {formatDate(user.created_at)}
             </CardDescription>
           </div>
-          <div className="ml-auto flex gap-2">
+          <div className="ml-auto flex flex-col items-end gap-2">
+            <PhotoActions />
+            <div className="flex gap-2">
             <Badge variant="secondary">{user.role === "admin" ? "Admin" : "Candidato"}</Badge>
             <Badge variant="outline">{user.provider === "google" ? "Google" : "E-mail"}</Badge>
+            </div>
           </div>
         </CardHeader>
       </Card>

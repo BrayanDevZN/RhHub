@@ -3,11 +3,13 @@ package br.rhhub.application.web;
 import br.rhhub.application.web.dto.Views;
 import br.rhhub.domain.auth.JwtService;
 import br.rhhub.domain.auth.TokenType;
+import br.rhhub.domain.exception.DomainException;
 import br.rhhub.service.AuthService;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Clock;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -85,10 +87,26 @@ public class AuthController {
         });
     }
 
+    /**
+     * Sempre apaga os cookies, mesmo com o token de acesso vencido (aí identifica a pessoa pelo refresh token).
+     * Os cookies precisam ser apagados ANTES de a resposta ser enviada: depois disso o cabeçalho já saiu.
+     */
     @PostMapping("/logout")
     Mono<Void> logout(ServerWebExchange exchange) {
-        return web.actor(exchange).flatMap(user -> auth.logout(user.publicId()))
-                .doFinally(signal -> web.clearSession(exchange));
+        UUID who = sessionOwner(exchange);
+        web.clearSession(exchange);
+        return who == null ? Mono.empty() : auth.logout(who);
+    }
+
+    private UUID sessionOwner(ServerWebExchange exchange) {
+        for (TokenType type : new TokenType[] {TokenType.ACCESS, TokenType.REFRESH}) {
+            try {
+                return jwt.verify(web.cookieValue(exchange, type.cookie()), type, clock.instant()).subject();
+            } catch (DomainException ignored) {
+                // tenta o próximo
+            }
+        }
+        return null;
     }
 
     @PatchMapping("/password")

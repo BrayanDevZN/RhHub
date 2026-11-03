@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import { ArrowLeftIcon, SparklesIcon } from "lucide-react"
+import { useEffect, useState, type FormEvent } from "react"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
+import { ArrowLeftIcon } from "lucide-react"
 import { AuthLayout } from "@/components/AuthLayout"
 import { CodeInput } from "@/components/CodeInput"
 import { ForgotPasswordDialog } from "@/components/ForgotPasswordDialog"
@@ -22,6 +22,20 @@ export default function Login() {
   const [password, setPassword] = useState("")
   const [code, setCode] = useState("")
   const [busy, setBusy] = useState(false)
+  const [googleEnabled, setGoogleEnabled] = useState(false)
+  const [params] = useSearchParams()
+
+  // O botão do Google só aparece se o back end estiver com o login ligado.
+  useEffect(() => {
+    api.auth.providers().then((p) => setGoogleEnabled(p.google))
+  }, [])
+
+  // O back end volta para /login?error=google quando o Google recusa o login.
+  useEffect(() => {
+    if (params.get("error") === "google") {
+      toast.add({ title: "Não foi possível entrar com o Google", description: "Use uma conta @gmail.com verificada.", type: "error" })
+    }
+  }, [params])
 
   async function run(action: () => Promise<void>) {
     setBusy(true)
@@ -39,8 +53,8 @@ export default function Login() {
     run(async () => {
       const result = await api.auth.login(email, password)
       if (result.twoFactor) {
-        const { code: sent } = await api.auth.sendTwoFactorCode(email)
-        toast.add({ title: "Código enviado para o seu e-mail", description: `Simulação: o código é ${sent}.` })
+        await api.auth.sendTwoFactorCode()
+        toast.add({ title: "Código enviado para o seu e-mail", description: "Ele vale por 5 minutos." })
         setStep("twoFactor")
         return
       }
@@ -52,23 +66,13 @@ export default function Login() {
   function handleTwoFactor(event: FormEvent) {
     event.preventDefault()
     run(async () => {
-      setUser(await api.auth.verifyTwoFactor(email, code))
+      setUser(await api.auth.verifyTwoFactor(code))
       navigate("/")
     })
   }
 
   function handleGoogle() {
-    run(async () => {
-      setUser(await api.auth.loginWithGoogle())
-      navigate("/")
-    })
-  }
-
-  function handleDemo() {
-    run(async () => {
-      setUser(await api.auth.enterDemo())
-      navigate("/")
-    })
+    api.auth.loginWithGoogle()
   }
 
   if (step === "twoFactor") {
@@ -114,8 +118,12 @@ export default function Login() {
         <CardContent>
           <form onSubmit={handleCredentials}>
             <FieldGroup>
-              <GoogleButton onClick={handleGoogle}>Continuar com Google</GoogleButton>
-              <FieldSeparator>ou</FieldSeparator>
+              {googleEnabled && (
+                <>
+                  <GoogleButton onClick={handleGoogle}>Continuar com Google</GoogleButton>
+                  <FieldSeparator>ou</FieldSeparator>
+                </>
+              )}
               <Field>
                 <FieldLabel htmlFor="email">E-mail</FieldLabel>
                 <Input
@@ -126,7 +134,7 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
-                <FieldDescription>Na demonstração, e-mails com "admin" entram como administrador.</FieldDescription>
+                <FieldDescription>Use o e-mail @gmail.com do seu cadastro.</FieldDescription>
               </Field>
               <Field>
                 <div className="flex items-center justify-between">
@@ -144,10 +152,6 @@ export default function Login() {
               <Button type="submit" size="lg" className="w-full" disabled={busy}>
                 {busy && <Spinner data-icon="inline-start" />}
                 Entrar
-              </Button>
-              <Button type="button" variant="outline" size="lg" className="w-full" disabled={busy} onClick={handleDemo}>
-                <SparklesIcon data-icon="inline-start" />
-                Explorar demonstracao sem login
               </Button>
             </FieldGroup>
           </form>

@@ -56,8 +56,9 @@ app:
       client-secret: ${GOOGLE_CLIENT_SECRET:}
       redirect-uri: ${GOOGLE_REDIRECT_URI:}
   web:
-    # Origens liberadas no CORS (separadas por vírgula) e destino do login com Google. Vazio: só mesma origem.
-    frontend-origin: ${FRONTEND_ORIGIN:}
+    # FRONTEND_URL (ou o nome antigo FRONTEND_ORIGIN): origens liberadas no CORS (separadas por vírgula) e destino do login
+    # com Google. Vazio: só mesma origem.
+    frontend-origin: ${FRONTEND_URL:${FRONTEND_ORIGIN:}}
     # Vazio: Secure ligado (desligado só com ENVIRONMENT=test). Em http local use COOKIE_SECURE=false.
     cookie-secure: ${COOKIE_SECURE:}
     # Strict exige front e API no mesmo domínio (proxy do nginx em /api)

@@ -30,18 +30,12 @@ import { api, errorMessage } from "@/lib/api"
 import { formatDate } from "@/lib/format"
 import type { Resume, User, Vacancy } from "@/lib/types"
 
-function downloadPdf(resume: Resume) {
-  if (!resume.pdf) {
-    toast.add({ title: "Arquivo indisponível", description: "PDFs grandes não ficam salvos na demonstração." })
-    return
+async function downloadFile(resume: Resume) {
+  try {
+    await api.resumes.download(resume)
+  } catch (error) {
+    toast.add({ title: "Não foi possível baixar", description: errorMessage(error), type: "error" })
   }
-  const bytes = Uint8Array.from(atob(resume.pdf), (c) => c.charCodeAt(0))
-  const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }))
-  const link = document.createElement("a")
-  link.href = url
-  link.download = resume.file_name
-  link.click()
-  URL.revokeObjectURL(url)
 }
 
 export function ResumeTable({
@@ -112,7 +106,7 @@ export function ResumeTable({
           <TableBody>
             {sorted.map((resume) => (
               <TableRow key={resume.id}>
-                <TableCell className="font-medium">{vacancyName(resume.vancancie_id)}</TableCell>
+                <TableCell className="font-medium">{vacancyName(resume.vacancy_id)}</TableCell>
                 {users && <TableCell>{userName(resume.user_id)}</TableCell>}
                 <TableCell className="hidden max-w-48 truncate text-muted-foreground sm:table-cell">
                   {resume.file_name}
@@ -135,9 +129,9 @@ export function ResumeTable({
                           <EyeIcon />
                           Ver resultado
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => downloadPdf(resume)}>
+                        <DropdownMenuItem onClick={() => downloadFile(resume)}>
                           <DownloadIcon />
-                          Baixar PDF
+                          Baixar arquivo
                         </DropdownMenuItem>
                       </DropdownMenuGroup>
                       <DropdownMenuSeparator />
@@ -159,13 +153,13 @@ export function ResumeTable({
       <Dialog open={viewing !== null} onOpenChange={(open) => !open && setViewing(null)}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>{viewing && vacancyName(viewing.vancancie_id)}</DialogTitle>
+            <DialogTitle>{viewing && vacancyName(viewing.vacancy_id)}</DialogTitle>
             <DialogDescription>Resultado da análise feita pela IA.</DialogDescription>
           </DialogHeader>
           {viewing && (
             <div className="flex flex-col gap-3">
               <StatusBadge status={viewing.status} />
-              <p className="text-sm leading-relaxed">{viewing.reason}</p>
+              <p className="text-sm leading-relaxed">{viewing.reason || "Sem detalhes da análise."}</p>
             </div>
           )}
         </DialogContent>
@@ -176,7 +170,7 @@ export function ResumeTable({
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir candidatura?</AlertDialogTitle>
             <AlertDialogDescription>
-              {deleting && `A candidatura para ${vacancyName(deleting.vancancie_id)} será apagada.`}
+              {deleting && `A candidatura para ${vacancyName(deleting.vacancy_id)} será apagada.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

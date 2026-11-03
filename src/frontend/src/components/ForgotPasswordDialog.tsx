@@ -39,8 +39,8 @@ export function ForgotPasswordDialog({ defaultEmail }: { defaultEmail: string })
     setBusy(true)
     try {
       if (step === "email") {
-        const { code: sent } = await api.auth.sendPasswordResetCode(email)
-        toast.add({ title: "Código enviado", description: `Simulação: o código é ${sent}.` })
+        await api.auth.sendPasswordResetCode(email)
+        toast.add({ title: "Código enviado", description: "Se o e-mail estiver cadastrado, o código chega em instantes. Ele vale por 8 minutos." })
         setStep("reset")
       } else {
         await api.auth.resetPassword(email, code, password)

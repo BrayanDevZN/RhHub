@@ -10,7 +10,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
-/** Libera só as origens de FRONTEND_ORIGIN, com cookies. Sem a variável, nenhuma origem externa é aceita. */
+/** Libera só as origens de FRONTEND_URL, com cookies. Sem a variável, nenhuma origem externa é aceita. */
 @Configuration
 public class CorsConfig {
 
