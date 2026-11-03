@@ -154,6 +154,12 @@ resume.analysis  {"resumeId": 42}
 email.send       {"resumeId": 42, "to": "...", "subject": "...", "content": "<html>", "type": "html"}
 ```
 
+**Criar os tópicos num Kafka real.** A aplicação os cria sozinha ao subir. Para criar e conferir sem subir a aplicação (sem consumers), use o `RemoteKafkaSetupTest`, que lê `KAFKA_URL`, `KAFKA_API_KEY` e `KAFKA_API_USER` do ambiente (a URL nunca fica no código), cria o que falta, mostra o endereço que o broker anuncia e confere as 3 partições. Não publica nem consome mensagens, e é pulado sem a flag:
+
+```bash
+KAFKA_URL=host:porta ./mvnw test -Dtest=RemoteKafkaSetupTest -Drhhub.kafka.setup=true
+```
+
 **Publishers** (`ResumeAnalysisPublisher`, `EmailPublisher`) devolvem `Mono<Void>` e só terminam quando o broker confirma (`acks=all`, idempotente).
 
 **Consumers** (grupos `rhhub-analysis` e `rhhub-email`, 3 threads cada, uma por partição):
