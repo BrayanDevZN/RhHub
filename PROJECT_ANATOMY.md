@@ -1,10 +1,10 @@
 # Project Anatomy: RhHub
-Generated: 2026-11-03 | 230 files | ~221.3K tokens if all read
+Generated: 2026-11-03 | 230 files | ~221.7K tokens if all read
 
 ## Structure
 | Path | Lines | ~Tokens | Type |
 |------|-------|---------|------|
-| src/backend/kafka/entrypoint.sh | 44 | 361 | source |
+| src/backend/kafka/entrypoint.sh | 59 | 564 | source |
 | src/backend/src/br/rhhub/application/port/in/AnalyzeResume.java | 10 | 63 | source |
 | src/backend/src/br/rhhub/application/port/in/DeliverEmail.java | 11 | 73 | source |
 | src/backend/src/br/rhhub/application/web/AdminController.java | 66 | 675 | source |
@@ -211,7 +211,7 @@ Generated: 2026-11-03 | 230 files | ~221.3K tokens if all read
 | src/backend/test/br/rhhub/service/ManagementServicesTest.java | 256 | 3.6K | test |
 | DOCUMENTACAO.md | 762 | 10.5K | docs |
 | src/backend/HISTORICO.md | 144 | 3.2K | docs |
-| src/backend/README.md | 272 | 4.9K | docs |
+| src/backend/README.md | 274 | 5.1K | docs |
 | src/backend/resources/prompt/resume_analysis.md | 342 | 6.7K | docs |
 | src/frontend/README.md | 33 | 320 | docs |
 | src/frontend/src/index.css | 483 | 7.5K | style |
@@ -236,10 +236,10 @@ Generated: 2026-11-03 | 230 files | ~221.3K tokens if all read
 | src/frontend/nginx.conf | 23 | 150 | other |
 
 ## Summary
-- source: 160 files, ~113.7K tokens
+- source: 160 files, ~113.9K tokens
 - config: 12 files, ~3.2K tokens
 - test: 33 files, ~56.6K tokens
-- docs: 5 files, ~25.6K tokens
+- docs: 5 files, ~25.8K tokens
 - style: 1 files, ~7.5K tokens
 - other: 19 files, ~14.6K tokens
 

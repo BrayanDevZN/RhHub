@@ -36,8 +36,23 @@ KafkaServer {
 EOF
 export KAFKA_OPTS="${KAFKA_OPTS:-} -Djava.security.auth.login.config=${JAAS_FILE}"
 
-# Endereço que os clientes recebem para reconectar (nome do serviço no Compose).
-export KAFKA_ADVERTISED_LISTENERS="SASL_PLAINTEXT://${KAFKA_ADVERTISED_HOST:-kafka}:9092"
+# Endereço que os clientes recebem para reconectar. É o que o Kafka devolve depois do primeiro contato, então tem de
+# ser alcançável por quem conecta: o nome do serviço (Compose, rede privada do Railway) ou, para acesso de fora, o
+# host e a porta do TCP Proxy público (KAFKA_ADVERTISED_HOST e KAFKA_ADVERTISED_PORT).
+ADV_HOST="${KAFKA_ADVERTISED_HOST:-kafka}"
+ADV_PORT="${KAFKA_ADVERTISED_PORT:-9092}"
+case "$ADV_HOST" in
+  *[!A-Za-z0-9.-]*|"") echo "KAFKA_ADVERTISED_HOST so pode ter letras, numeros, '.' e '-'." >&2; exit 1 ;;
+esac
+case "$ADV_PORT" in
+  *[!0-9]*|"") echo "KAFKA_ADVERTISED_PORT precisa ser um numero." >&2; exit 1 ;;
+esac
+if [ "$ADV_PORT" -lt 1 ] || [ "$ADV_PORT" -gt 65535 ]; then
+  echo "KAFKA_ADVERTISED_PORT fora do intervalo 1-65535." >&2
+  exit 1
+fi
+export KAFKA_ADVERTISED_LISTENERS="SASL_PLAINTEXT://${ADV_HOST}:${ADV_PORT}"
+echo "kafka: anunciando ${ADV_HOST}:${ADV_PORT} (o broker escuta na 9092; o TCP Proxy do Railway deve apontar para a 9092)"
 
 # Passa para o entrypoint original da imagem apache/kafka.
 exec /__cacert_entrypoint.sh "$@"
