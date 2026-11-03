@@ -1,0 +1,22 @@
+# Consumers do RhHub (análise de currículo e envio de e-mail), lendo do Kafka em segundo plano.
+# O AnalysisConsumer e o EmailConsumer são @KafkaListener do mesmo app: uma JVM sobe os dois.
+# Uso: docker build -f Dockerfile.Consumer -t rhhub-consumer .
+#      docker run --env-file src/backend/.env rhhub-consumer
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /app
+COPY src/backend/pom.xml .
+RUN mvn -q -B dependency:go-offline
+COPY src/backend/src ./src
+COPY src/backend/resources ./resources
+RUN mvn -q -B -DskipTests package && cp target/*.jar /app/app.jar
+
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+RUN useradd --system --uid 1001 rhhub
+COPY --from=build /app/app.jar app.jar
+USER rhhub
+
+# Variáveis lidas: DATABASE_URL, REDIS_*, KAFKA_URL, KAFKA_API_KEY, groq_key/open_ai_key, gmail_secret.
+# Sem KAFKA_URL tenta localhost:9092. Sem DATABASE_URL usa SQLite local (efêmero no container).
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75"
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
