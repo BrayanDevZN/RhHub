@@ -14,6 +14,8 @@ import br.rhhub.domain.model.Role;
 import br.rhhub.domain.model.User;
 import br.rhhub.domain.model.Vacancy;
 import br.rhhub.infra.database.adapter.DeadLetterRepositoryAdapter;
+import br.rhhub.domain.model.ProfilePhoto;
+import br.rhhub.infra.database.adapter.ProfilePhotoRepositoryAdapter;
 import br.rhhub.infra.database.adapter.ResumeRepositoryAdapter;
 import br.rhhub.infra.database.adapter.UserRepositoryAdapter;
 import br.rhhub.infra.database.adapter.VacancyRepositoryAdapter;
@@ -41,7 +43,7 @@ abstract class RepositoryContract {
 
     @AfterEach
     void clean() {
-        for (String table : new String[] {"dead_letters", "resumes", "vacancies", "users"}) {
+        for (String table : new String[] {"dead_letters", "resumes", "vacancies", "user_photos", "users"}) {
             executor().update("DELETE FROM " + table, Params.of()).block();
         }
     }
@@ -271,5 +273,34 @@ abstract class RepositoryContract {
         assertThat(repo.findAll(DeadLetterStatus.FAILED).collectList().block()).hasSize(3);
         assertThat(repo.findAll(null).collectList().block()).hasSize(4);
         assertThatThrownBy(() -> repo.markResolved(-1L).block()).isInstanceOf(DomainException.NotFound.class);
+    }
+
+    @Test
+    void profilePhotoIsSavedReplacedFoundAndDeletedWithTheUser() {
+        var user = newUser(email(), "55566677788");
+        var photos = new ProfilePhotoRepositoryAdapter(executor(), Clock.systemUTC());
+        assertThat(photos.exists(user.id()).block()).isFalse();
+        assertThat(photos.find(user.id()).block()).isNull();
+
+        byte[] jpeg = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 1, 2, 3};
+        photos.save(user.id(), new ProfilePhoto(jpeg, "image/jpeg")).block();
+        var found = photos.find(user.id()).block();
+        assertThat(found.content()).isEqualTo(jpeg);
+        assertThat(found.contentType()).isEqualTo("image/jpeg");
+
+        byte[] png = {(byte) 0x89, 'P', 'N', 'G', 9, 9};
+        photos.save(user.id(), new ProfilePhoto(png, "image/png")).block(); // troca, sem duplicar
+        assertThat(photos.find(user.id()).block().content()).isEqualTo(png);
+        assertThat(executor().query("SELECT COUNT(*) AS n FROM user_photos", Params.of()).next().block().longValue("n")).isEqualTo(1L);
+
+        users.deleteByPublicId(user.publicId()).block();
+        assertThat(photos.exists(user.id()).block()).isFalse();
+
+        assertThatThrownBy(() -> photos.save(-1L, new ProfilePhoto(jpeg, "image/jpeg")).block())
+                .isInstanceOf(DomainException.NotFound.class);
+        var other = newUser(email(), "11100099988");
+        photos.save(other.id(), new ProfilePhoto(jpeg, "image/jpeg")).block();
+        photos.delete(other.id()).block();
+        assertThat(photos.exists(other.id()).block()).isFalse();
     }
 }

@@ -70,7 +70,7 @@ public class UserService {
             if (!user.isGoogle() && (user.passwordHash() == null || !hasher.matches(password, user.passwordHash()))) {
                 return Mono.<Void>error(new DomainException.Unauthorized("Senha incorreta."));
             }
-            return users.deleteByPublicId(publicId).then(refreshTokens.revoke(publicId));
+            return users.deleteByPublicId(publicId).then(Mono.defer(() -> refreshTokens.revoke(publicId)));
         });
     }
 }

@@ -7,6 +7,7 @@ import br.rhhub.infra.database.table.Dialect;
 import br.rhhub.infra.database.table.DeadLettersTable;
 import br.rhhub.infra.database.table.ResumesTable;
 import br.rhhub.infra.database.table.TableCreator;
+import br.rhhub.infra.database.table.UserPhotosTable;
 import br.rhhub.infra.database.table.UsersTable;
 import br.rhhub.infra.database.table.VacanciesTable;
 import java.nio.file.Files;
@@ -28,7 +29,7 @@ class TableCreatorTest {
 
             var names = executor.query("SELECT name FROM sqlite_master WHERE type IN ('table', 'index') "
                     + "AND name NOT LIKE 'sqlite_%'", Params.of()).map(r -> r.string("name")).collectList().block();
-            assertThat(names).contains("users", "vacancies", "resumes", "dead_letters", "idx_resumes_vacancy", "idx_resumes_status",
+            assertThat(names).contains("users", "user_photos", "vacancies", "resumes", "dead_letters", "idx_resumes_vacancy", "idx_resumes_status",
                     "idx_dead_letters_key", "idx_dead_letters_status");
         } finally {
             executor.close();
@@ -38,7 +39,7 @@ class TableCreatorTest {
     @Test
     void everyDialectProducesStatementsForEveryTable() {
         for (Dialect dialect : Dialect.values()) {
-            for (var table : List.of(new UsersTable(), new VacanciesTable(), new ResumesTable(), new DeadLettersTable())) {
+            for (var table : List.of(new UsersTable(), new UserPhotosTable(), new VacanciesTable(), new ResumesTable(), new DeadLettersTable())) {
                 assertThat(table.statements(dialect)).first().asString()
                         .startsWith("CREATE TABLE IF NOT EXISTS " + table.name())
                         .doesNotContain("%s");

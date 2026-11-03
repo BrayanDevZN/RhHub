@@ -21,7 +21,8 @@ public class TableCreator {
     private final List<TableDefinition> tables;
 
     public TableCreator(SqlExecutor sql, Dialect dialect) {
-        this(sql, dialect, List.of(new UsersTable(), new VacanciesTable(), new ResumesTable(), new DeadLettersTable()));
+        this(sql, dialect, List.of(new UsersTable(), new UserPhotosTable(), new VacanciesTable(), new ResumesTable(),
+                new DeadLettersTable()));
     }
 
     TableCreator(SqlExecutor sql, Dialect dialect, List<TableDefinition> tables) {

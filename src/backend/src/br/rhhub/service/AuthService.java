@@ -179,7 +179,7 @@ public class AuthService {
                     return Mono.<Void>error(new DomainException.Unauthorized("Senha atual incorreta."));
                 }
                 return users.save(user.withPasswordHash(hasher.hash(newPassword)))
-                        .then(refreshTokens.revoke(publicId));
+                        .then(Mono.defer(() -> refreshTokens.revoke(publicId)));
             });
         });
     }
@@ -201,10 +201,10 @@ public class AuthService {
             String code = Rules.code(rawCode);
             String newPassword = Rules.password(rawNewPassword);
             return codes.verify(CodePurpose.PASSWORD_RESET, address, code)
-                    .then(users.findByEmail(address))
+                    .then(Mono.defer(() -> users.findByEmail(address)))
                     .switchIfEmpty(Mono.error(new DomainException.Unauthorized("Código inválido ou expirado.")))
                     .flatMap(user -> users.save(user.withPasswordHash(hasher.hash(newPassword)))
-                            .then(refreshTokens.revoke(user.publicId())));
+                            .then(Mono.defer(() -> refreshTokens.revoke(user.publicId()))));
         });
     }
 

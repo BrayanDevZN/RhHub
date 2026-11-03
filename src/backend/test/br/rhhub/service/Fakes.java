@@ -3,12 +3,21 @@ package br.rhhub.service;
 import br.rhhub.application.port.out.EmailMessage;
 import br.rhhub.application.port.out.EmailSender;
 import br.rhhub.application.port.out.GoogleIdentityProvider;
+import br.rhhub.application.port.out.ProfilePhotoRepository;
 import br.rhhub.application.port.out.RefreshTokenStore;
+import br.rhhub.application.port.out.ResumeAnalysisPublisher;
+import br.rhhub.application.port.out.ResumeRepository;
+import br.rhhub.application.port.out.VacancyRepository;
 import br.rhhub.application.port.out.UserRepository;
 import br.rhhub.application.port.out.VerificationCodeStore;
 import br.rhhub.domain.auth.CodePurpose;
 import br.rhhub.domain.exception.DomainException;
+import br.rhhub.domain.model.ProfilePhoto;
+import br.rhhub.domain.model.Resume;
+import br.rhhub.domain.model.ResumeFile;
+import br.rhhub.domain.model.ResumeStatus;
 import br.rhhub.domain.model.User;
+import br.rhhub.domain.model.Vacancy;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -103,5 +112,83 @@ final class Fakes {
         @Override public Mono<Profile> fetchProfile(String code) {
             return "ok".equals(code) ? Mono.just(profile) : Mono.error(new DomainException.Unauthorized("recusado"));
         }
+    }
+
+    static class Vacancies implements VacancyRepository {
+        final Map<Long, Vacancy> byId = new HashMap<>();
+        private final AtomicLong seq = new AtomicLong();
+        @Override public Mono<Vacancy> findById(Long id) { return Mono.justOrEmpty(byId.get(id)); }
+        @Override public Flux<Vacancy> findAll() { return Flux.fromIterable(new ArrayList<>(byId.values())); }
+        @Override public Mono<Boolean> existsByName(String name) {
+            return Mono.just(byId.values().stream().anyMatch(v -> v.name().equals(name)));
+        }
+        @Override
+        public Mono<Vacancy> save(Vacancy v) {
+            if (byId.values().stream().anyMatch(o -> !o.id().equals(v.id()) && o.name().equals(v.name()))) {
+                return Mono.error(new DomainException.Conflict("nome repetido"));
+            }
+            Long id = v.id() == null ? seq.incrementAndGet() : v.id();
+            Vacancy stored = new Vacancy(id, v.name(), v.description(), v.createdBy(), Instant.parse("2026-11-03T12:00:00Z"));
+            byId.put(id, stored);
+            return Mono.just(stored);
+        }
+        @Override public Mono<Void> deleteById(Long id) { byId.remove(id); return Mono.empty(); }
+    }
+
+    static class Resumes implements ResumeRepository {
+        final Map<Long, Resume> byId = new HashMap<>();
+        final Map<Long, byte[]> files = new HashMap<>();
+        private final AtomicLong seq = new AtomicLong();
+        @Override public Mono<Resume> findById(Long id) { return Mono.justOrEmpty(byId.get(id)); }
+        @Override public Flux<Resume> findByUserId(Long userId) {
+            return Flux.fromStream(byId.values().stream().filter(r -> r.userId().equals(userId)));
+        }
+        @Override public Flux<Resume> findAll(ResumeStatus status, Long vacancyId) {
+            return Flux.fromStream(byId.values().stream().filter(r -> (status == null || r.status() == status)
+                    && (vacancyId == null || r.vacancyId().equals(vacancyId))));
+        }
+        @Override public Mono<ResumeFile> findFile(Long id) {
+            Resume r = byId.get(id);
+            return r == null ? Mono.empty() : Mono.just(new ResumeFile(files.get(id), r.fileName(), r.contentType()));
+        }
+        @Override public Mono<Boolean> existsByUserIdAndVacancyId(Long u, Long v) {
+            return Mono.just(byId.values().stream().anyMatch(r -> r.userId().equals(u) && r.vacancyId().equals(v)));
+        }
+        @Override public Mono<Resume> create(Resume r, byte[] file) {
+            Long id = seq.incrementAndGet();
+            Resume stored = new Resume(id, r.userId(), r.vacancyId(), r.fileName(), r.contentType(), r.status(), r.reason(),
+                    Instant.parse("2026-11-03T12:00:00Z"));
+            byId.put(id, stored);
+            files.put(id, file);
+            return Mono.just(stored);
+        }
+        @Override public Mono<Resume> updateResult(Long id, ResumeStatus status, String reason) {
+            Resume r = byId.get(id);
+            Resume next = new Resume(r.id(), r.userId(), r.vacancyId(), r.fileName(), r.contentType(), status, reason, r.createdAt());
+            byId.put(id, next);
+            return Mono.just(next);
+        }
+        @Override public Mono<Void> deleteById(Long id) { byId.remove(id); files.remove(id); return Mono.empty(); }
+    }
+
+    static class Analysis implements ResumeAnalysisPublisher {
+        final List<Long> queued = new ArrayList<>();
+        boolean failing;
+        @Override
+        public Mono<Void> publish(Long resumeId) {
+            if (failing) {
+                return Mono.error(new IllegalStateException("kafka fora do ar"));
+            }
+            queued.add(resumeId);
+            return Mono.empty();
+        }
+    }
+
+    static class Photos implements ProfilePhotoRepository {
+        final Map<Long, ProfilePhoto> byUser = new HashMap<>();
+        @Override public Mono<Void> save(Long userId, ProfilePhoto p) { byUser.put(userId, p); return Mono.empty(); }
+        @Override public Mono<ProfilePhoto> find(Long userId) { return Mono.justOrEmpty(byUser.get(userId)); }
+        @Override public Mono<Boolean> exists(Long userId) { return Mono.just(byUser.containsKey(userId)); }
+        @Override public Mono<Void> delete(Long userId) { byUser.remove(userId); return Mono.empty(); }
     }
 }

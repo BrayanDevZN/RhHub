@@ -13,7 +13,13 @@ import br.rhhub.domain.auth.AccessPolicy;
 import br.rhhub.domain.auth.JwtService;
 import br.rhhub.domain.auth.PasswordHasher;
 import br.rhhub.service.AuthService;
+import br.rhhub.application.port.out.ProfilePhotoRepository;
+import br.rhhub.application.port.out.ResumeAnalysisPublisher;
+import br.rhhub.service.AdminService;
+import br.rhhub.service.ProfilePhotoService;
+import br.rhhub.service.ResumeService;
 import br.rhhub.service.UserService;
+import br.rhhub.service.VacancyService;
 import java.time.Clock;
 import br.rhhub.application.port.out.EmailSender;
 import br.rhhub.application.port.out.ResumeRepository;
@@ -47,6 +53,27 @@ public class ServiceConfig {
     @Bean
     UserService userService(UserRepository users, PasswordHasher hasher, RefreshTokenStore refresh, AccessPolicy policy) {
         return new UserService(users, hasher, refresh, policy);
+    }
+
+    @Bean
+    ProfilePhotoService profilePhotoService(ProfilePhotoRepository photos, UserRepository users) {
+        return new ProfilePhotoService(photos, users);
+    }
+
+    @Bean
+    VacancyService vacancyService(VacancyRepository vacancies, AccessPolicy policy) {
+        return new VacancyService(vacancies, policy);
+    }
+
+    @Bean
+    ResumeService resumeService(ResumeRepository resumes, VacancyRepository vacancies, DocumentTextExtractor extractor,
+            ResumeAnalysisPublisher analysis) {
+        return new ResumeService(resumes, vacancies, extractor, analysis);
+    }
+
+    @Bean
+    AdminService adminService(UserRepository users, RefreshTokenStore refresh, AccessPolicy policy) {
+        return new AdminService(users, refresh, policy);
     }
 
     /** O prompt de triagem (o mesmo do AgentRH) vem de resources/prompt/resume_analysis.md e é lido uma vez, na subida. */

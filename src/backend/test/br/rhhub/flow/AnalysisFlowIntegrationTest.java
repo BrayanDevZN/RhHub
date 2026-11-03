@@ -26,6 +26,7 @@ import br.rhhub.infra.database.DatabaseUrl;
 import br.rhhub.infra.database.SqlExecutor;
 import br.rhhub.infra.database.SqliteSqlExecutor;
 import br.rhhub.infra.database.adapter.DeadLetterRepositoryAdapter;
+import br.rhhub.infra.database.adapter.ProfilePhotoRepositoryAdapter;
 import br.rhhub.infra.database.adapter.ResumeRepositoryAdapter;
 import br.rhhub.infra.database.adapter.UserRepositoryAdapter;
 import br.rhhub.infra.database.adapter.VacancyRepositoryAdapter;
@@ -97,7 +98,9 @@ class AnalysisFlowIntegrationTest {
     @Import({KafkaConfig.class, KafkaPublisher.class, KafkaResumeAnalysisPublisher.class, KafkaEmailPublisher.class,
             AnalysisConsumer.class, EmailConsumer.class, ServiceConfig.class, LlmConfig.class, ClockConfig.class,
             PdfDocxTextExtractor.class, UserRepositoryAdapter.class, VacancyRepositoryAdapter.class,
-            ResumeRepositoryAdapter.class, DeadLetterRepositoryAdapter.class})
+            ResumeRepositoryAdapter.class, DeadLetterRepositoryAdapter.class, ProfilePhotoRepositoryAdapter.class,
+            br.rhhub.infra.security.AuthConfig.class, br.rhhub.infra.security.BcryptPasswordHasher.class,
+            br.rhhub.infra.email.HtmlEmailComposer.class, br.rhhub.infra.google.GoogleConfig.class})
     static class Context {
 
         @Bean
@@ -109,6 +112,22 @@ class AnalysisFlowIntegrationTest {
                     new AppProperties.Ai(null, "m", "http://x", "chave-de-teste", "modelo-de-teste",
                             "http://127.0.0.1:" + llm.getAddress().getPort(), Duration.ofSeconds(10)),
                     base.email());
+        }
+
+        @Bean
+        br.rhhub.infra.config.AuthProperties authProperties() {
+            return new br.rhhub.infra.config.AuthProperties(null, null, null, 60, 1000, null);
+        }
+
+        /** O Redis não participa deste fluxo: as portas que o usam entram como dublês. */
+        @Bean
+        br.rhhub.application.port.out.RefreshTokenStore refreshTokenStore() {
+            return org.mockito.Mockito.mock(br.rhhub.application.port.out.RefreshTokenStore.class);
+        }
+
+        @Bean
+        br.rhhub.application.port.out.VerificationCodeStore verificationCodeStore() {
+            return org.mockito.Mockito.mock(br.rhhub.application.port.out.VerificationCodeStore.class);
         }
 
         @Bean
