@@ -1,11 +1,13 @@
 package br.rhhub.application.port.out;
 
+import reactor.core.publisher.Mono;
+
 public interface AiProvider {
 
-    /** Devolve o texto bruto da resposta do modelo. Lança AiException em qualquer falha. */
-    String complete(String systemPrompt, String userInput);
+    /** Texto bruto da resposta do modelo. Qualquer falha vira erro AiException. */
+    Mono<String> complete(String systemPrompt, String userInput);
 
-    /** Nome do provedor ativo, para log (openai, groq ou fixed). */
+    /** Nome do provedor ativo, para log (openai, groq, fixed ou none). */
     String name();
 
     class AiException extends RuntimeException {

@@ -1,3 +1,7 @@
 target/
 .env
 *.class
+data/
+*.db
+*.db-wal
+*.db-shm

@@ -6,121 +6,137 @@ import br.rhhub.domain.model.AuthProvider;
 import br.rhhub.domain.model.Gender;
 import br.rhhub.domain.model.Role;
 import br.rhhub.domain.model.User;
-import br.rhhub.infra.database.entity.UserEntity;
-import br.rhhub.infra.database.jpa.UserJpaRepository;
+import br.rhhub.infra.database.Params;
+import br.rhhub.infra.database.Row;
+import br.rhhub.infra.database.SqlExecutor;
 import java.time.Clock;
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Repository
-@Transactional
 public class UserRepositoryAdapter implements UserRepository {
 
-    private final UserJpaRepository jpa;
+    private static final String COLUMNS =
+            "id, public_id, name, email, cpf, age, gender, password, two_factor, role, provider, google_sub, created_at";
+
+    private final SqlExecutor sql;
     private final Clock clock;
 
-    public UserRepositoryAdapter(UserJpaRepository jpa, Clock clock) {
-        this.jpa = jpa;
+    public UserRepositoryAdapter(SqlExecutor sql, Clock clock) {
+        this.sql = sql;
         this.clock = clock;
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public Optional<User> findByPublicId(UUID publicId) {
-        return jpa.findByPublicId(publicId).map(UserRepositoryAdapter::toDomain);
+    public Mono<User> findByPublicId(UUID publicId) {
+        return one("public_id = :v", Params.of().add("v", publicId));
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public Optional<User> findByEmail(String email) {
-        return jpa.findByEmail(email).map(UserRepositoryAdapter::toDomain);
+    public Mono<User> findByEmail(String email) {
+        return one("email = :v", Params.of().add("v", email));
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public Optional<User> findByGoogleSub(String googleSub) {
-        return jpa.findByGoogleSub(googleSub).map(UserRepositoryAdapter::toDomain);
+    public Mono<User> findByGoogleSub(String googleSub) {
+        return one("google_sub = :v", Params.of().add("v", googleSub));
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public boolean existsByEmail(String email) {
-        return jpa.existsByEmail(email);
+    public Mono<Boolean> existsByEmail(String email) {
+        return exists("email = :v", Params.of().add("v", email));
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public boolean existsByCpf(String cpf) {
-        return jpa.existsByCpf(cpf);
+    public Mono<Boolean> existsByCpf(String cpf) {
+        return exists("cpf = :v", Params.of().add("v", cpf));
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<User> findAll() {
-        return jpa.findAll().stream().map(UserRepositoryAdapter::toDomain).toList();
+    public Flux<User> findAll() {
+        return sql.query("SELECT " + COLUMNS + " FROM users ORDER BY id", Params.of()).map(UserRepositoryAdapter::toDomain);
     }
 
     @Override
-    public User save(User user) {
-        try {
-            return toDomain(jpa.saveAndFlush(toEntity(user)));
-        } catch (DataIntegrityViolationException e) {
-            throw new DomainException.Conflict(conflictMessage(e), e);
+    public Mono<User> save(User user) {
+        var params = Params.of()
+                .add("name", user.name())
+                .add("email", user.email())
+                .add("cpf", user.cpf(), String.class)
+                .add("age", user.age(), Integer.class)
+                .add("gender", user.gender() == null ? null : user.gender().value(), String.class)
+                .add("password", user.passwordHash(), String.class)
+                .add("two_factor", user.twoFactor())
+                .add("role", user.role().value())
+                .add("provider", user.provider().value())
+                .add("google_sub", user.googleSub(), String.class);
+        Flux<Row> result;
+        if (user.id() == null) {
+            params.add("public_id", user.publicId() != null ? user.publicId() : UUID.randomUUID())
+                    .add("created_at", user.createdAt() != null ? user.createdAt() : clock.instant());
+            result = sql.query("""
+                    INSERT INTO users (public_id, name, email, cpf, age, gender, password, two_factor, role, provider,
+                                       google_sub, created_at)
+                    VALUES (:public_id, :name, :email, :cpf, :age, :gender, :password, :two_factor, :role, :provider,
+                            :google_sub, :created_at)
+                    RETURNING\s""" + COLUMNS, params);
+        } else {
+            params.add("id", user.id());
+            result = sql.query("""
+                    UPDATE users SET name = :name, email = :email, cpf = :cpf, age = :age, gender = :gender,
+                                     password = :password, two_factor = :two_factor, role = :role,
+                                     provider = :provider, google_sub = :google_sub
+                    WHERE id = :id RETURNING\s""" + COLUMNS, params);
         }
+        return result.next()
+                .map(UserRepositoryAdapter::toDomain)
+                .switchIfEmpty(Mono.error(new DomainException.NotFound("Usuário não encontrado")))
+                .onErrorMap(SqlExecutor.ConstraintViolation.class,
+                        e -> new DomainException.Conflict(conflictMessage(e.detail()), e));
     }
 
     @Override
-    public void deleteByPublicId(UUID publicId) {
-        jpa.deleteByPublicId(publicId);
+    public Mono<Void> deleteByPublicId(UUID publicId) {
+        return sql.update("DELETE FROM users WHERE public_id = :v", Params.of().add("v", publicId)).then();
     }
 
-    private UserEntity toEntity(User u) {
-        return new UserEntity(
-                u.id(),
-                u.publicId() != null ? u.publicId() : UUID.randomUUID(),
-                u.name(),
-                u.email(),
-                u.cpf(),
-                u.age(),
-                u.gender() != null ? u.gender().value() : null,
-                u.passwordHash(),
-                u.twoFactor(),
-                u.role().value(),
-                u.provider().value(),
-                u.googleSub(),
-                u.createdAt() != null ? u.createdAt() : clock.instant());
+    private Mono<User> one(String where, Params params) {
+        return sql.query("SELECT " + COLUMNS + " FROM users WHERE " + where, params).next()
+                .map(UserRepositoryAdapter::toDomain);
     }
 
-    static User toDomain(UserEntity e) {
+    private Mono<Boolean> exists(String where, Params params) {
+        return sql.query("SELECT 1 AS found FROM users WHERE " + where + " LIMIT 1", params).hasElements();
+    }
+
+    static User toDomain(Row r) {
         return new User(
-                e.getId(),
-                e.getPublicId(),
-                e.getName(),
-                e.getEmail(),
-                e.getCpf(),
-                e.getAge(),
-                e.getGender() != null ? Gender.from(e.getGender()) : null,
-                e.getPasswordHash(),
-                e.isTwoFactor(),
-                Role.from(e.getRole()),
-                AuthProvider.from(e.getProvider()),
-                e.getGoogleSub(),
-                e.getCreatedAt());
+                r.longValue("id"),
+                r.uuid("public_id"),
+                r.string("name"),
+                r.string("email"),
+                r.string("cpf"),
+                r.intValue("age"),
+                r.string("gender") == null ? null : Gender.from(r.string("gender")),
+                r.string("password"),
+                r.bool("two_factor"),
+                Role.from(r.string("role")),
+                AuthProvider.from(r.string("provider")),
+                r.string("google_sub"),
+                r.instant("created_at"));
     }
 
-    private static String conflictMessage(DataIntegrityViolationException e) {
-        String detail = String.valueOf(e.getMostSpecificCause().getMessage());
-        if (detail.contains("uq_users_email")) {
+    /** PostgreSQL informa o nome da constraint (uq_users_email); SQLite, tabela.coluna (users.email). */
+    static String conflictMessage(String detail) {
+        if (detail.contains("email")) {
             return "E-mail já cadastrado";
         }
-        if (detail.contains("uq_users_cpf")) {
+        if (detail.contains("cpf")) {
             return "CPF já cadastrado";
         }
-        if (detail.contains("uq_users_google_sub")) {
+        if (detail.contains("google_sub")) {
             return "Conta Google já vinculada";
         }
         return "Usuário já existe";

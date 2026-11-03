@@ -1,9 +1,10 @@
 package br.rhhub.infra.llm;
 
 import br.rhhub.application.port.out.AiProvider;
+import reactor.core.publisher.Mono;
 
 /**
- * Usado com app.environment=test: devolve sempre aprovado, no formato "decisão | assunto | HTML"
+ * Usado com ENVIRONMENT=test: devolve sempre aprovado, no formato "decisão | assunto | HTML"
  * que o prompt do AgentRH pede, sem chamar a rede.
  */
 public class FixedAiProvider implements AiProvider {
@@ -12,8 +13,8 @@ public class FixedAiProvider implements AiProvider {
             "aproved | Resultado da sua candidatura | <p>Seu currículo foi aprovado (resposta fixa de teste).</p>";
 
     @Override
-    public String complete(String systemPrompt, String userInput) {
-        return RESPONSE;
+    public Mono<String> complete(String systemPrompt, String userInput) {
+        return Mono.just(RESPONSE);
     }
 
     @Override

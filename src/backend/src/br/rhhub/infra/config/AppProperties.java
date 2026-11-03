@@ -6,7 +6,13 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /** Configurações lidas das variáveis de ambiente (ver application.yml e .env.example). */
 @ConfigurationProperties(prefix = "app")
-public record AppProperties(@DefaultValue("production") String environment, Ai ai) {
+public record AppProperties(@DefaultValue("production") String environment, Database database, Ai ai) {
+
+    /**
+     * url: DATABASE_URL. Vazia, ausente ou "none" usa o SQLite local em sqlitePath.
+     */
+    public record Database(String url, @DefaultValue("./data/rhhub.db") String sqlitePath, @DefaultValue("10") int poolSize) {
+    }
 
     /** Uma chave vazia ou só com espaços conta como ausente. */
     public record Ai(

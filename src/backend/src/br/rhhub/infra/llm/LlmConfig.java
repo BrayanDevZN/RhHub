@@ -2,6 +2,7 @@ package br.rhhub.infra.llm;
 
 import br.rhhub.application.port.out.AiProvider;
 import br.rhhub.infra.config.AppProperties;
+import reactor.core.publisher.Mono;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -25,8 +26,8 @@ public class LlmConfig {
         }
         return new AiProvider() {
             @Override
-            public String complete(String systemPrompt, String userInput) {
-                throw new AiException("Nenhuma chave de IA configurada (OPENAI_API_KEY ou GROQ_API_KEY)");
+            public Mono<String> complete(String systemPrompt, String userInput) {
+                return Mono.error(new AiException("Nenhuma chave de IA configurada (OPENAI_API_KEY ou GROQ_API_KEY)"));
             }
 
             @Override

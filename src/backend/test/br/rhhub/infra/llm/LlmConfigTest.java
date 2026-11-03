@@ -13,7 +13,7 @@ class LlmConfigTest {
     private final LlmConfig config = new LlmConfig();
 
     private static AppProperties with(String env, String openai, String groq) {
-        return new AppProperties(env,
+        return new AppProperties(env, new AppProperties.Database("none", "x.db", 1),
                 new AppProperties.Ai(openai, "m", "http://localhost:1", groq, "m", "http://localhost:1",
                         Duration.ofSeconds(1)));
     }
@@ -22,7 +22,7 @@ class LlmConfigTest {
     void testEnvironmentUsesFixedAnswer() {
         AiProvider provider = config.aiProvider(with("test", "k", "k"));
         assertThat(provider.name()).isEqualTo("fixed");
-        assertThat(provider.complete("s", "u")).startsWith("aproved |");
+        assertThat(provider.complete("s", "u").block()).startsWith("aproved |");
     }
 
     @Test
@@ -35,12 +35,12 @@ class LlmConfigTest {
     void withoutKeysFailsOnUse() {
         AiProvider provider = config.aiProvider(with("production", "", null));
         assertThat(provider.name()).isEqualTo("none");
-        assertThatThrownBy(() -> provider.complete("s", "u")).isInstanceOf(AiProvider.AiException.class);
+        assertThatThrownBy(() -> provider.complete("s", "u").block()).isInstanceOf(AiProvider.AiException.class);
     }
 
     @Test
     void unreachableProviderRaisesAiException() {
         AiProvider provider = config.aiProvider(with("production", "k", ""));
-        assertThatThrownBy(() -> provider.complete("s", "u")).isInstanceOf(AiProvider.AiException.class);
+        assertThatThrownBy(() -> provider.complete("s", "u").block()).isInstanceOf(AiProvider.AiException.class);
     }
 }

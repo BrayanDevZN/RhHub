@@ -1,26 +1,26 @@
 package br.rhhub.application.port.out;
 
 import br.rhhub.domain.model.User;
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public interface UserRepository {
 
-    Optional<User> findByPublicId(UUID publicId);
+    Mono<User> findByPublicId(UUID publicId);
 
-    Optional<User> findByEmail(String email);
+    Mono<User> findByEmail(String email);
 
-    Optional<User> findByGoogleSub(String googleSub);
+    Mono<User> findByGoogleSub(String googleSub);
 
-    boolean existsByEmail(String email);
+    Mono<Boolean> existsByEmail(String email);
 
-    boolean existsByCpf(String cpf);
+    Mono<Boolean> existsByCpf(String cpf);
 
-    List<User> findAll();
+    Flux<User> findAll();
 
-    /** Insere (id nulo) ou atualiza. Lança DomainException.Conflict se e-mail, CPF ou google_sub já existirem. */
-    User save(User user);
+    /** Insere (id nulo) ou atualiza. Erro DomainException.Conflict se e-mail, CPF ou google_sub já existirem. */
+    Mono<User> save(User user);
 
-    void deleteByPublicId(UUID publicId);
+    Mono<Void> deleteByPublicId(UUID publicId);
 }
