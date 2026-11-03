@@ -35,6 +35,19 @@ app:
     groq-model: ${GROQ_MODEL:llama-3.3-70b-versatile}
     groq-base-url: ${GROQ_BASE_URL:https://api.groq.com/openai/v1}
     timeout: 60s
+  auth:
+    # Vazio: segredo aleatório gerado a cada subida (as sessões acabam ao reiniciar)
+    jwt-secret: ${JWT_SECRET:}
+    # Admin raiz: criado na subida se ainda não existir
+    admin-email: ${ADMIN_EMAIL:}
+    admin-password: ${ADMIN_PASSWORD:}
+    rate-limit: ${RATE_LIMIT:60}
+    global-rate-limit: ${GLOBAL_RATE_LIMIT:1000}
+    google:
+      enabled: ${GOOGLE_OAUTH_ENABLED:false}
+      client-id: ${GOOGLE_CLIENT_ID:}
+      client-secret: ${GOOGLE_CLIENT_SECRET:}
+      redirect-uri: ${GOOGLE_REDIRECT_URI:}
   email:
     # Workflow "gmail" do n8n: POST com JWT (HS256) e corpo {type, to, subject, content}
     webhook-url: ${N8N_EMAIL_WEBHOOK_URL:https://n8n.nexoaicompany.com/webhook/a043ad9f-9a0c-4bbd-a142-f64a1cd524c0}
