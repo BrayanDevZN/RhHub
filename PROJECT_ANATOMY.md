@@ -1,5 +1,5 @@
 # Project Anatomy: RhHub
-Generated: 2026-11-03 | 230 files | ~221.7K tokens if all read
+Generated: 2026-11-03 | 231 files | ~222.1K tokens if all read
 
 ## Structure
 | Path | Lines | ~Tokens | Type |
@@ -169,7 +169,7 @@ Generated: 2026-11-03 | 230 files | ~221.7K tokens if all read
 | railway.api.json | 14 | 77 | config |
 | railway.consumer.json | 8 | 38 | config |
 | railway.kafka.json | 8 | 37 | config |
-| src/backend/resources/application.yml | 73 | 730 | config |
+| src/backend/resources/application.yml | 79 | 791 | config |
 | src/frontend/.oxlintrc.json | 9 | 62 | config |
 | src/frontend/components.json | 26 | 129 | config |
 | src/frontend/package.json | 41 | 252 | config |
@@ -184,6 +184,7 @@ Generated: 2026-11-03 | 230 files | ~221.7K tokens if all read
 | src/backend/test/br/rhhub/flow/AnalysisFlowIntegrationTest.java | 370 | 4.6K | test |
 | src/backend/test/br/rhhub/flow/EmailEndToEndLiveTest.java | 194 | 2.3K | test |
 | src/backend/test/br/rhhub/flow/GroqLiveAnalysisTest.java | 191 | 2.5K | test |
+| src/backend/test/br/rhhub/infra/config/ApplicationYmlTest.java | 36 | 360 | test |
 | src/backend/test/br/rhhub/infra/config/WebPropertiesTest.java | 41 | 403 | test |
 | src/backend/test/br/rhhub/infra/database/DatabaseUrlTest.java | 55 | 582 | test |
 | src/backend/test/br/rhhub/infra/database/PostgresRepositoryTest.java | 34 | 248 | test |
@@ -222,7 +223,7 @@ Generated: 2026-11-03 | 230 files | ~221.7K tokens if all read
 | Dockerfile.Api | 29 | 332 | other |
 | Dockerfile.Consumer | 23 | 249 | other |
 | Dockerfile.kafka | 28 | 315 | other |
-| src/backend/.env.example | 47 | 469 | other |
+| src/backend/.env.example | 47 | 468 | other |
 | src/backend/.gitignore | 8 | 13 | other |
 | src/backend/.mvn/wrapper/maven-wrapper.properties | 4 | 42 | other |
 | src/backend/mvnw | 296 | 2.9K | other |
@@ -237,8 +238,8 @@ Generated: 2026-11-03 | 230 files | ~221.7K tokens if all read
 
 ## Summary
 - source: 160 files, ~113.9K tokens
-- config: 12 files, ~3.2K tokens
-- test: 33 files, ~56.6K tokens
+- config: 12 files, ~3.3K tokens
+- test: 34 files, ~57.0K tokens
 - docs: 5 files, ~25.8K tokens
 - style: 1 files, ~7.5K tokens
 - other: 19 files, ~14.6K tokens

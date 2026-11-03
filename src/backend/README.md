@@ -138,7 +138,7 @@ Os dois provedores usam a API `/chat/completions`. Qualquer falha de rede ou res
 
 **Limite de taxa (429).** O plano gratuito do Groq limita tokens por minuto e cada análise manda o prompt inteiro. Ao receber 429, o cliente espera o tempo do cabeçalho `Retry-After` (padrão 20 s, no máximo 60 s) e tenta de novo, até 2 vezes. Esgotadas as esperas, o erro sobe e o job é repetido pelo consumer. O cliente usa os proxies das propriedades do sistema (`https.proxyHost` etc.), quando existirem.
 
-O modelo padrão é `llama-3.3-70b-versatile`; se a sua conta não o tiver, defina `GROQ_MODEL` (o teste real do Groq usou `openai/gpt-oss-120b`).
+O modelo padrão é `openai/gpt-oss-120b` (o do teste real com o Groq). Para usar outro, defina `GROQ_MODEL`.
 
 ## Redis
 
@@ -244,11 +244,11 @@ Veja o `.env.example`.
 | `SQLITE_PATH` | `./data/rhhub.db` | Arquivo do SQLite |
 | `DATABASE_POOL_SIZE` | `10` | Conexões do pool do PostgreSQL |
 | `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_BASE_URL` | modelo `gpt-4o-mini` | OpenAI |
-| `GROQ_API_KEY`, `GROQ_MODEL`, `GROQ_BASE_URL` | modelo `llama-3.3-70b-versatile` | Groq |
+| `GROQ_API_KEY`, `GROQ_MODEL`, `GROQ_BASE_URL` | modelo `openai/gpt-oss-120b` | Groq |
 | `gmail_secret` | vazio | Segredo da credencial JWT do webhook de e-mail do n8n |
 | `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` | `localhost`, `6379`, vazio | Redis (sem senha: só host e porta) |
 | `KAFKA_URL`, `KAFKA_API_USER`, `KAFKA_API_KEY` | `none` (local), `rhhub`, vazio | Kafka (com a chave, SASL/PLAIN) |
-| `GROQ_API_KEY` ou `groq_key`, `GROQ_MODEL` | vazio, `llama-3.3-70b-versatile` | Groq (também `OPENAI_API_KEY` ou `open_ai_key`) |
+| `GROQ_API_KEY` ou `groq_key`, `GROQ_MODEL` | vazio, `openai/gpt-oss-120b` | Groq (também `OPENAI_API_KEY` ou `open_ai_key`) |
 | `N8N_EMAIL_WEBHOOK_URL` | URL de produção do workflow `gmail` | Webhook de envio de e-mail |
 | `PORT` | `8080` | Porta HTTP |
 

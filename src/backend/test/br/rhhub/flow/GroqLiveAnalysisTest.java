@@ -60,8 +60,8 @@ import reactor.core.publisher.Mono;
 class GroqLiveAnalysisTest {
 
     private static final String BASE_URL = "https://api.groq.com/openai/v1";
-    private static final List<String> PREFERRED = List.of("llama-3.3-70b-versatile", "openai/gpt-oss-120b",
-            "openai/gpt-oss-20b", "llama-3.1-8b-instant");
+    private static final List<String> PREFERRED = List.of("openai/gpt-oss-120b", "openai/gpt-oss-20b",
+            "llama-3.3-70b-versatile", "llama-3.1-8b-instant");
 
     private static String key;
     private static String model;
