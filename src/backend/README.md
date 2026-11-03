@@ -3,6 +3,8 @@
 Back end Java (Spring Boot 3, WebFlux) do RhHub, portado do [AgentRH](https://github.com/BrayanDevZN/AgentRH).
 Todo acesso a dados é assíncrono (`Mono`/`Flux`).
 
+O que já foi feito, as decisões, os problemas encontrados e o que falta: veja o [HISTORICO.md](HISTORICO.md).
+
 ## Camadas
 
 | Camada | Responsabilidade |

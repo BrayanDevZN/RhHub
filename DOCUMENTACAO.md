@@ -729,16 +729,17 @@ O `Dockerfile.front` já existe e o `railway.json` aponta para ele no deploy.
 
 - [x] Front end com autenticação, vagas, candidaturas, perfil e admin (API simulada)
 - [x] Dockerfile do front end e deploy
-- [ ] Back end: projeto Spring Boot, entidades e migrações Flyway
+- [x] E-mail pelo workflow `gmail` do n8n (webhook com JWT), com envio real confirmado
+- [x] Back end: projeto Spring Boot, banco assíncrono (PostgreSQL ou SQLite) e tabelas criadas por classes Java (sem Flyway)
 - [ ] Autenticação: cadastro com código, login, cookies JWT, refresh e logout
 - [ ] 2FA por e-mail e recuperação de senha
 - [ ] Login com Google (OAuth2): implementar atrás da flag `GOOGLE_OAUTH_ENABLED` (desligada localmente)
 - [ ] Ligar o Google OAuth na nuvem (credenciais, URI de redirecionamento, flag)
 - [ ] CRUD de vagas e controle de papéis
 - [ ] Upload de candidaturas e download do PDF
-- [ ] Kafka: topics `resume.analysis` e `email.send`, retry e DLT
-- [ ] Análise por IA com leitura de PDF e DOCX, e escolha de provedor (OpenAI ou Groq)
-- [ ] Rate limit com Redis
+- [x] Kafka: topics `resume.analysis` e `email.send` (3 partições), retry, DLT e tabela `dead_letters` (falta testar contra o Kafka do Railway)
+- [x] Análise por IA com leitura de PDF e DOCX, e escolha de provedor (OpenAI ou Groq); validada com o Groq de verdade
+- [ ] Rate limit com Redis (a conexão e o `RedisStore` já existem; falta o filtro)
 - [ ] Docker Compose completo (front, back, Postgres, Redis, Kafka)
 - [ ] Testes unitários, de integração (Testcontainers) e funcionais
 - [ ] Trocar a API simulada do front pela real
