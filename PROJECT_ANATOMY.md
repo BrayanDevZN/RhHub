@@ -1,5 +1,5 @@
 # Project Anatomy: RhHub
-Generated: 2026-11-03 | 238 files | ~236.2K tokens if all read
+Generated: 2026-11-03 | 239 files | ~236.4K tokens if all read
 
 ## Structure
 | Path | Lines | ~Tokens | Type |
@@ -169,7 +169,7 @@ Generated: 2026-11-03 | 238 files | ~236.2K tokens if all read
 | src/frontend/src/pages/Register.tsx | 192 | 1.9K | source |
 | src/frontend/src/pages/Vacancies.tsx | 642 | 5.8K | source |
 | src/frontend/vite.config.ts | 13 | 81 | source |
-| .github/workflows/ci.yml | 101 | 690 | config |
+| .github/workflows/ci.yml | 104 | 725 | config |
 | docker-compose.yml | 114 | 848 | config |
 | railway.api.json | 14 | 77 | config |
 | railway.consumer.json | 8 | 38 | config |
@@ -226,9 +226,10 @@ Generated: 2026-11-03 | 238 files | ~236.2K tokens if all read
 | .dockerignore | 4 | 10 | other |
 | .env.compose.example | 18 | 152 | other |
 | .gitignore | 4 | 9 | other |
-| Dockerfile | 17 | 150 | other |
+| Dockerfile | 19 | 196 | other |
 | Dockerfile.Api | 29 | 332 | other |
 | Dockerfile.Consumer | 23 | 249 | other |
+| Dockerfile.front | 19 | 196 | other |
 | Dockerfile.kafka | 28 | 315 | other |
 | src/backend/.env.example | 47 | 468 | other |
 | src/backend/.gitignore | 8 | 13 | other |
@@ -249,7 +250,7 @@ Generated: 2026-11-03 | 238 files | ~236.2K tokens if all read
 - test: 36 files, ~62.8K tokens
 - docs: 5 files, ~26.4K tokens
 - style: 1 files, ~7.5K tokens
-- other: 19 files, ~14.6K tokens
+- other: 20 files, ~14.9K tokens
 
 ## Heaviest files (read with offset/limit, not whole)
 1. DOCUMENTACAO.md — 778 lines (~10.9K tokens)

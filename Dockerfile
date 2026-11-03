@@ -1,3 +1,5 @@
+# ATENÇÃO: este arquivo e o Dockerfile.front são cópias idênticas (o Railway pode apontar para qualquer um dos dois
+# nomes). Altere os dois juntos; o CI recusa se divergirem.
 # Build do frontend (Vite + React + TypeScript)
 FROM node:22-alpine AS build
 WORKDIR /app

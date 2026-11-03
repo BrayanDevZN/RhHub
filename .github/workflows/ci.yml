@@ -66,6 +66,9 @@ jobs:
         working-directory: src/frontend
     steps:
       - uses: actions/checkout@v4
+      - name: Dockerfile e Dockerfile.front precisam ser idênticos
+        working-directory: .
+        run: cmp Dockerfile Dockerfile.front
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
