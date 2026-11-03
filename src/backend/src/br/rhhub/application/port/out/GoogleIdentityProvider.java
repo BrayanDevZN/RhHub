@@ -15,4 +15,21 @@ public interface GoogleIdentityProvider {
 
     record Profile(String sub, String email, boolean emailVerified, String name) {
     }
+
+    /**
+     * O Google (ou a rede até ele) recusou o login. reason é o código de erro do Google (invalid_client, invalid_grant,
+     * redirect_uri_mismatch...) ou google_unreachable. Não tem dado sensível: vai na URL de volta para o front.
+     */
+    class LoginFailure extends RuntimeException {
+        private final String reason;
+
+        public LoginFailure(String reason, Throwable cause) {
+            super("Google recusou o login: " + reason, cause);
+            this.reason = reason;
+        }
+
+        public String reason() {
+            return reason;
+        }
+    }
 }

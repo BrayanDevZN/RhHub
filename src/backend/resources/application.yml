@@ -30,6 +30,8 @@ app:
     # Com a chave, conecta por SASL/PLAIN (o Dockerfile.kafka exige KAFKA_API_KEY); sem ela, sem autenticação.
     api-user: ${KAFKA_API_USER:rhhub}
     api-key: ${KAFKA_API_KEY:}
+    # false na API (só publica); true no consumer, que lê as filas de análise e de e-mail
+    consumers-enabled: ${KAFKA_CONSUMERS_ENABLED:true}
     partitions: 3
     retry-interval: 2s
     email-topic: email.send

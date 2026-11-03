@@ -21,6 +21,8 @@ USER rhhub
 # Variáveis lidas: DATABASE_URL, REDIS_*, KAFKA_URL, KAFKA_API_KEY, gmail_secret, JWT_SECRET, ADMIN_EMAIL,
 # ADMIN_PASSWORD, FRONTEND_URL, COOKIE_SECURE, COOKIE_SAMESITE e, se ligar o Google, GOOGLE_*.
 # O Railway injeta a PORT; sem ela a API ouve na 8080.
-ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75"
+# A API só publica nas filas; quem lê é o serviço consumer (Dockerfile.Consumer).
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75" \
+    KAFKA_CONSUMERS_ENABLED=false
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

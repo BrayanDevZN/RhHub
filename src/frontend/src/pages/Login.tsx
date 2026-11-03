@@ -1,10 +1,11 @@
-import { useEffect, useState, type FormEvent } from "react"
+import { useState, type FormEvent } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { ArrowLeftIcon } from "lucide-react"
 import { AuthLayout } from "@/components/AuthLayout"
 import { CodeInput } from "@/components/CodeInput"
 import { ForgotPasswordDialog } from "@/components/ForgotPasswordDialog"
 import { GoogleButton } from "@/components/GoogleButton"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Field, FieldDescription, FieldGroup, FieldLabel, FieldSeparator } from "@/components/ui/field"
@@ -13,6 +14,24 @@ import { Spinner } from "@/components/ui/spinner"
 import { toast } from "@/components/ui/toast"
 import { api, errorMessage } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
+
+/** Texto para cada motivo que o back end devolve em /login?error=google&reason=... (o código aparece junto, para suporte). */
+function googleFailure(reason: string): string {
+  const known: Record<string, string> = {
+    state: "A sessão do login se perdeu no caminho. Tente de novo.",
+    no_code: "O Google não devolveu a autorização. Tente de novo.",
+    google_access_denied: "Você cancelou o login com o Google.",
+    invalid_client: "O Google não reconheceu as credenciais deste app (chave secreta ou ID do cliente incorretos no servidor).",
+    invalid_grant: "A autorização do Google expirou ou já foi usada. Tente de novo.",
+    redirect_uri_mismatch: "O endereço de retorno do servidor não bate com o cadastrado no Google.",
+    google_unreachable: "O servidor não conseguiu falar com o Google. Tente de novo em instantes.",
+    not_gmail: "Só contas @gmail.com podem entrar.",
+    email_not_verified: "O Google não verificou o e-mail dessa conta.",
+  }
+  if (known[reason]) return known[reason]
+  if (reason.startsWith("server_error")) return "O servidor falhou ao concluir o login. Tente de novo; se repetir, avise o suporte."
+  return "Não foi possível entrar com o Google."
+}
 
 export default function Login() {
   const { setUser } = useAuth()
@@ -24,12 +43,8 @@ export default function Login() {
   const [busy, setBusy] = useState(false)
   const [params] = useSearchParams()
 
-  // O back end volta para /login?error=google quando o Google recusa o login.
-  useEffect(() => {
-    if (params.get("error") === "google") {
-      toast.add({ title: "Não foi possível entrar com o Google", description: "Use uma conta @gmail.com verificada.", type: "error" })
-    }
-  }, [params])
+  // O back end volta para /login?error=google&reason=... quando o login com Google não se completa.
+  const googleReason = params.get("error") === "google" ? (params.get("reason") ?? "desconhecido") : null
 
   async function run(action: () => Promise<void>) {
     setBusy(true)
@@ -110,6 +125,15 @@ export default function Login() {
           <CardDescription>Acesse sua conta para acompanhar vagas e candidaturas.</CardDescription>
         </CardHeader>
         <CardContent>
+          {googleReason && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertTitle>Não foi possível entrar com o Google</AlertTitle>
+              <AlertDescription>
+                {googleFailure(googleReason)}
+                <span className="mt-1 block text-xs opacity-70">Código: {googleReason}</span>
+              </AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleCredentials}>
             <FieldGroup>
               <GoogleButton onClick={handleGoogle}>Continuar com Google</GoogleButton>

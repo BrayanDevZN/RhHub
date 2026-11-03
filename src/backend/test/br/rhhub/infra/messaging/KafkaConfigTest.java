@@ -84,4 +84,21 @@ class KafkaConfigTest {
             }
         }
     }
+
+    @Test
+    void consumersAreOnByDefaultAndTheApiTurnsThemOff() {
+        var env = new org.springframework.mock.env.MockEnvironment();
+        assertThat(KafkaConfig.consumersEnabled(env)).isTrue();
+        env.setProperty("app.kafka.consumers-enabled", "false");
+        assertThat(KafkaConfig.consumersEnabled(env)).isFalse();
+        var factory = new KafkaConfig().kafkaListenerContainerFactory(
+                org.mockito.Mockito.mock(org.springframework.kafka.core.ConsumerFactory.class),
+                org.mockito.Mockito.mock(org.springframework.kafka.listener.CommonErrorHandler.class), env);
+        assertThat(org.springframework.test.util.ReflectionTestUtils.getField(factory, "autoStartup")).isEqualTo(false);
+        env.setProperty("app.kafka.consumers-enabled", "true");
+        var on = new KafkaConfig().kafkaListenerContainerFactory(
+                org.mockito.Mockito.mock(org.springframework.kafka.core.ConsumerFactory.class),
+                org.mockito.Mockito.mock(org.springframework.kafka.listener.CommonErrorHandler.class), env);
+        assertThat(org.springframework.test.util.ReflectionTestUtils.getField(on, "autoStartup")).isEqualTo(true);
+    }
 }

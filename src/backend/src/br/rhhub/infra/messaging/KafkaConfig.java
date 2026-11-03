@@ -124,12 +124,20 @@ public class KafkaConfig {
 
     @Bean
     ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory(
-            ConsumerFactory<String, String> consumerFactory, CommonErrorHandler kafkaErrorHandler) {
+            ConsumerFactory<String, String> consumerFactory, CommonErrorHandler kafkaErrorHandler,
+            org.springframework.core.env.Environment env) {
         var factory = new ConcurrentKafkaListenerContainerFactory<String, String>();
+        // KAFKA_CONSUMERS_ENABLED=false (a imagem da API): o serviço só publica nas filas e não lê nenhuma. Quem
+        // consome é o serviço consumer; assim a API não depende do Kafka para subir nem enche o log de reconexões.
+        factory.setAutoStartup(consumersEnabled(env));
         factory.setConsumerFactory(consumerFactory);
         factory.setCommonErrorHandler(kafkaErrorHandler);
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
         return factory;
+    }
+
+    static boolean consumersEnabled(org.springframework.core.env.Environment env) {
+        return env.getProperty("app.kafka.consumers-enabled", Boolean.class, true);
     }
 
     @Bean

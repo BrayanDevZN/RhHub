@@ -106,8 +106,24 @@ public class GoogleOAuthClient implements GoogleIdentityProvider {
                         log.warn("Falha ao falar com o Google: {}", e.toString());
                     }
                 })
-                .onErrorMap(e -> !(e instanceof DomainException),
-                        e -> new DomainException.Unauthorized("Não foi possível entrar com o Google.", e));
+                .onErrorMap(e -> !(e instanceof DomainException), e -> new LoginFailure(reasonOf(e), e));
+    }
+
+    /** O campo "error" da resposta do Google (invalid_client, invalid_grant...); sem ele, o status HTTP. */
+    static String reasonOf(Throwable error) {
+        if (error instanceof WebClientResponseException http) {
+            try {
+                String code = new com.fasterxml.jackson.databind.ObjectMapper().readTree(http.getResponseBodyAsString())
+                        .path("error").asText("");
+                if (code.matches("[a-z_]{3,40}")) {
+                    return code;
+                }
+            } catch (Exception ignored) {
+                // corpo que não é JSON
+            }
+            return "google_http_" + http.getStatusCode().value();
+        }
+        return "google_unreachable";
     }
 
     private static String enc(String value) {

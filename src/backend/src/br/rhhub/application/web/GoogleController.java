@@ -1,5 +1,7 @@
 package br.rhhub.application.web;
 
+import br.rhhub.application.port.out.GoogleIdentityProvider;
+import br.rhhub.domain.exception.DomainException;
 import br.rhhub.infra.config.WebProperties;
 import br.rhhub.service.AuthService;
 import java.net.URI;
@@ -46,7 +48,7 @@ public class GoogleController {
 
     @GetMapping("/login/oauth2/code/google")
     Mono<Void> callback(@RequestParam(required = false) String code, @RequestParam(required = false) String state,
-            ServerWebExchange exchange) {
+            @RequestParam(required = false) String error, ServerWebExchange exchange) {
         if (!auth.googleEnabled()) {
             return Mono.error(new br.rhhub.domain.exception.DomainException.NotFound("Login com Google desativado."));
         }
@@ -56,22 +58,48 @@ public class GoogleController {
                 expected.getBytes(StandardCharsets.UTF_8), state.getBytes(StandardCharsets.UTF_8))) {
             log.warn("Login com Google recusado: o state não confere (cookie {}, parâmetro {})",
                     expected == null ? "ausente" : "presente", state == null ? "ausente" : "presente");
-            return redirect(exchange, props.homeUrl() + "login?error=google");
+            return failed(exchange, "state");
+        }
+        if (error != null && !error.isBlank()) { // o usuário cancelou ou o Google recusou antes de devolver o code
+            log.warn("Login com Google recusado pelo Google: {}", error);
+            return failed(exchange, "google_" + error.replaceAll("[^a-z_]", "").toLowerCase());
         }
         if (code == null || code.isBlank()) {
-            log.warn("Login com Google recusado: o Google voltou sem code (o usuário cancelou ou o Google recusou)");
-            return redirect(exchange, props.homeUrl() + "login?error=google");
+            log.warn("Login com Google recusado: o Google voltou sem code");
+            return failed(exchange, "no_code");
         }
         return auth.loginWithGoogle(code)
                 .flatMap(session -> {
                     AuthController.openSession0(web, exchange, session);
                     return redirect(exchange, props.homeUrl());
                 })
-                .onErrorResume(error -> {
-                    log.warn("Login com Google recusado: {} ({})", error.getMessage(),
-                            error.getCause() == null ? error.getClass().getSimpleName() : error.getCause().getClass().getSimpleName());
-                    return redirect(exchange, props.homeUrl() + "login?error=google");
+                .onErrorResume(failure -> {
+                    String reason = reasonOf(failure);
+                    log.warn("Login com Google recusado ({}): {}", reason, failure.getMessage());
+                    return failed(exchange, reason);
                 });
+    }
+
+    /**
+     * Código curto do motivo, para a tela do login mostrar (sem dado sensível): o erro do Google, não_gmail, e-mail não
+     * verificado, ou server_error:NomeDaExceção quando foi o nosso lado (banco, Redis...) que falhou.
+     */
+    static String reasonOf(Throwable failure) {
+        if (failure instanceof GoogleIdentityProvider.LoginFailure google) {
+            return google.reason();
+        }
+        if (failure instanceof DomainException.Forbidden) {
+            return "not_gmail";
+        }
+        if (failure instanceof DomainException.Unauthorized) {
+            return "email_not_verified";
+        }
+        return "server_error:" + failure.getClass().getSimpleName();
+    }
+
+    private Mono<Void> failed(ServerWebExchange exchange, String reason) {
+        return redirect(exchange, props.homeUrl() + "login?error=google&reason="
+                + java.net.URLEncoder.encode(reason, StandardCharsets.UTF_8));
     }
 
     private static Mono<Void> redirect(ServerWebExchange exchange, String url) {

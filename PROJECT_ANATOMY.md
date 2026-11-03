@@ -1,5 +1,5 @@
 # Project Anatomy: RhHub
-Generated: 2026-11-03 | 228 files | ~215.9K tokens if all read
+Generated: 2026-11-03 | 230 files | ~220.7K tokens if all read
 
 ## Structure
 | Path | Lines | ~Tokens | Type |
@@ -13,7 +13,7 @@ Generated: 2026-11-03 | 228 files | ~215.9K tokens if all read
 | src/backend/src/br/rhhub/application/web/AuthFilter.java | 73 | 648 | source |
 | src/backend/src/br/rhhub/application/web/CorsConfig.java | 42 | 406 | source |
 | src/backend/src/br/rhhub/application/web/dto/Views.java | 69 | 610 | source |
-| src/backend/src/br/rhhub/application/web/GoogleController.java | 77 | 833 | source |
+| src/backend/src/br/rhhub/application/web/GoogleController.java | 112 | 1.3K | source |
 | src/backend/src/br/rhhub/application/web/HealthController.java | 15 | 86 | source |
 | src/backend/src/br/rhhub/application/web/RateLimitFilter.java | 67 | 684 | source |
 | src/backend/src/br/rhhub/application/web/ResumeController.java | 97 | 1.1K | source |
@@ -48,7 +48,7 @@ Generated: 2026-11-03 | 228 files | ~215.9K tokens if all read
 | src/backend/src/br/rhhub/infra/config/AuthProperties.java | 32 | 276 | source |
 | src/backend/src/br/rhhub/infra/config/ClockConfig.java | 15 | 72 | source |
 | src/backend/src/br/rhhub/infra/config/ServiceConfig.java | 94 | 1.0K | source |
-| src/backend/src/br/rhhub/infra/config/WebProperties.java | 29 | 319 | source |
+| src/backend/src/br/rhhub/infra/config/WebProperties.java | 51 | 535 | source |
 | src/backend/src/br/rhhub/infra/database/adapter/DeadLetterRepositoryAdapter.java | 105 | 1.3K | source |
 | src/backend/src/br/rhhub/infra/database/adapter/ProfilePhotoRepositoryAdapter.java | 56 | 571 | source |
 | src/backend/src/br/rhhub/infra/database/adapter/ResumeRepositoryAdapter.java | 120 | 1.3K | source |
@@ -75,7 +75,7 @@ Generated: 2026-11-03 | 228 files | ~215.9K tokens if all read
 | src/backend/src/br/rhhub/infra/email/JwtHs256.java | 62 | 548 | source |
 | src/backend/src/br/rhhub/infra/email/N8nEmailSender.java | 96 | 954 | source |
 | src/backend/src/br/rhhub/infra/google/GoogleConfig.java | 59 | 513 | source |
-| src/backend/src/br/rhhub/infra/google/GoogleOAuthClient.java | 101 | 1.1K | source |
+| src/backend/src/br/rhhub/infra/google/GoogleOAuthClient.java | 133 | 1.5K | source |
 | src/backend/src/br/rhhub/infra/llm/FixedAiProvider.java | 25 | 172 | source |
 | src/backend/src/br/rhhub/infra/llm/LlmConfig.java | 44 | 375 | source |
 | src/backend/src/br/rhhub/infra/llm/OpenAiCompatibleProvider.java | 104 | 1.2K | source |
@@ -83,7 +83,7 @@ Generated: 2026-11-03 | 228 files | ~215.9K tokens if all read
 | src/backend/src/br/rhhub/infra/messaging/DeadLetterRecoverer.java | 47 | 581 | source |
 | src/backend/src/br/rhhub/infra/messaging/EmailConsumer.java | 29 | 262 | source |
 | src/backend/src/br/rhhub/infra/messaging/EmailKafkaMessage.java | 16 | 152 | source |
-| src/backend/src/br/rhhub/infra/messaging/KafkaConfig.java | 195 | 2.4K | source |
+| src/backend/src/br/rhhub/infra/messaging/KafkaConfig.java | 203 | 2.5K | source |
 | src/backend/src/br/rhhub/infra/messaging/KafkaEmailPublisher.java | 33 | 291 | source |
 | src/backend/src/br/rhhub/infra/messaging/KafkaPublisher.java | 21 | 157 | source |
 | src/backend/src/br/rhhub/infra/messaging/KafkaResumeAnalysisPublisher.java | 32 | 285 | source |
@@ -158,7 +158,7 @@ Generated: 2026-11-03 | 228 files | ~215.9K tokens if all read
 | src/frontend/src/pages/AdminResumes.tsx | 53 | 463 | source |
 | src/frontend/src/pages/AdminUsers.tsx | 172 | 1.7K | source |
 | src/frontend/src/pages/Dashboard.tsx | 150 | 2.5K | source |
-| src/frontend/src/pages/Login.tsx | 159 | 1.5K | source |
+| src/frontend/src/pages/Login.tsx | 183 | 1.9K | source |
 | src/frontend/src/pages/MyResumes.tsx | 39 | 316 | source |
 | src/frontend/src/pages/Profile.tsx | 409 | 3.7K | source |
 | src/frontend/src/pages/Register.tsx | 192 | 1.9K | source |
@@ -169,13 +169,14 @@ Generated: 2026-11-03 | 228 files | ~215.9K tokens if all read
 | railway.api.json | 14 | 77 | config |
 | railway.consumer.json | 8 | 38 | config |
 | railway.kafka.json | 8 | 37 | config |
-| src/backend/resources/application.yml | 71 | 693 | config |
+| src/backend/resources/application.yml | 73 | 730 | config |
 | src/frontend/.oxlintrc.json | 9 | 62 | config |
 | src/frontend/components.json | 26 | 129 | config |
 | src/frontend/package.json | 41 | 252 | config |
 | src/frontend/tsconfig.app.json | 28 | 173 | config |
 | src/frontend/tsconfig.json | 9 | 45 | config |
 | src/frontend/tsconfig.node.json | 24 | 140 | config |
+| src/backend/test/br/rhhub/application/web/GoogleCallbackTest.java | 150 | 2.0K | test |
 | src/backend/test/br/rhhub/application/web/WebApiTest.java | 525 | 7.8K | test |
 | src/backend/test/br/rhhub/domain/AnalysisResultTest.java | 74 | 863 | test |
 | src/backend/test/br/rhhub/domain/AuthDomainTest.java | 121 | 1.5K | test |
@@ -183,6 +184,7 @@ Generated: 2026-11-03 | 228 files | ~215.9K tokens if all read
 | src/backend/test/br/rhhub/flow/AnalysisFlowIntegrationTest.java | 370 | 4.6K | test |
 | src/backend/test/br/rhhub/flow/EmailEndToEndLiveTest.java | 194 | 2.3K | test |
 | src/backend/test/br/rhhub/flow/GroqLiveAnalysisTest.java | 191 | 2.5K | test |
+| src/backend/test/br/rhhub/infra/config/WebPropertiesTest.java | 41 | 403 | test |
 | src/backend/test/br/rhhub/infra/database/DatabaseUrlTest.java | 55 | 582 | test |
 | src/backend/test/br/rhhub/infra/database/PostgresRepositoryTest.java | 34 | 248 | test |
 | src/backend/test/br/rhhub/infra/database/RepositoryContract.java | 307 | 3.8K | test |
@@ -191,10 +193,10 @@ Generated: 2026-11-03 | 228 files | ~215.9K tokens if all read
 | src/backend/test/br/rhhub/infra/document/PdfDocxTextExtractorTest.java | 77 | 768 | test |
 | src/backend/test/br/rhhub/infra/email/HtmlEmailComposerTest.java | 30 | 291 | test |
 | src/backend/test/br/rhhub/infra/email/N8nEmailSenderTest.java | 154 | 1.8K | test |
-| src/backend/test/br/rhhub/infra/google/GoogleOAuthClientTest.java | 99 | 1.2K | test |
+| src/backend/test/br/rhhub/infra/google/GoogleOAuthClientTest.java | 117 | 1.5K | test |
 | src/backend/test/br/rhhub/infra/llm/LlmConfigTest.java | 49 | 513 | test |
 | src/backend/test/br/rhhub/infra/llm/OpenAiCompatibleProviderTest.java | 120 | 1.2K | test |
-| src/backend/test/br/rhhub/infra/messaging/KafkaConfigTest.java | 88 | 1.0K | test |
+| src/backend/test/br/rhhub/infra/messaging/KafkaConfigTest.java | 105 | 1.3K | test |
 | src/backend/test/br/rhhub/infra/messaging/KafkaMessagingIntegrationTest.java | 292 | 3.3K | test |
 | src/backend/test/br/rhhub/infra/messaging/KafkaUrlTest.java | 35 | 418 | test |
 | src/backend/test/br/rhhub/infra/messaging/RemoteKafkaSetupTest.java | 77 | 1.0K | test |
@@ -217,10 +219,10 @@ Generated: 2026-11-03 | 228 files | ~215.9K tokens if all read
 | .env.compose.example | 18 | 152 | other |
 | .gitignore | 4 | 9 | other |
 | Dockerfile | 17 | 150 | other |
-| Dockerfile.Api | 27 | 301 | other |
+| Dockerfile.Api | 29 | 332 | other |
 | Dockerfile.Consumer | 23 | 249 | other |
 | Dockerfile.kafka | 28 | 315 | other |
-| src/backend/.env.example | 46 | 445 | other |
+| src/backend/.env.example | 47 | 469 | other |
 | src/backend/.gitignore | 8 | 13 | other |
 | src/backend/.mvn/wrapper/maven-wrapper.properties | 4 | 42 | other |
 | src/backend/mvnw | 296 | 2.9K | other |
@@ -234,9 +236,9 @@ Generated: 2026-11-03 | 228 files | ~215.9K tokens if all read
 | src/frontend/nginx.conf | 23 | 150 | other |
 
 ## Summary
-- source: 160 files, ~111.7K tokens
+- source: 160 files, ~113.3K tokens
 - config: 12 files, ~3.2K tokens
-- test: 31 files, ~53.2K tokens
+- test: 33 files, ~56.4K tokens
 - docs: 5 files, ~25.6K tokens
 - style: 1 files, ~7.5K tokens
 - other: 19 files, ~14.6K tokens

@@ -75,8 +75,26 @@ class GoogleOAuthClientTest {
     @Test
     void googleRefusalBecomesUnauthorized() {
         tokenStatus = 400;
-        assertThatThrownBy(() -> client().fetchProfile("bad").block()).isInstanceOf(DomainException.Unauthorized.class);
+        assertThatThrownBy(() -> client().fetchProfile("bad").block())
+                .isInstanceOfSatisfying(br.rhhub.application.port.out.GoogleIdentityProvider.LoginFailure.class,
+                        f -> assertThat(f.reason()).isEqualTo("invalid_grant"));
         assertThatThrownBy(() -> client().fetchProfile(" ").block()).isInstanceOf(DomainException.Unauthorized.class);
+    }
+
+    @Test
+    void reasonIsTheGoogleErrorCodeOrAGenericOne() {
+        assertThat(GoogleOAuthClient.reasonOf(new RuntimeException("rede"))).isEqualTo("google_unreachable");
+        var noJson = org.springframework.web.reactive.function.client.WebClientResponseException.create(
+                502, "Bad Gateway", org.springframework.http.HttpHeaders.EMPTY, "<html>".getBytes(), StandardCharsets.UTF_8);
+        assertThat(GoogleOAuthClient.reasonOf(noJson)).isEqualTo("google_http_502");
+        var weird = org.springframework.web.reactive.function.client.WebClientResponseException.create(
+                400, "Bad Request", org.springframework.http.HttpHeaders.EMPTY,
+                "{\"error\":\"<script>alert(1)</script>\"}".getBytes(), StandardCharsets.UTF_8);
+        assertThat(GoogleOAuthClient.reasonOf(weird)).isEqualTo("google_http_400"); // nunca devolve texto livre na URL
+        var invalidClient = org.springframework.web.reactive.function.client.WebClientResponseException.create(
+                401, "Unauthorized", org.springframework.http.HttpHeaders.EMPTY,
+                "{\"error\":\"invalid_client\",\"error_description\":\"Unauthorized\"}".getBytes(), StandardCharsets.UTF_8);
+        assertThat(GoogleOAuthClient.reasonOf(invalidClient)).isEqualTo("invalid_client");
     }
 
     @Test
