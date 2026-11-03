@@ -13,7 +13,7 @@ class LlmConfigTest {
     private final LlmConfig config = new LlmConfig();
 
     private static AppProperties with(String env, String openai, String groq) {
-        return new AppProperties(env, new AppProperties.Database("none", "x.db", 1),
+        return new AppProperties(env, new AppProperties.Database("none", "x.db", 1), new AppProperties.Redis("localhost", 6379, null),
                 new AppProperties.Ai(openai, "m", "http://localhost:1", groq, "m", "http://localhost:1",
                         Duration.ofSeconds(1)),
                 new AppProperties.Email("http://x", "", Duration.ofSeconds(1)));

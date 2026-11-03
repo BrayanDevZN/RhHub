@@ -26,6 +26,12 @@
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
 
+        <!-- Redis assíncrono (Lettuce, API reativa) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+        </dependency>
+
         <!-- Banco assíncrono: R2DBC no PostgreSQL; o SQLite roda em thread própria sobre JDBC -->
         <dependency>
             <groupId>org.springframework</groupId>

@@ -12,6 +12,11 @@ app:
     url: ${DATABASE_URL:none}
     sqlite-path: ${SQLITE_PATH:./data/rhhub.db}
     pool-size: ${DATABASE_POOL_SIZE:10}
+  redis:
+    # Sem as variáveis: Redis local padrão (localhost:6379). Sem senha: conecta só com host e porta.
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
   ai:
     openai-key: ${OPENAI_API_KEY:}
     openai-model: ${OPENAI_MODEL:gpt-4o-mini}

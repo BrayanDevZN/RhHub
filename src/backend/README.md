@@ -19,13 +19,13 @@ Fluxo de uma requisição: `application` (rota) → `service` → `domain` + `ad
 
 | Camada | Situação |
 | --- | --- |
-| `infra` | **Pronta**: `config`, `database` (tabelas e repositórios), `llm` e `email`. |
+| `infra` | **Pronta**: `config`, `database` (tabelas e repositórios), `redis`, `llm` e `email`. Falta só a conexão do Kafka. |
 | `domain` | Parcial: só os modelos (`User`, `Vacancy`, `Resume`...) e `DomainException`. Faltam as regras e o JWT. |
 | `adapter` | As **interfaces** estão hoje em `application/port/out` e as **implementações** do banco em `infra/database/adapter`. Falta reorganizar para o desenho acima. |
 | `service` | Não existe ainda. |
 | `application` | Não existe ainda (não há rotas). |
 
-Ficou de fora de propósito, para entrar depois: Redis, Kafka, o JWT de sessão e BCrypt (o JWT do e-mail já existe em `infra/email`), leitura de PDF/DOCX e os templates HTML de e-mail.
+Ficou de fora de propósito, para entrar depois: Kafka, o JWT de sessão e BCrypt (o JWT do e-mail já existe em `infra/email`), leitura de PDF/DOCX e os templates HTML de e-mail.
 
 ## Estrutura de pastas
 
@@ -49,6 +49,7 @@ src/backend/
 │       │   ├── table/        Dialect, TableDefinition, UsersTable, VacanciesTable, ResumesTable, TableCreator
 │       │   └── adapter/      UserRepositoryAdapter, VacancyRepositoryAdapter, ResumeRepositoryAdapter
 │       ├── email/            N8nEmailSender, JwtHs256, EmailConfig
+│       ├── redis/            RedisConfig (conexão), RedisStore (operações)
 │       └── llm/              OpenAiCompatibleProvider, FixedAiProvider, LlmConfig
 ├── resources/application.yml
 ├── test/
@@ -102,6 +103,22 @@ As consultas de metadados do currículo não selecionam a coluna `file`; o PDF s
 
 Os dois provedores usam a API `/chat/completions`. Qualquer falha de rede ou resposta vazia vira `AiException`.
 
+## Redis
+
+Conexão assíncrona (Lettuce, API reativa) configurada em `infra/redis/RedisConfig`, lendo `REDIS_HOST`, `REDIS_PORT` e `REDIS_PASSWORD` (maiúsculas ou minúsculas):
+
+| Situação | Comportamento |
+| --- | --- |
+| Nenhuma variável | Redis local padrão: `localhost:6379`, sem senha |
+| Só `REDIS_HOST` e/ou `REDIS_PORT` | Conecta só com host e porta |
+| `REDIS_PASSWORD` vazia, `none` ou `null` | Sem senha: conecta só com host e porta |
+| `REDIS_PASSWORD` preenchida | Conecta com a senha |
+| `REDIS_PORT` fora de 1 a 65535 | A subida falha com mensagem clara |
+
+Na subida o log diz se o Redis respondeu (`Redis conectado em host:porta (com senha|sem senha)`). Se ele estiver fora do ar, a aplicação sobe do mesmo jeito e só registra um aviso.
+
+`RedisStore` reúne as operações, todas devolvendo `Mono`: `set` (com ou sem expiração), `setIfAbsent`, `get`, `exists`, `delete`, `increment`, `incrementWithTtl` (soma 1 e define a expiração só na primeira vez, de forma atômica), `expire`, `ttl` e `ping`. Os adapters que vêm depois (códigos de verificação, refresh token, rate limit) só montam as chaves e usam esses métodos.
+
 ## E-mail
 
 O envio é feito pelo workflow **`gmail`** do n8n, que manda o e-mail pela conta Gmail conectada lá. `EmailSender.send(EmailMessage)` devolve `Mono<Void>`.
@@ -132,6 +149,7 @@ Veja o `.env.example`.
 | `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_BASE_URL` | modelo `gpt-4o-mini` | OpenAI |
 | `GROQ_API_KEY`, `GROQ_MODEL`, `GROQ_BASE_URL` | modelo `llama-3.3-70b-versatile` | Groq |
 | `gmail_secret` | vazio | Segredo da credencial JWT do webhook de e-mail do n8n |
+| `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` | `localhost`, `6379`, vazio | Redis (sem senha: só host e porta) |
 | `N8N_EMAIL_WEBHOOK_URL` | URL de produção do workflow `gmail` | Webhook de envio de e-mail |
 | `PORT` | `8080` | Porta HTTP |
 
@@ -151,4 +169,4 @@ DATABASE_URL=postgresql://rhhub:rhhub@localhost:5432/rhhub ./mvnw spring-boot:ru
 
 - Os **mesmos 9 cenários** de repositório rodam contra o SQLite e contra o PostgreSQL, para os dois se comportarem igual.
 - O teste do PostgreSQL usa o banco `rhhub_test` em `localhost:5432` (usuário e senha `rhhub`) e é **pulado** se ele não estiver de pé.
-- Há também testes de `DatabaseUrl`, de `TableCreator` (criação do zero, idempotência e constraints) da escolha do provedor de LLM e do envio de e-mail (contrato do webhook, assinatura do JWT, validação e erros, contra um servidor HTTP local; nenhum e-mail real é enviado nos testes).
+- Há também testes de `DatabaseUrl`, de `TableCreator` (criação do zero, idempotência e constraints) da escolha do provedor de LLM, da conexão e das operações do Redis (contra um Redis local, inclusive um com senha) e do envio de e-mail (contrato do webhook, assinatura do JWT, validação e erros, contra um servidor HTTP local; nenhum e-mail real é enviado nos testes).
