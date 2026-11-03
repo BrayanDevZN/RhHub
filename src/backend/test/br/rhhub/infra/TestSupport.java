@@ -35,4 +35,22 @@ public final class TestSupport {
             return false;
         }
     }
+
+    /**
+     * true quando CADA consumer (cada thread de cada listener) já tem partição. Esperar só o primeiro não basta: o
+     * consumer que entra primeiro recebe todas as partições e, quando os outros chegam, o rebalance move partições
+     * no meio de um teste. A thread nova começa a contagem de tentativas do zero (o controle de falhas é por thread),
+     * e a mesma mensagem é tentada de novo do início.
+     */
+    public static boolean allConsumersAssigned(org.springframework.kafka.config.KafkaListenerEndpointRegistry registry) {
+        var containers = registry.getListenerContainers();
+        return !containers.isEmpty() && containers.stream().allMatch(c -> {
+            if (c instanceof org.springframework.kafka.listener.ConcurrentMessageListenerContainer<?, ?> concurrent) {
+                return concurrent.isRunning() && !concurrent.getContainers().isEmpty()
+                        && concurrent.getContainers().stream().allMatch(child -> child.isRunning()
+                                && child.getAssignedPartitions() != null && !child.getAssignedPartitions().isEmpty());
+            }
+            return c.isRunning() && !c.getAssignedPartitions().isEmpty();
+        });
+    }
 }

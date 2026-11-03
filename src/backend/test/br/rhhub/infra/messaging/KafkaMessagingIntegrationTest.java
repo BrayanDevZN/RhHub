@@ -87,8 +87,8 @@ class KafkaMessagingIntegrationTest {
         broker.afterPropertiesSet();
         ctx = new AnnotationConfigApplicationContext(Context.class);
         // espera os dois consumers (3 threads cada) pegarem as partições
-        await().atMost(Duration.ofSeconds(60)).until(() -> ctx.getBean(org.springframework.kafka.config.KafkaListenerEndpointRegistry.class)
-                .getListenerContainers().stream().allMatch(c -> c.isRunning() && !c.getAssignedPartitions().isEmpty()));
+        await().atMost(Duration.ofSeconds(60)).until(() -> br.rhhub.infra.TestSupport.allConsumersAssigned(
+                ctx.getBean(org.springframework.kafka.config.KafkaListenerEndpointRegistry.class)));
     }
 
     @AfterAll

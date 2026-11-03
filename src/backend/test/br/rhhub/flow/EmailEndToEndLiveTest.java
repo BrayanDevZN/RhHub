@@ -152,8 +152,8 @@ class EmailEndToEndLiveTest {
         broker = new EmbeddedKafkaKraftBroker(1, 3);
         broker.afterPropertiesSet();
         ctx = new AnnotationConfigApplicationContext(Context.class);
-        await().atMost(Duration.ofSeconds(60)).until(() -> ctx.getBean(org.springframework.kafka.config.KafkaListenerEndpointRegistry.class)
-                .getListenerContainers().stream().allMatch(c -> c.isRunning() && !c.getAssignedPartitions().isEmpty()));
+        await().atMost(Duration.ofSeconds(60)).until(() -> br.rhhub.infra.TestSupport.allConsumersAssigned(
+                ctx.getBean(org.springframework.kafka.config.KafkaListenerEndpointRegistry.class)));
     }
 
     @AfterAll
