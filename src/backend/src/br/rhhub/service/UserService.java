@@ -19,13 +19,13 @@ public class UserService {
     }
 
     private final UserRepository users;
-    private final PasswordHasher hasher;
+    private final Passwords passwords;
     private final RefreshTokenStore refreshTokens;
     private final AccessPolicy policy;
 
     public UserService(UserRepository users, PasswordHasher hasher, RefreshTokenStore refreshTokens, AccessPolicy policy) {
         this.users = users;
-        this.hasher = hasher;
+        this.passwords = new Passwords(hasher);
         this.refreshTokens = refreshTokens;
         this.policy = policy;
     }
@@ -67,10 +67,11 @@ public class UserService {
     public Mono<Void> deleteOwn(UUID publicId, String password) {
         return me(publicId).flatMap(user -> {
             policy.checkDelete(user, user);
-            if (!user.isGoogle() && (user.passwordHash() == null || !hasher.matches(password, user.passwordHash()))) {
-                return Mono.<Void>error(new DomainException.Unauthorized("Senha incorreta."));
-            }
-            return users.deleteByPublicId(publicId).then(Mono.defer(() -> refreshTokens.revoke(publicId)));
+            Mono<Boolean> confirmed = user.isGoogle() ? Mono.just(true)
+                    : user.passwordHash() == null ? Mono.just(false) : passwords.matches(password, user.passwordHash());
+            return confirmed.flatMap(ok -> ok
+                    ? users.deleteByPublicId(publicId).then(Mono.defer(() -> refreshTokens.revoke(publicId)))
+                    : Mono.<Void>error(new DomainException.Unauthorized("Senha incorreta.")));
         });
     }
 }

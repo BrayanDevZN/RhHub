@@ -1,6 +1,13 @@
 spring:
   application:
     name: rhhub
+  codec:
+    max-in-memory-size: 1MB
+  webflux:
+    multipart:
+      max-in-memory-size: 1MB
+      max-disk-usage-per-part: 6MB
+      max-parts: 10
 
 server:
   port: ${PORT:8080}
@@ -48,6 +55,13 @@ app:
       client-id: ${GOOGLE_CLIENT_ID:}
       client-secret: ${GOOGLE_CLIENT_SECRET:}
       redirect-uri: ${GOOGLE_REDIRECT_URI:}
+  web:
+    # Origens liberadas no CORS (separadas por vírgula) e destino do login com Google. Vazio: só mesma origem.
+    frontend-origin: ${FRONTEND_ORIGIN:}
+    # Vazio: Secure ligado (desligado só com ENVIRONMENT=test). Em http local use COOKIE_SECURE=false.
+    cookie-secure: ${COOKIE_SECURE:}
+    # Strict exige front e API no mesmo domínio (proxy do nginx em /api)
+    cookie-same-site: ${COOKIE_SAMESITE:Strict}
   email:
     # Workflow "gmail" do n8n: POST com JWT (HS256) e corpo {type, to, subject, content}
     webhook-url: ${N8N_EMAIL_WEBHOOK_URL:https://n8n.nexoaicompany.com/webhook/a043ad9f-9a0c-4bbd-a142-f64a1cd524c0}

@@ -1,0 +1,68 @@
+package br.rhhub.application.web.dto;
+
+import br.rhhub.domain.model.Resume;
+import br.rhhub.domain.model.User;
+import br.rhhub.domain.model.Vacancy;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.Instant;
+import java.util.UUID;
+
+/** O que a API devolve (campos em snake_case, como na DOCUMENTACAO.md). Nunca inclui hash de senha nem google_sub. */
+public final class Views {
+
+    private Views() {
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record UserView(
+            Long id,
+            @JsonProperty("public_id") UUID publicId,
+            String name,
+            String email,
+            String cpf,
+            Integer age,
+            String gender,
+            @JsonProperty("two_factor") boolean twoFactor,
+            String role,
+            String provider,
+            @JsonProperty("has_photo") Boolean hasPhoto,
+            @JsonProperty("created_at") Instant createdAt) {
+    }
+
+    /** created_by só aparece para admin. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record VacancyView(
+            Long id,
+            String name,
+            String description,
+            @JsonProperty("created_by") Long createdBy,
+            @JsonProperty("created_at") Instant createdAt) {
+    }
+
+    public record ResumeView(
+            Long id,
+            @JsonProperty("user_id") Long userId,
+            @JsonProperty("vacancy_id") Long vacancyId,
+            @JsonProperty("file_name") String fileName,
+            @JsonProperty("content_type") String contentType,
+            String status,
+            String reason,
+            @JsonProperty("created_at") Instant createdAt) {
+    }
+
+    public static UserView user(User u, Boolean hasPhoto) {
+        return new UserView(u.id(), u.publicId(), u.name(), u.email(), u.cpf(), u.age(),
+                u.gender() == null ? null : u.gender().value(), u.twoFactor(), u.role().value(), u.provider().value(),
+                hasPhoto, u.createdAt());
+    }
+
+    public static VacancyView vacancy(Vacancy v, boolean admin) {
+        return new VacancyView(v.id(), v.name(), v.description(), admin ? v.createdBy() : null, v.createdAt());
+    }
+
+    public static ResumeView resume(Resume r) {
+        return new ResumeView(r.id(), r.userId(), r.vacancyId(), r.fileName(), r.contentType(), r.status().value(),
+                r.reason(), r.createdAt());
+    }
+}

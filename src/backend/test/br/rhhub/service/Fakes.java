@@ -29,13 +29,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /** Implementações em memória das portas, para testar os serviços sem banco, Redis nem rede. */
-final class Fakes {
+public final class Fakes {
 
     private Fakes() {
     }
 
-    static class Users implements UserRepository {
-        final Map<Long, User> byId = new HashMap<>();
+    public static class Users implements UserRepository {
+        public final Map<Long, User> byId = new HashMap<>();
         private final AtomicLong seq = new AtomicLong();
 
         private Mono<User> first(java.util.function.Predicate<User> p) {
@@ -72,15 +72,15 @@ final class Fakes {
         }
     }
 
-    static class Refresh implements RefreshTokenStore {
-        final Map<UUID, String> tokens = new HashMap<>();
+    public static class Refresh implements RefreshTokenStore {
+        public final Map<UUID, String> tokens = new HashMap<>();
         @Override public Mono<Void> save(UUID id, String t) { tokens.put(id, t); return Mono.empty(); }
         @Override public Mono<Boolean> isCurrent(UUID id, String t) { return Mono.just(t.equals(tokens.get(id))); }
         @Override public Mono<Void> revoke(UUID id) { tokens.remove(id); return Mono.empty(); }
     }
 
-    static class Codes implements VerificationCodeStore {
-        final Map<String, String> issued = new HashMap<>();
+    public static class Codes implements VerificationCodeStore {
+        public final Map<String, String> issued = new HashMap<>();
         @Override
         public Mono<String> issue(CodePurpose purpose, String email) {
             String code = String.format("%06d", issued.size() + 1);
@@ -96,17 +96,17 @@ final class Fakes {
             issued.remove(purpose.key(email));
             return Mono.empty();
         }
-        String last(CodePurpose purpose, String email) { return issued.get(purpose.key(email)); }
+        public String last(CodePurpose purpose, String email) { return issued.get(purpose.key(email)); }
     }
 
-    static class Mailbox implements EmailSender {
-        final List<EmailMessage> sent = new ArrayList<>();
+    public static class Mailbox implements EmailSender {
+        public final List<EmailMessage> sent = new ArrayList<>();
         @Override public Mono<Void> send(EmailMessage m) { sent.add(m); return Mono.empty(); }
         @Override public String name() { return "fake"; }
     }
 
-    static class Google implements GoogleIdentityProvider {
-        Profile profile = new Profile("g-1", "gente@gmail.com", true, "Gente");
+    public static class Google implements GoogleIdentityProvider {
+        public Profile profile = new Profile("g-1", "gente@gmail.com", true, "Gente");
         @Override public boolean enabled() { return true; }
         @Override public String authorizationUrl(String state) { return "https://google/auth?state=" + state; }
         @Override public Mono<Profile> fetchProfile(String code) {
@@ -114,8 +114,8 @@ final class Fakes {
         }
     }
 
-    static class Vacancies implements VacancyRepository {
-        final Map<Long, Vacancy> byId = new HashMap<>();
+    public static class Vacancies implements VacancyRepository {
+        public final Map<Long, Vacancy> byId = new HashMap<>();
         private final AtomicLong seq = new AtomicLong();
         @Override public Mono<Vacancy> findById(Long id) { return Mono.justOrEmpty(byId.get(id)); }
         @Override public Flux<Vacancy> findAll() { return Flux.fromIterable(new ArrayList<>(byId.values())); }
@@ -135,8 +135,8 @@ final class Fakes {
         @Override public Mono<Void> deleteById(Long id) { byId.remove(id); return Mono.empty(); }
     }
 
-    static class Resumes implements ResumeRepository {
-        final Map<Long, Resume> byId = new HashMap<>();
+    public static class Resumes implements ResumeRepository {
+        public final Map<Long, Resume> byId = new HashMap<>();
         final Map<Long, byte[]> files = new HashMap<>();
         private final AtomicLong seq = new AtomicLong();
         @Override public Mono<Resume> findById(Long id) { return Mono.justOrEmpty(byId.get(id)); }
@@ -171,9 +171,9 @@ final class Fakes {
         @Override public Mono<Void> deleteById(Long id) { byId.remove(id); files.remove(id); return Mono.empty(); }
     }
 
-    static class Analysis implements ResumeAnalysisPublisher {
-        final List<Long> queued = new ArrayList<>();
-        boolean failing;
+    public static class Analysis implements ResumeAnalysisPublisher {
+        public final List<Long> queued = new ArrayList<>();
+        public boolean failing;
         @Override
         public Mono<Void> publish(Long resumeId) {
             if (failing) {
@@ -184,8 +184,8 @@ final class Fakes {
         }
     }
 
-    static class Photos implements ProfilePhotoRepository {
-        final Map<Long, ProfilePhoto> byUser = new HashMap<>();
+    public static class Photos implements ProfilePhotoRepository {
+        public final Map<Long, ProfilePhoto> byUser = new HashMap<>();
         @Override public Mono<Void> save(Long userId, ProfilePhoto p) { byUser.put(userId, p); return Mono.empty(); }
         @Override public Mono<ProfilePhoto> find(Long userId) { return Mono.justOrEmpty(byUser.get(userId)); }
         @Override public Mono<Boolean> exists(Long userId) { return Mono.just(byUser.containsKey(userId)); }

@@ -41,7 +41,7 @@ public class AuthService {
     private static final String BAD_CREDENTIALS = "E-mail ou senha incorretos.";
 
     private final UserRepository users;
-    private final PasswordHasher hasher;
+    private final Passwords passwords;
     private final JwtService jwt;
     private final RefreshTokenStore refreshTokens;
     private final VerificationCodeStore codes;
@@ -56,7 +56,7 @@ public class AuthService {
             VerificationCodeStore codes, EmailComposer composer, EmailSender email, GoogleIdentityProvider google,
             Clock clock, boolean exposeCode) {
         this.users = users;
-        this.hasher = hasher;
+        this.passwords = new Passwords(hasher);
         this.jwt = jwt;
         this.refreshTokens = refreshTokens;
         this.codes = codes;
@@ -65,7 +65,7 @@ public class AuthService {
         this.google = google;
         this.clock = clock;
         this.exposeCode = exposeCode;
-        this.dummyHash = hasher.hash("senha-que-ninguem-usa");
+        this.dummyHash = passwords.hashNow("senha-que-ninguem-usa");
     }
 
     // ---- cadastro ----
@@ -97,8 +97,9 @@ public class AuthService {
                     .flatMap(exists -> exists
                             ? Mono.<Void>error(new DomainException.Conflict("Esse CPF já está cadastrado."))
                             : codes.verify(CodePurpose.SIGNUP, address, code))
-                    .then(Mono.defer(() -> users.save(new User(null, UUID.randomUUID(), name, address, cpf, age, gender,
-                            hasher.hash(password), false, Role.USER, AuthProvider.LOCAL, null, null))))
+                    .then(Mono.defer(() -> passwords.hash(password)))
+                    .flatMap(hash -> users.save(new User(null, UUID.randomUUID(), name, address, cpf, age, gender,
+                            hash, false, Role.USER, AuthProvider.LOCAL, null, null)))
                     .flatMap(this::openSession);
         });
     }
@@ -109,23 +110,23 @@ public class AuthService {
         return Mono.defer(() -> {
             String address = Rules.email(rawEmail);
             return users.findByEmail(address)
-                    .switchIfEmpty(Mono.fromSupplier(() -> {
-                        hasher.matches(password, dummyHash); // gasta o mesmo tempo de um usuário real
-                        return null;
-                    }))
+                    .switchIfEmpty(Mono.defer(() -> passwords.matches(password, dummyHash) // mesmo tempo de um usuário real
+                            .then(Mono.<User>empty())))
                     .flatMap(user -> {
                         if (user.isGoogle() || user.passwordHash() == null) {
                             return Mono.<LoginResult>error(new DomainException.Unauthorized(
                                     "Essa conta usa o login com Google."));
                         }
-                        if (!hasher.matches(password, user.passwordHash())) {
-                            return Mono.<LoginResult>error(new DomainException.Unauthorized(BAD_CREDENTIALS));
-                        }
-                        if (user.twoFactor()) {
-                            return Mono.just(new LoginResult(null,
-                                    jwt.issue(user.publicId(), TokenType.TWO_FACTOR, clock.instant())));
-                        }
-                        return openSession(user).map(session -> new LoginResult(session, null));
+                        return passwords.matches(password, user.passwordHash()).flatMap(ok -> {
+                            if (!ok) {
+                                return Mono.<LoginResult>error(new DomainException.Unauthorized(BAD_CREDENTIALS));
+                            }
+                            if (user.twoFactor()) {
+                                return Mono.just(new LoginResult(null,
+                                        jwt.issue(user.publicId(), TokenType.TWO_FACTOR, clock.instant())));
+                            }
+                            return openSession(user).map(session -> new LoginResult(session, null));
+                        });
                     })
                     .switchIfEmpty(Mono.error(new DomainException.Unauthorized(BAD_CREDENTIALS)));
         });
@@ -175,11 +176,11 @@ public class AuthService {
                 if (user.isGoogle() || user.passwordHash() == null) {
                     return Mono.<Void>error(new DomainException.Unprocessable("Contas do Google não têm senha."));
                 }
-                if (!hasher.matches(current, user.passwordHash())) {
-                    return Mono.<Void>error(new DomainException.Unauthorized("Senha atual incorreta."));
-                }
-                return users.save(user.withPasswordHash(hasher.hash(newPassword)))
-                        .then(Mono.defer(() -> refreshTokens.revoke(publicId)));
+                return passwords.matches(current, user.passwordHash()).flatMap(ok -> ok
+                        ? passwords.hash(newPassword)
+                                .flatMap(hash -> users.save(user.withPasswordHash(hash)))
+                                .then(Mono.defer(() -> refreshTokens.revoke(publicId)))
+                        : Mono.<Void>error(new DomainException.Unauthorized("Senha atual incorreta.")));
             });
         });
     }
@@ -203,7 +204,8 @@ public class AuthService {
             return codes.verify(CodePurpose.PASSWORD_RESET, address, code)
                     .then(Mono.defer(() -> users.findByEmail(address)))
                     .switchIfEmpty(Mono.error(new DomainException.Unauthorized("Código inválido ou expirado.")))
-                    .flatMap(user -> users.save(user.withPasswordHash(hasher.hash(newPassword)))
+                    .flatMap(user -> passwords.hash(newPassword)
+                            .flatMap(hash -> users.save(user.withPasswordHash(hash)))
                             .then(Mono.defer(() -> refreshTokens.revoke(user.publicId()))));
         });
     }
@@ -249,8 +251,9 @@ public class AuthService {
             return users.findByEmail(address)
                     .flatMap(existing -> existing.isAdmin() ? Mono.just(existing)
                             : users.save(existing.withRole(Role.ADMIN)))
-                    .switchIfEmpty(Mono.defer(() -> users.save(new User(null, UUID.randomUUID(), "Administrador", address,
-                            null, null, null, hasher.hash(password), false, Role.ADMIN, AuthProvider.LOCAL, null, null))));
+                    .switchIfEmpty(Mono.defer(() -> passwords.hash(password)
+                            .flatMap(hash -> users.save(new User(null, UUID.randomUUID(), "Administrador", address,
+                                    null, null, null, hash, false, Role.ADMIN, AuthProvider.LOCAL, null, null)))));
         });
     }
 
