@@ -70,7 +70,7 @@ public class GoogleController {
         }
         return auth.loginWithGoogle(code)
                 .flatMap(session -> {
-                    AuthController.openSession0(web, exchange, session);
+                    AuthController.openGoogleSession(web, exchange, session);
                     return redirect(exchange, props.homeUrl());
                 })
                 .onErrorResume(failure -> {

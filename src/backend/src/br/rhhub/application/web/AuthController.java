@@ -140,6 +140,12 @@ public class AuthController {
         exchange.getResponse().addCookie(web.cookie(TokenType.REFRESH, session.refreshToken()));
     }
 
+    /** Sessão aberta na volta do Google: os cookies precisam ser Lax (ver WebSupport.landingCookie). */
+    static void openGoogleSession(WebSupport web, ServerWebExchange exchange, AuthService.Session session) {
+        exchange.getResponse().addCookie(web.landingCookie(TokenType.ACCESS, session.accessToken()));
+        exchange.getResponse().addCookie(web.landingCookie(TokenType.REFRESH, session.refreshToken()));
+    }
+
     private void openSession(ServerWebExchange exchange, AuthService.Session session) {
         openSession0(web, exchange, session);
     }

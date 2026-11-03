@@ -104,6 +104,9 @@ class GoogleCallbackTest {
         assertThat(res.getResponseHeaders().getLocation().toString()).isEqualTo("https://front.exemplo.com/");
         assertThat(res.getResponseCookies().getFirst("X-user_token").isHttpOnly()).isTrue();
         assertThat(res.getResponseCookies().getFirst("X-user_refresh_token")).isNotNull();
+        // Strict seria descartado pelo navegador nesta volta vinda do Google, e o usuário caía de novo no /login.
+        assertThat(res.getResponseCookies().getFirst("X-user_token").getSameSite()).isEqualTo("Lax");
+        assertThat(res.getResponseCookies().getFirst("X-user_refresh_token").getSameSite()).isEqualTo("Lax");
         assertThat(res.getResponseCookies().getFirst("X-oauth_state").getMaxAge().isZero()).isTrue(); // state usado uma vez
         assertThat(users.byId.values()).extracting("email").containsExactly("ana@gmail.com");
     }

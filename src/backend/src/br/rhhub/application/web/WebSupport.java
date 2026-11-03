@@ -41,6 +41,15 @@ public class WebSupport {
         return base(type, token).maxAge(type.lifetime()).build();
     }
 
+    /**
+     * Cookie de sessão aberto na volta do Google. O navegador descarta Set-Cookie SameSite=Strict numa resposta que
+     * vem de uma cadeia de navegação iniciada em outro site (accounts.google.com), e o login ficava sem sessão e
+     * voltava para /login. Aqui o SameSite é Lax (o mesmo valor do state); o cookie volta a Strict ao renovar.
+     */
+    public ResponseCookie landingCookie(TokenType type, String token) {
+        return base(type, token).sameSite("Lax").maxAge(type.lifetime()).build();
+    }
+
     public ResponseCookie expired(TokenType type) {
         return base(type, "").maxAge(Duration.ZERO).build();
     }
