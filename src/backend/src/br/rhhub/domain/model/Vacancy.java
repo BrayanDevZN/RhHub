@@ -17,7 +17,9 @@ public record Vacancy(
         Long createdBy,
         Instant createdAt,
         boolean hasPhoto,
-        List<String> stages) {
+        List<String> stages,
+        Instant expiresAt,
+        int applicants) {
 
     /** Sem etapas informadas, vale o padrão (Triagem, Entrevista, Contratado). */
     public Vacancy {
@@ -26,15 +28,26 @@ public record Vacancy(
 
     public Vacancy(Long id, String name, String description, String requirements, String responsibilities,
             Long createdBy, Instant createdAt, boolean hasPhoto) {
-        this(id, name, description, requirements, responsibilities, createdBy, createdAt, hasPhoto, null);
+        this(id, name, description, requirements, responsibilities, createdBy, createdAt, hasPhoto, null, null, 0);
+    }
+
+    /** Vaga sem expiração e sem candidatos contados (o banco preenche applicants ao ler). */
+    public Vacancy(Long id, String name, String description, String requirements, String responsibilities,
+            Long createdBy, Instant createdAt, boolean hasPhoto, List<String> stages) {
+        this(id, name, description, requirements, responsibilities, createdBy, createdAt, hasPhoto, stages, null, 0);
+    }
+
+    /** Sem data de expiração a vaga fica aberta até alguém apagá-la. */
+    public boolean isExpired(Instant now) {
+        return expiresAt != null && !expiresAt.isAfter(now);
     }
 
     /** Vaga só com o básico, sem requisitos, responsabilidades nem foto. */
     public Vacancy(Long id, String name, String description, Long createdBy, Instant createdAt) {
-        this(id, name, description, null, null, createdBy, createdAt, false, null);
+        this(id, name, description, null, null, createdBy, createdAt, false, null, null, 0);
     }
 
     public Vacancy withHasPhoto(boolean value) {
-        return new Vacancy(id, name, description, requirements, responsibilities, createdBy, createdAt, value, stages);
+        return new Vacancy(id, name, description, requirements, responsibilities, createdBy, createdAt, value, stages, expiresAt, applicants);
     }
 }

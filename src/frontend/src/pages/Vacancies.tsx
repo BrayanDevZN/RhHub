@@ -9,6 +9,7 @@ import {
   SearchIcon,
   Trash2Icon,
   UploadIcon,
+  UsersIcon,
 } from "lucide-react"
 import { cn } from "cn"
 import { PageHeader } from "@/components/PageHeader"
@@ -53,7 +54,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/toast"
 import { api, errorMessage } from "@/lib/api"
 import { useCurrentUser } from "@/lib/auth"
-import { formatDate } from "@/lib/format"
+import { endOfDayIso, formatDate, isExpired, toDateInput } from "@/lib/format"
 import { DEFAULT_STAGES, type Resume, type Vacancy } from "@/lib/types"
 import { useQuery } from "@/lib/use-query"
 
@@ -97,6 +98,28 @@ function FormattedText({ text }: { text: string }) {
   )
 }
 
+/** Prazo da vaga e, para o admin, quantos candidatos ela já tem. */
+function VacancyMeta({ vacancy, isAdmin }: { vacancy: Vacancy; isAdmin: boolean }) {
+  const expired = isExpired(vacancy)
+  if (!vacancy.expires_at && !(isAdmin && vacancy.applicants !== undefined)) return null
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {vacancy.expires_at && (
+        <Badge variant={expired ? "destructive" : "outline"}>
+          <CalendarIcon data-icon="inline-start" />
+          {expired ? "Encerrada" : `Até ${formatDate(vacancy.expires_at)}`}
+        </Badge>
+      )}
+      {isAdmin && vacancy.applicants !== undefined && (
+        <Badge variant="secondary">
+          <UsersIcon data-icon="inline-start" />
+          {vacancy.applicants === 1 ? "1 candidato" : `${vacancy.applicants} candidatos`}
+        </Badge>
+      )}
+    </div>
+  )
+}
+
 function DetailSection({ title, text }: { title: string; text: string }) {
   return (
     <section className="flex flex-col gap-2">
@@ -110,12 +133,14 @@ function VacancyDetailsDialog({
   vacancy,
   version,
   resume,
+  isAdmin,
   onOpenChange,
   onApply,
 }: {
   vacancy: Vacancy | null
   version: number
   resume?: Resume
+  isAdmin: boolean
   onOpenChange: (open: boolean) => void
   onApply: (vacancy: Vacancy) => void
 }) {
@@ -133,6 +158,7 @@ function VacancyDetailsDialog({
                   Publicada em {formatDate(vacancy.created_at)}
                 </DialogDescription>
               </DialogHeader>
+              <VacancyMeta vacancy={vacancy} isAdmin={isAdmin} />
               <DetailSection title="Sobre a vaga" text={vacancy.description} />
               {vacancy.requirements && <DetailSection title="Requisitos" text={vacancy.requirements} />}
               {vacancy.responsibilities && <DetailSection title="Responsabilidades" text={vacancy.responsibilities} />}
@@ -147,13 +173,14 @@ function VacancyDetailsDialog({
                   <StatusBadge status={resume.status} />
                 ) : (
                   <Button
+                    disabled={isExpired(vacancy)}
                     onClick={() => {
                       onOpenChange(false)
                       onApply(vacancy)
                     }}
                   >
                     <UploadIcon data-icon="inline-start" />
-                    Candidatar-se
+                    {isExpired(vacancy) ? "Vaga encerrada" : "Candidatar-se"}
                   </Button>
                 )}
               </div>
@@ -270,6 +297,7 @@ function VacancyFormDialog({
   const [requirements, setRequirements] = useState("")
   const [responsibilities, setResponsibilities] = useState("")
   const [stages, setStages] = useState<string[]>(DEFAULT_STAGES)
+  const [expires, setExpires] = useState("")
   const [file, setFile] = useState<File | null>(null)
   const [removed, setRemoved] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -284,6 +312,7 @@ function VacancyFormDialog({
       setRequirements(vacancy?.requirements ?? "")
       setResponsibilities(vacancy?.responsibilities ?? "")
       setStages(vacancy?.stages ?? DEFAULT_STAGES)
+      setExpires(toDateInput(vacancy?.expires_at))
       setFile(null)
       setRemoved(false)
     }
@@ -293,7 +322,10 @@ function VacancyFormDialog({
     event.preventDefault()
     setBusy(true)
     try {
-      const data = { name, description, requirements, responsibilities, stages } // vazio em requisitos/responsabilidades apaga
+      // O prazo só vai quando mudou (editar uma vaga vencida sem mexer na data não pode falhar): vazio remove.
+      const original = toDateInput(vacancy?.expires_at)
+      const expiresAt = expires === original ? undefined : expires ? endOfDayIso(expires) : ""
+      const data = { name, description, requirements, responsibilities, stages, expiresAt } // vazio em requisitos/responsabilidades apaga
       const saved = vacancy ? await api.vacancies.update(vacancy.id, data) : await api.vacancies.create(data)
       let photoProblem: string | null = null
       try {
@@ -369,6 +401,19 @@ function VacancyFormDialog({
                 onChange={(e) => setResponsibilities(e.target.value)}
               />
               <FieldDescription>Uma por linha: o que a pessoa vai fazer no dia a dia.</FieldDescription>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="vacancy-expires">Expiração (opcional)</FieldLabel>
+              <Input
+                id="vacancy-expires"
+                type="date"
+                value={expires}
+                min={vacancy ? undefined : toDateInput(new Date().toISOString())}
+                onChange={(e) => setExpires(e.target.value)}
+              />
+              <FieldDescription>
+                Até esse dia (inclusive) a vaga recebe candidaturas. Em branco, ela fica aberta até você excluí-la.
+              </FieldDescription>
             </Field>
             <Field>
               <FieldLabel>Etapas do processo</FieldLabel>
@@ -590,6 +635,7 @@ export default function Vacancies() {
                 </CardHeader>
                 <CardContent className="flex flex-1 flex-col gap-3">
                   <p className="line-clamp-3 text-sm text-muted-foreground">{vacancy.description}</p>
+                  <VacancyMeta vacancy={vacancy} isAdmin={isAdmin} />
                   {(vacancy.requirements || vacancy.responsibilities) && (
                     <div className="flex flex-wrap gap-1.5">
                       {vacancy.requirements && <Badge variant="secondary">Requisitos</Badge>}
@@ -606,9 +652,14 @@ export default function Vacancies() {
                       <StatusBadge status={resume.status} />
                     </span>
                   ) : (
-                    <Button variant="outline" className="ml-auto" onClick={() => setApplying(vacancy)}>
+                    <Button
+                      variant="outline"
+                      className="ml-auto"
+                      disabled={isExpired(vacancy)}
+                      onClick={() => setApplying(vacancy)}
+                    >
                       <UploadIcon data-icon="inline-start" />
-                      Candidatar-se
+                      {isExpired(vacancy) ? "Vaga encerrada" : "Candidatar-se"}
                     </Button>
                   )}
                 </CardFooter>
@@ -632,6 +683,7 @@ export default function Vacancies() {
         vacancy={viewing}
         version={photoVersion}
         resume={viewing ? myResume(viewing.id) : undefined}
+        isAdmin={isAdmin}
         onOpenChange={(open) => !open && setViewing(null)}
         onApply={setApplying}
       />

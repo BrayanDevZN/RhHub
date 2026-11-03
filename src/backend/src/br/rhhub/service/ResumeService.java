@@ -25,8 +25,16 @@ public class ResumeService {
     private final DocumentTextExtractor extractor;
     private final ResumeAnalysisPublisher analysis;
 
+    private final java.time.Clock clock;
+
     public ResumeService(ResumeRepository resumes, VacancyRepository vacancies, DocumentTextExtractor extractor,
             ResumeAnalysisPublisher analysis) {
+        this(resumes, vacancies, extractor, analysis, java.time.Clock.systemUTC());
+    }
+
+    public ResumeService(ResumeRepository resumes, VacancyRepository vacancies, DocumentTextExtractor extractor,
+            ResumeAnalysisPublisher analysis, java.time.Clock clock) {
+        this.clock = clock;
         this.resumes = resumes;
         this.vacancies = vacancies;
         this.extractor = extractor;
@@ -53,7 +61,9 @@ public class ResumeService {
             String name = cleanName(fileName, type.name().toLowerCase());
             return vacancies.findById(vacancyId)
                     .switchIfEmpty(Mono.error(new DomainException.NotFound("Vaga não encontrada.")))
-                    .then(Mono.defer(() -> resumes.existsByUserIdAndVacancyId(actor.id(), vacancyId)))
+                    .flatMap(vacancy -> vacancy.isExpired(clock.instant())
+                            ? Mono.<Boolean>error(new DomainException.Unprocessable("Essa vaga já foi encerrada."))
+                            : resumes.existsByUserIdAndVacancyId(actor.id(), vacancyId))
                     .flatMap(exists -> exists
                             ? Mono.<Resume>error(new DomainException.Conflict("Você já se candidatou a essa vaga."))
                             : resumes.create(new Resume(null, actor.id(), vacancyId, name, type.contentType(),

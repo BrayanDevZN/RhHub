@@ -365,7 +365,7 @@ Prefixo `/api`. Respostas em JSON. Sessão por cookie, então o front usa `crede
 | --- | --- | --- | --- | --- |
 | `GET` | `/vacancies` | Logado | Lista as vagas (candidato não vê `created_by`) | `GET /vancancies` |
 | `GET` | `/vacancies/{id}` | Logado | Detalhe de uma vaga | `GET /vancancies` |
-| `POST` | `/vacancies` | Admin | Cria `{name, description, requirements?, responsibilities?, stages?}`. Nome único. **Só a descrição é obrigatória**. `stages` são as etapas do processo: sem elas valem `Triagem`, `Entrevista` e `Contratado`; a **Triagem é obrigatória** e sempre a primeira | `POST /vancancies` |
+| `POST` | `/vacancies` | Admin | Cria `{name, description, requirements?, responsibilities?, stages?}`. Nome único. **Só a descrição é obrigatória**. `expiresAt` (opcional, ISO-8601 no futuro; vazio remove, ausente mantém) fecha a vaga para candidaturas depois da data (`422 Essa vaga já foi encerrada.`). O admin recebe `applicants` (número de candidaturas) e todos recebem `expires_at`. `stages` são as etapas do processo: sem elas valem `Triagem`, `Entrevista` e `Contratado`; a **Triagem é obrigatória** e sempre a primeira | `POST /vancancies` |
 | `PATCH` | `/vacancies/{id}` | Admin | Edita os campos enviados. Texto vazio em requisitos ou responsabilidades apaga o campo | `PATCH /vancancies` |
 | `PUT` | `/vacancies/{id}/photo` | Admin | Envia a foto da vaga (`multipart`, campo `file`: JPEG, PNG ou WebP, até 2 MB, conferido pelo conteúdo). Troca a anterior | novo |
 | `GET` | `/vacancies/{id}/photo` | Logado | A imagem da vaga (`404` se não tiver). Fica 5 min em cache; o front força a troca com `?v=` | novo |

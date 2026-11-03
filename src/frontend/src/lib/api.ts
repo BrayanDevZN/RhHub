@@ -92,6 +92,7 @@ export type VacancyInput = {
   description: string
   requirements?: string
   responsibilities?: string
+  expiresAt?: string // ISO no futuro; vazio remove o prazo; ausente mantém
   stages?: string[] // a Triagem entra sempre; sem a lista, valem as etapas padrão (ou as atuais, ao editar)
 }
 

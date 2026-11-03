@@ -41,6 +41,8 @@ public final class Views {
             String responsibilities,
             @JsonProperty("has_photo") boolean hasPhoto,
             List<String> stages,
+            @JsonProperty("expires_at") Instant expiresAt,
+            Integer applicants,
             @JsonProperty("created_by") Long createdBy,
             @JsonProperty("created_at") Instant createdAt) {
     }
@@ -64,7 +66,7 @@ public final class Views {
     }
 
     public static VacancyView vacancy(Vacancy v, boolean admin) {
-        return new VacancyView(v.id(), v.name(), v.description(), v.requirements(), v.responsibilities(), v.hasPhoto(), v.stages(),
+        return new VacancyView(v.id(), v.name(), v.description(), v.requirements(), v.responsibilities(), v.hasPhoto(), v.stages(), v.expiresAt(), admin ? v.applicants() : null,
                 admin ? v.createdBy() : null, v.createdAt());
     }
 

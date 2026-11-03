@@ -327,6 +327,32 @@ abstract class RepositoryContract {
     }
 
     @Test
+    void vacancyStoresStagesTheDeadlineAndCountsApplicants() {
+        User user = newUser(email(), "66666666666");
+        var deadline = java.time.Instant.parse("2031-12-31T23:59:59Z");
+        var saved = vacancies.save(new Vacancy(null, "Prazo " + UUID.randomUUID(), "d", null, null, null, null, false,
+                java.util.List.of("Triagem", "Teste técnico"), deadline, 0)).block();
+        assertThat(saved.stages()).containsExactly("Triagem", "Teste técnico");
+        assertThat(saved.expiresAt()).isEqualTo(deadline);
+        assertThat(saved.applicants()).isZero();
+
+        resumes.create(new Resume(null, user.id(), saved.id(), "cv.pdf", "application/pdf", ResumeStatus.PENDING, null,
+                null), new byte[] {1}).block();
+        assertThat(vacancies.findById(saved.id()).block().applicants()).isEqualTo(1);
+        assertThat(vacancies.findAll().collectList().block()).filteredOn(v -> v.id().equals(saved.id()))
+                .extracting(Vacancy::applicants).containsExactly(1);
+
+        var cleared = vacancies.save(new Vacancy(saved.id(), saved.name(), "d", null, null, null, saved.createdAt(), false,
+                saved.stages(), null, 0)).block();
+        assertThat(cleared.expiresAt()).isNull();
+        assertThat(cleared.applicants()).isEqualTo(1);
+
+        var plain = vacancies.save(new Vacancy(null, "Padrão " + UUID.randomUUID(), "d", null, null)).block();
+        assertThat(plain.stages()).containsExactly("Triagem", "Entrevista", "Contratado");
+        assertThat(plain.expiresAt()).isNull();
+    }
+
+    @Test
     void vacancyPhotoIsSavedReplacedReportedInTheVacancyAndDeletedWithIt() {
         init();
         var photos = new VacancyPhotoRepositoryAdapter(executor(), Clock.systemUTC());

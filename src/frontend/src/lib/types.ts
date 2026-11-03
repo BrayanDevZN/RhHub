@@ -28,6 +28,8 @@ export type Vacancy = {
   responsibilities?: string // opcional
   has_photo: boolean
   stages: string[] // etapas do processo seletivo; a primeira é sempre a Triagem
+  expires_at?: string // opcional: depois dessa data a vaga não recebe candidaturas
+  applicants?: number // número de candidaturas; só admins recebem
   created_by?: number // só admins recebem
   created_at: string
 }

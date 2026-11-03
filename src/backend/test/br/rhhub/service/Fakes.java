@@ -133,7 +133,7 @@ public final class Fakes {
             }
             Long id = v.id() == null ? seq.incrementAndGet() : v.id();
             Vacancy stored = new Vacancy(id, v.name(), v.description(), v.requirements(), v.responsibilities(),
-                    v.createdBy(), Instant.parse("2026-11-03T12:00:00Z"), false, v.stages());
+                    v.createdBy(), Instant.parse("2026-11-03T12:00:00Z"), false, v.stages(), v.expiresAt(), 0);
             byId.put(id, stored);
             return Mono.just(view(stored));
         }
