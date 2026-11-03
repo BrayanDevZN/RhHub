@@ -1,0 +1,27 @@
+# Kafka (KRaft, nó único) do RhHub, acessível só com a chave KAFKA_API_KEY (SASL/PLAIN).
+# Uso: docker build -f Dockerfile.kafka -t rhhub-kafka .
+#      docker run --env-file .env rhhub-kafka
+FROM apache/kafka:3.9.0
+
+COPY --chmod=755 src/backend/kafka/entrypoint.sh /rhhub-entrypoint.sh
+
+# Nó único: broker e controller juntos. O controller escuta só dentro do container.
+ENV KAFKA_NODE_ID=1 \
+    KAFKA_PROCESS_ROLES=broker,controller \
+    KAFKA_LISTENERS=SASL_PLAINTEXT://:9092,CONTROLLER://localhost:9093 \
+    KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,SASL_PLAINTEXT:SASL_PLAINTEXT \
+    KAFKA_CONTROLLER_QUORUM_VOTERS=1@localhost:9093 \
+    KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER \
+    KAFKA_INTER_BROKER_LISTENER_NAME=SASL_PLAINTEXT \
+    KAFKA_SASL_ENABLED_MECHANISMS=PLAIN \
+    KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL=PLAIN \
+    KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 \
+    KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1 \
+    KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1 \
+    KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0 \
+    KAFKA_AUTO_CREATE_TOPICS_ENABLE=false
+
+# Sem KAFKA_API_KEY o entrypoint recusa subir. Não publique a 9092 no host.
+EXPOSE 9092
+ENTRYPOINT ["/rhhub-entrypoint.sh"]
+CMD ["/etc/kafka/docker/run"]

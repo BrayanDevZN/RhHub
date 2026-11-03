@@ -186,7 +186,7 @@ backend/src/main/java/br/rhhub
 ├── messaging/         # producers, consumers e DTOs das mensagens
 │   ├── analysis/      # topic resume.analysis
 │   └── email/         # topic email.send
-├── ai/                # cliente OpenAI e leitura do PDF
+├── ai/                # provedores de IA (OpenAI e Groq) e leitura de PDF/DOCX
 ├── mail/              # JavaMailSender e templates HTML
 ├── cache/             # códigos temporários e rate limit
 └── common/            # erros, DTOs de resposta, utilidades
@@ -226,8 +226,9 @@ erDiagram
         bigint id PK
         bigint user_id FK
         bigint vacancy_id FK
-        bytea pdf
+        bytea file "PDF ou DOCX"
         varchar file_name
+        varchar content_type "application/pdf ou DOCX"
         varchar status "pending, aproved, recuse"
         text reason
         timestamp created_at
@@ -237,7 +238,7 @@ erDiagram
 - Uma candidatura por usuário e por vaga: restrição única em `(user_id, vacancy_id)`.
 - Excluir uma vaga apaga as candidaturas dela (`ON DELETE CASCADE`). Excluir um usuário apaga as dele.
 - Os valores de `status` seguem o AgentRH (`aproved`, `recuse`, `pending`) para o front não mudar.
-- Novos campos em relação ao AgentRH: `provider`, `google_sub` e `file_name`.
+- Novos campos em relação ao AgentRH: `provider`, `google_sub`, `file_name` e `content_type`. A coluna `pdf` virou `file`, porque o currículo pode ser PDF ou DOCX.
 
 ```mermaid
 stateDiagram-v2
@@ -302,6 +303,21 @@ sequenceDiagram
 
 **Login com Google**
 
+![Status](https://img.shields.io/badge/STATUS-PREPARADO,_DESLIGADO_LOCALMENTE-orange?style=flat-square)
+
+O fluxo é implementado, mas **fica desligado por padrão** (`GOOGLE_OAUTH_ENABLED=false`). Em ambiente local o login com Google não está disponível; ele só será ligado quando o sistema estiver na nuvem, com URL pública e credenciais reais.
+
+| Com a flag desligada | Com a flag ligada |
+| --- | --- |
+| O `ClientRegistration` do Google **não é criado**, então a aplicação sobe sem `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` | Exige as duas variáveis e `GOOGLE_REDIRECT_URI`; sem elas a subida falha com mensagem clara |
+| `GET /oauth2/authorization/google` responde `404` | Inicia o fluxo OAuth2 |
+| `GET /api/auth/providers` devolve `{"google": false}` | Devolve `{"google": true}` |
+| O front esconde o botão "Entrar com Google" | O front mostra o botão |
+
+O front decide o botão por `GET /api/auth/providers` (público), e não por variável de build, para que ligar o Google na nuvem seja só mudar a configuração do back end.
+
+Fluxo, quando ligado:
+
 1. O front redireciona para `GET /oauth2/authorization/google`.
 2. O Google autentica e volta para `/login/oauth2/code/google`.
 3. O back end busca o usuário pelo e-mail verificado. Se existir, **vincula** à mesma conta; se não, cria um com `provider = google`.
@@ -345,7 +361,8 @@ Prefixo `/api`. Respostas em JSON. Sessão por cookie, então o front usa `crede
 | `PATCH` | `/auth/password` | Logado | Troca a senha `{password, newPassword}` | `PATCH /auth` |
 | `POST` | `/auth/password/reset-code` | Público | Envia o código de recuperação `{email}` | `PATCH /sender` |
 | `POST` | `/auth/password/reset` | Público | Troca a senha com o código `{email, code, newPassword}` | `PATCH /auth` com `sender` |
-| `GET` | `/oauth2/authorization/google` | Público | Inicia o login com Google | novo |
+| `GET` | `/auth/providers` | Público | Informa quais logins externos estão ativos `{google}` | novo |
+| `GET` | `/oauth2/authorization/google` | Público | Inicia o login com Google. `404` se `GOOGLE_OAUTH_ENABLED=false` | novo |
 
 **Vagas**
 
@@ -361,11 +378,11 @@ Prefixo `/api`. Respostas em JSON. Sessão por cookie, então o front usa `crede
 
 | Método | Rota | Acesso | Descrição | AgentRH |
 | --- | --- | --- | --- | --- |
-| `POST` | `/resumes` | Logado | Envia o PDF (`multipart`: `vacancyId`, `pdf`). Responde `201` e publica em `resume.analysis` | `POST /resumes` |
+| `POST` | `/resumes` | Logado | Envia o currículo em PDF ou DOCX (`multipart`: `vacancyId`, `file`). Responde `201` e publica em `resume.analysis` | `POST /resumes` |
 | `GET` | `/resumes/me` | Logado | Candidaturas do usuário | `GET /resumes` |
 | `GET` | `/resumes` | Admin | Todas as candidaturas (filtro `status`, `vacancyId`) | `GET /resumes` com `get_all` |
 | `GET` | `/resumes/{id}` | Dono ou admin | Detalhe e resultado da IA | `GET /resumes` com `id` |
-| `GET` | `/resumes/{id}/pdf` | Dono ou admin | Baixa o PDF (`application/pdf`) | PDF em Base64 no JSON |
+| `GET` | `/resumes/{id}/file` | Dono ou admin | Baixa o arquivo (`application/pdf` ou DOCX, conforme `content_type`) | PDF em Base64 no JSON |
 | `DELETE` | `/resumes/{id}` | Dono ou admin | Exclui a candidatura | `DELETE /resumes` |
 
 **Administração**
@@ -422,13 +439,33 @@ A mensagem de análise leva só o `resumeId`: o consumer busca o PDF, a vaga e o
 
 ![OpenAI](https://img.shields.io/badge/OPENAI-RESPONSES_API-412991?style=flat-square&logo=openai&logoColor=white)
 
-1. O consumer lê o PDF do banco e **extrai o texto** (Apache PDFBox).
+1. O consumer lê o arquivo do banco e **extrai o texto**: Apache PDFBox para PDF e Apache POI (`XWPFDocument`) para DOCX, escolhidos por `content_type`.
 2. Monta a entrada: nome e descrição da vaga, nome do candidato e texto do currículo.
-3. Envia à OpenAI com o prompt de triagem (reaproveitado de `src/config/prompt/prompt.md` do AgentRH).
+3. Envia ao provedor de IA ativo com o prompt de triagem (reaproveitado de `src/config/prompt/prompt.md` do AgentRH).
 4. A IA devolve uma linha no formato `decisão | assunto | HTML`, em que a decisão é `aproved` ou `recuse`.
 5. O consumer separa as três partes, grava `status` e `reason` e publica o HTML em `email.send`.
 
-Com `ENVIRONMENT=test`, a OpenAI é trocada por uma resposta fixa no mesmo formato, e os códigos de e-mail aparecem no JSON para facilitar testes.
+Com `ENVIRONMENT=test`, a IA é trocada por uma resposta fixa no mesmo formato, e os códigos de e-mail aparecem no JSON para facilitar testes. Nesse modo nenhuma chave de IA é necessária.
+
+**Provedor de IA: OpenAI ou Groq**
+
+Os dois usam modelos da família GPT e expõem uma API compatível com a da OpenAI, então há uma única interface `AiProvider` com duas implementações que só mudam a URL base, a chave e o modelo.
+
+| Provedor | Chave | URL base | Modelo (variável) |
+| --- | --- | --- | --- |
+| OpenAI | `OPENAI_API_KEY` | `https://api.openai.com/v1` | modelo GPT configurável (`OPENAI_MODEL`) |
+| Groq | `GROQ_API_KEY` | `https://api.groq.com/openai/v1` | modelo GPT open-weight, por padrão `openai/gpt-oss-120b` (`GROQ_MODEL`) |
+
+Regra de escolha, resolvida **uma vez na subida** da aplicação:
+
+| `OPENAI_API_KEY` | `GROQ_API_KEY` | Provedor usado |
+| :---: | :---: | --- |
+| definida | definida | **OpenAI** (tem prioridade) |
+| definida | ausente | OpenAI |
+| ausente | definida | Groq |
+| ausente | ausente | Falha na subida com mensagem clara (exceto com `ENVIRONMENT=test`) |
+
+Uma chave vazia ou só com espaços conta como ausente. O provedor escolhido aparece no log de inicialização, sem imprimir a chave. Não há fallback em tempo de execução: se a OpenAI falhar com a chave definida, a mensagem passa pelo retry e pelo DLT do Kafka, e não troca para o Groq.
 
 ### 4.8 E-mails
 
@@ -465,13 +502,13 @@ O resultado real da análise usa o HTML gerado pela IA. Os templates do AgentRH 
 
 | Campo | Regra |
 | --- | --- |
-| `email` | E-mail válido (no AgentRH era só `@gmail.com`, com 8 caracteres antes do `@`) |
+| `email` | E-mail válido terminando **exatamente** em `@gmail.com` (sem diferenciar maiúsculas; normalizado para minúsculas). No AgentRH a checagem era `"@gmail.com" in email`, que aceitava `x@gmail.com.outro.com`; aqui é comparação de sufixo. Vale para cadastro, código de cadastro, recuperação de senha, login e `ADMIN_EMAIL`. No login com Google, só entram contas `@gmail.com` com e-mail verificado |
 | `password` | Mínimo de 8 caracteres, com maiúscula, minúscula e número |
 | `cpf` | Exatamente 11 dígitos, único |
 | `age` | 18 ou mais |
 | `gender` | `male`, `female` ou `other` |
 | `code` | 6 dígitos (no AgentRH eram 5) |
-| `pdf` | `application/pdf`, tamanho máximo configurável |
+| `file` | PDF (`application/pdf`) ou DOCX (`application/vnd.openxmlformats-officedocument.wordprocessingml.document`), tamanho máximo configurável. O tipo é conferido pelo conteúdo (assinatura `%PDF`; ZIP com `word/document.xml`), não só pelo cabeçalho. `.doc` antigo não é aceito |
 | `vacancy.name` | Único |
 
 ### 4.11 Padrão de erros
@@ -505,8 +542,11 @@ No AgentRH todo erro virava `501`. Aqui cada caso tem o seu código:
 | `RATE_LIMIT`, `GLOBAL_RATE_LIMIT` | Limites por minuto |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Admin raiz criado na primeira execução (`email_user` e `password_user`) |
 | `MAIL_HOST`, `MAIL_PORT`, `MAIL_USER`, `MAIL_PASSWORD` | SMTP |
-| `OPENAI_API_KEY`, `OPENAI_MODEL` | IA |
-| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Login com Google |
+| `OPENAI_API_KEY`, `OPENAI_MODEL` | IA via OpenAI. Tem prioridade se a chave existir |
+| `GROQ_API_KEY`, `GROQ_MODEL` | IA via Groq. Usada quando não há `OPENAI_API_KEY` ([seção 4.7](#47-análise-por-ia)) |
+| `MAX_UPLOAD_MB` | Tamanho máximo do currículo |
+| `GOOGLE_OAUTH_ENABLED` | `false` por padrão. Liga o login com Google; só mude na nuvem |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` | Credenciais do Google. Só são lidas com `GOOGLE_OAUTH_ENABLED=true` |
 | `ENVIRONMENT` | `test` troca a IA por resposta fixa e expõe os códigos |
 
 ### 4.13 Correções em relação ao AgentRH
@@ -523,7 +563,7 @@ Problemas encontrados lendo o código original, que **não** devem ser repetidos
 | 6 | Cookie `X-user_refresh-token` (com hífen) em `/users` e `X-user_refresh_token` nas outras rotas | Um só nome, com underscore |
 | 7 | `DELETE /vancancies` chama `update` antes de excluir | Exclusão direta por `id` |
 | 8 | `sender_update` passa um objeto no lugar do e-mail e troca o nome por `replace` no HTML | Busca por e-mail e templates com variáveis |
-| 9 | O consumer faz `resume.decode("utf-8")` em bytes de PDF, o que falha em PDFs reais | Extração de texto com PDFBox |
+| 9 | O consumer faz `resume.decode("utf-8")` em bytes de PDF, o que falha em PDFs reais | Extração de texto com PDFBox (PDF) e POI (DOCX) |
 | 10 | Rate limit: quando o contador é igual ao limite, a requisição passa | Comparação com `>=` |
 | 11 | Código de 5 dígitos, sem limite de tentativas | 6 dígitos e no máximo 5 tentativas |
 
@@ -661,10 +701,10 @@ Para trocar a API simulada pela real, só o corpo de cada função em `src/lib/a
 | CORS | O back end libera `FRONTEND_ORIGIN` com `allowCredentials(true)` |
 | Cookies entre domínios | Em produção, servir front e API no **mesmo domínio** (proxy do nginx em `/api`) por causa do `SameSite=Strict` |
 | Nomes de campos | O front usa `vancancie_id` e `/vancancies` (grafia do AgentRH). Trocar por `vacancy_id` e `/vacancies` em `types.ts` e `api.ts` |
-| PDF | Remover o campo `pdf` em Base64 de `Resume` e usar `GET /resumes/{id}/pdf` |
+| Arquivo | Remover o campo `pdf` em Base64 de `Resume`, usar `GET /resumes/{id}/file` e aceitar também DOCX no upload (campo `file`, com `file_name` e `content_type`) |
 | Papel de admin | Ler `role` de `GET /users/me`. Esconder, para admins que não são raiz, as ações de rebaixar e excluir |
 | 2FA | O código vem só por e-mail. Remover o aviso "Simulação: o código é..." |
-| Login com Google | Trocar `loginWithGoogle()` por `window.location.href = "/oauth2/authorization/google"` |
+| Login com Google | Ler `GET /auth/providers` e mostrar o botão só se `google` for `true`. Nesse caso, `loginWithGoogle()` vira `window.location.href = "/oauth2/authorization/google"`. Localmente o botão fica oculto |
 | Aviso de demonstração | Remover do login o texto sobre e-mails com `admin` |
 | Renovação | Interceptar o `401`, chamar `POST /auth/refresh` e repetir a requisição |
 
@@ -706,11 +746,12 @@ O `Dockerfile.front` já existe e o `railway.json` aponta para ele no deploy.
 - [ ] Back end: projeto Spring Boot, entidades e migrações Flyway
 - [ ] Autenticação: cadastro com código, login, cookies JWT, refresh e logout
 - [ ] 2FA por e-mail e recuperação de senha
-- [ ] Login com Google (OAuth2)
+- [ ] Login com Google (OAuth2): implementar atrás da flag `GOOGLE_OAUTH_ENABLED` (desligada localmente)
+- [ ] Ligar o Google OAuth na nuvem (credenciais, URI de redirecionamento, flag)
 - [ ] CRUD de vagas e controle de papéis
 - [ ] Upload de candidaturas e download do PDF
 - [ ] Kafka: topics `resume.analysis` e `email.send`, retry e DLT
-- [ ] Análise por IA com leitura de PDF
+- [ ] Análise por IA com leitura de PDF e DOCX, e escolha de provedor (OpenAI ou Groq)
 - [ ] Rate limit com Redis
 - [ ] Docker Compose completo (front, back, Postgres, Redis, Kafka)
 - [ ] Testes unitários, de integração (Testcontainers) e funcionais
@@ -721,8 +762,9 @@ O `Dockerfile.front` já existe e o `railway.json` aponta para ele no deploy.
 ## 9. Pontos em aberto
 
 1. **CPF em contas Google:** o Google não fornece CPF, idade nem gênero. O front mostra "Não informado" e não deixa editar o CPF. É preciso um endpoint para completar o cadastro.
-2. **Tipos de arquivo:** aceitar só PDF ou também DOCX?
-3. **E-mail:** manter a restrição a `@gmail.com` do AgentRH ou aceitar qualquer e-mail válido?
+2. ~~**Tipos de arquivo**~~ **Decidido:** PDF e DOCX (`.doc` antigo fica de fora).
+3. ~~**E-mail**~~ **Decidido:** só `@gmail.com`, sem o mínimo de 8 caracteres do AgentRH.
+8. **Google OAuth na nuvem:** o código fica pronto, mas desligado por padrão. Falta, quando houver URL pública, criar as credenciais no Google Cloud, cadastrar a URI de redirecionamento e ligar `GOOGLE_OAUTH_ENABLED=true` ([seção 4.3](#43-autenticação-e-sessão)).
 4. **Duração do token de acesso:** 15 minutos com refresh (proposto) ou 7 dias, como no original?
 5. **Vários admins raiz:** hoje só um (`ADMIN_EMAIL`). Vale permitir mais de um?
 6. **Reenvio de código:** limite de reenvios por e-mail e por IP.
