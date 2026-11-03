@@ -111,7 +111,8 @@ class KafkaConfigTest {
         var config = factory.getConfigurationProperties();
         assertThat(config).containsEntry("max.block.ms", KafkaConfig.PRODUCER_MAX_BLOCK_MS)
                 .containsEntry("request.timeout.ms", KafkaConfig.PRODUCER_REQUEST_TIMEOUT_MS)
-                .containsEntry("delivery.timeout.ms", KafkaConfig.PRODUCER_DELIVERY_TIMEOUT_MS);
+                .containsEntry("delivery.timeout.ms", KafkaConfig.PRODUCER_DELIVERY_TIMEOUT_MS)
+                .containsEntry("connections.max.idle.ms", KafkaConfig.PRODUCER_MAX_IDLE_MS);
         assertThat(KafkaConfig.PRODUCER_MAX_BLOCK_MS).isLessThanOrEqualTo(10_000); // o padrão eram 60 000
         assertThat(KafkaConfig.PRODUCER_DELIVERY_TIMEOUT_MS).isGreaterThanOrEqualTo(KafkaConfig.PRODUCER_REQUEST_TIMEOUT_MS);
     }

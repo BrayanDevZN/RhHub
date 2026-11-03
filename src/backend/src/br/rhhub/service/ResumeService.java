@@ -34,8 +34,8 @@ public class ResumeService {
     }
 
     /**
-     * Valida o arquivo pelo conteúdo (PDF ou DOCX, até 5 MB), grava a candidatura como pending e a enfileira para a
-     * análise. Se não conseguir enfileirar, desfaz a gravação para o candidato poder tentar de novo.
+     * Valida o arquivo pelo conteúdo (PDF ou DOCX, até 5 MB), grava a candidatura como pending e pede a análise em
+     * segundo plano (sem esperar o Kafka).
      */
     public Mono<Resume> submit(User actor, Long vacancyId, String fileName, byte[] content) {
         return Mono.defer(() -> {
@@ -58,13 +58,23 @@ public class ResumeService {
                             ? Mono.<Resume>error(new DomainException.Conflict("Você já se candidatou a essa vaga."))
                             : resumes.create(new Resume(null, actor.id(), vacancyId, name, type.contentType(),
                                     ResumeStatus.PENDING, null, null), content))
-                    .flatMap(saved -> analysis.publish(saved.id()).thenReturn(saved)
-                            .onErrorResume(error -> {
-                                log.error("Candidatura {}: não foi possível enfileirar a análise, desfazendo o envio", saved.id(), error);
-                                return resumes.deleteById(saved.id()).then(Mono.error(new DomainException.Unprocessable(
-                                        "Não foi possível iniciar a análise agora. Tente de novo em instantes.")));
-                            }));
+                    .map(saved -> {
+                        enqueueInBackground(saved.id());
+                        return saved;
+                    });
         });
+    }
+
+    /**
+     * O envio responde assim que o currículo está gravado. Avisar a fila de análise acontece em segundo plano: a
+     * resposta nunca espera o Kafka (rede, proxy, conexão parada). Se o aviso falhar, a candidatura continua pending e
+     * o consumer a reenfileira depois (PendingResumeRepublisher), então nada se perde.
+     */
+    private void enqueueInBackground(Long resumeId) {
+        analysis.publish(resumeId).subscribe(
+                done -> { },
+                error -> log.warn("Candidatura {}: não foi possível enfileirar a análise agora; será reenfileirada: {}",
+                        resumeId, error.toString()));
     }
 
     public Flux<Resume> listMine(User actor) {

@@ -130,14 +130,29 @@ class ManagementServicesTest {
     }
 
     @Test
-    void ifQueueingFailsTheResumeIsRolledBackSoTheUserCanRetry() {
+    void ifQueueingFailsTheUploadStillSucceedsAndTheResumeStaysPendingForTheRepublisher() {
         Long vacancy = vacancyId();
         analysis.failing = true;
-        assertThatThrownBy(() -> resumeService.submit(ana, vacancy, "a.pdf", PDF).block())
-                .isInstanceOf(DomainException.Unprocessable.class).hasMessageContaining("Tente de novo");
-        assertThat(resumes.byId).isEmpty();
-        analysis.failing = false;
-        assertThat(resumeService.submit(ana, vacancy, "a.pdf", PDF).block().id()).isNotNull();
+        var saved = resumeService.submit(ana, vacancy, "a.pdf", PDF).block(); // não falha nem espera o Kafka
+        assertThat(saved.status()).isEqualTo(ResumeStatus.PENDING);
+        assertThat(resumes.byId).containsKey(saved.id());
+        assertThat(analysis.queued).isEmpty();
+    }
+
+    @Test
+    void theUploadDoesNotWaitForASlowQueue() {
+        Long vacancy = vacancyId();
+        var never = new java.util.concurrent.atomic.AtomicBoolean();
+        var slow = new br.rhhub.application.port.out.ResumeAnalysisPublisher() {
+            public reactor.core.publisher.Mono<Void> publish(Long id) {
+                never.set(true);
+                return reactor.core.publisher.Mono.never(); // um Kafka que nunca responde
+            }
+        };
+        var service = new ResumeService(resumes, vacancies, new PdfDocxTextExtractor(), slow);
+        var saved = service.submit(ana, vacancy, "a.pdf", PDF).block(java.time.Duration.ofSeconds(2));
+        assertThat(saved).isNotNull();
+        assertThat(never).isTrue(); // o aviso foi disparado, mas a resposta não ficou presa nele
     }
 
     @Test

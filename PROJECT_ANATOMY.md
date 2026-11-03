@@ -1,5 +1,5 @@
 # Project Anatomy: RhHub
-Generated: 2026-11-03 | 231 files | ~222.1K tokens if all read
+Generated: 2026-11-03 | 234 files | ~224.4K tokens if all read
 
 ## Structure
 | Path | Lines | ~Tokens | Type |
@@ -47,6 +47,7 @@ Generated: 2026-11-03 | 231 files | ~222.1K tokens if all read
 | src/backend/src/br/rhhub/infra/config/AppProperties.java | 80 | 782 | source |
 | src/backend/src/br/rhhub/infra/config/AuthProperties.java | 32 | 276 | source |
 | src/backend/src/br/rhhub/infra/config/ClockConfig.java | 15 | 72 | source |
+| src/backend/src/br/rhhub/infra/config/SchedulingConfig.java | 10 | 57 | source |
 | src/backend/src/br/rhhub/infra/config/ServiceConfig.java | 94 | 1.0K | source |
 | src/backend/src/br/rhhub/infra/config/WebProperties.java | 51 | 535 | source |
 | src/backend/src/br/rhhub/infra/database/adapter/DeadLetterRepositoryAdapter.java | 105 | 1.3K | source |
@@ -83,12 +84,13 @@ Generated: 2026-11-03 | 231 files | ~222.1K tokens if all read
 | src/backend/src/br/rhhub/infra/messaging/DeadLetterRecoverer.java | 47 | 581 | source |
 | src/backend/src/br/rhhub/infra/messaging/EmailConsumer.java | 29 | 262 | source |
 | src/backend/src/br/rhhub/infra/messaging/EmailKafkaMessage.java | 16 | 152 | source |
-| src/backend/src/br/rhhub/infra/messaging/KafkaConfig.java | 211 | 2.7K | source |
+| src/backend/src/br/rhhub/infra/messaging/KafkaConfig.java | 215 | 2.8K | source |
 | src/backend/src/br/rhhub/infra/messaging/KafkaEmailPublisher.java | 33 | 291 | source |
 | src/backend/src/br/rhhub/infra/messaging/KafkaPublisher.java | 27 | 225 | source |
 | src/backend/src/br/rhhub/infra/messaging/KafkaResumeAnalysisPublisher.java | 32 | 285 | source |
 | src/backend/src/br/rhhub/infra/messaging/KafkaTopics.java | 20 | 132 | source |
 | src/backend/src/br/rhhub/infra/messaging/KafkaUrl.java | 46 | 462 | source |
+| src/backend/src/br/rhhub/infra/messaging/PendingResumeRepublisher.java | 80 | 933 | source |
 | src/backend/src/br/rhhub/infra/messaging/ResumeAnalysisMessage.java | 6 | 49 | source |
 | src/backend/src/br/rhhub/infra/redis/RedisConfig.java | 57 | 624 | source |
 | src/backend/src/br/rhhub/infra/redis/RedisRateLimiter.java | 27 | 211 | source |
@@ -104,7 +106,7 @@ Generated: 2026-11-03 | 231 files | ~222.1K tokens if all read
 | src/backend/src/br/rhhub/service/DeliverEmailService.java | 22 | 156 | source |
 | src/backend/src/br/rhhub/service/Passwords.java | 29 | 235 | source |
 | src/backend/src/br/rhhub/service/ProfilePhotoService.java | 53 | 501 | source |
-| src/backend/src/br/rhhub/service/ResumeService.java | 119 | 1.4K | source |
+| src/backend/src/br/rhhub/service/ResumeService.java | 129 | 1.4K | source |
 | src/backend/src/br/rhhub/service/UserService.java | 78 | 917 | source |
 | src/backend/src/br/rhhub/service/VacancyService.java | 78 | 767 | source |
 | src/frontend/40-rhhub-listen.sh | 23 | 172 | source |
@@ -197,9 +199,10 @@ Generated: 2026-11-03 | 231 files | ~222.1K tokens if all read
 | src/backend/test/br/rhhub/infra/google/GoogleOAuthClientTest.java | 117 | 1.5K | test |
 | src/backend/test/br/rhhub/infra/llm/LlmConfigTest.java | 49 | 513 | test |
 | src/backend/test/br/rhhub/infra/llm/OpenAiCompatibleProviderTest.java | 120 | 1.2K | test |
-| src/backend/test/br/rhhub/infra/messaging/KafkaConfigTest.java | 119 | 1.5K | test |
+| src/backend/test/br/rhhub/infra/messaging/KafkaConfigTest.java | 120 | 1.6K | test |
 | src/backend/test/br/rhhub/infra/messaging/KafkaMessagingIntegrationTest.java | 292 | 3.3K | test |
 | src/backend/test/br/rhhub/infra/messaging/KafkaUrlTest.java | 35 | 418 | test |
+| src/backend/test/br/rhhub/infra/messaging/PendingResumeRepublisherTest.java | 94 | 954 | test |
 | src/backend/test/br/rhhub/infra/messaging/RemoteKafkaSetupTest.java | 77 | 1.0K | test |
 | src/backend/test/br/rhhub/infra/redis/AuthStoresIntegrationTest.java | 117 | 1.3K | test |
 | src/backend/test/br/rhhub/infra/redis/RedisConfigTest.java | 42 | 418 | test |
@@ -209,7 +212,7 @@ Generated: 2026-11-03 | 231 files | ~222.1K tokens if all read
 | src/backend/test/br/rhhub/service/AnalyzeResumeServiceTest.java | 180 | 2.1K | test |
 | src/backend/test/br/rhhub/service/AuthServiceTest.java | 252 | 3.3K | test |
 | src/backend/test/br/rhhub/service/Fakes.java | 195 | 2.5K | test |
-| src/backend/test/br/rhhub/service/ManagementServicesTest.java | 256 | 3.6K | test |
+| src/backend/test/br/rhhub/service/ManagementServicesTest.java | 271 | 3.8K | test |
 | DOCUMENTACAO.md | 762 | 10.5K | docs |
 | src/backend/HISTORICO.md | 144 | 3.2K | docs |
 | src/backend/README.md | 274 | 5.1K | docs |
@@ -237,9 +240,9 @@ Generated: 2026-11-03 | 231 files | ~222.1K tokens if all read
 | src/frontend/nginx.conf | 23 | 150 | other |
 
 ## Summary
-- source: 160 files, ~113.9K tokens
+- source: 162 files, ~115.0K tokens
 - config: 12 files, ~3.3K tokens
-- test: 34 files, ~57.0K tokens
+- test: 35 files, ~58.1K tokens
 - docs: 5 files, ~25.8K tokens
 - style: 1 files, ~7.5K tokens
 - other: 19 files, ~14.6K tokens

@@ -55,6 +55,7 @@ public class KafkaConfig {
     /** Tentativas extras depois da primeira. O e-mail tem menos para não reenviar à toa. */
     static final int PRODUCER_MAX_BLOCK_MS = 5_000;
     static final int PRODUCER_REQUEST_TIMEOUT_MS = 8_000;
+    static final int PRODUCER_MAX_IDLE_MS = 30_000;
     static final int PRODUCER_DELIVERY_TIMEOUT_MS = 12_000; // precisa ser >= request.timeout.ms (idempotência)
     static final int ANALYSIS_RETRIES = 3;
     static final int EMAIL_RETRIES = 2;
@@ -110,6 +111,9 @@ public class KafkaConfig {
         config.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, PRODUCER_MAX_BLOCK_MS);
         config.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, PRODUCER_REQUEST_TIMEOUT_MS);
         config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, PRODUCER_DELIVERY_TIMEOUT_MS);
+        // Atrás de um TCP Proxy, uma conexão parada pode ser derrubada sem aviso; o produtor só descobriria no próximo
+        // envio, depois de esperar o request.timeout. Fechando as ociosas antes, o envio abre uma conexão nova na hora.
+        config.put(ProducerConfig.CONNECTIONS_MAX_IDLE_MS_CONFIG, PRODUCER_MAX_IDLE_MS);
         return new DefaultKafkaProducerFactory<>(config);
     }
 
