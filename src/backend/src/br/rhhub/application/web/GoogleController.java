@@ -54,6 +54,12 @@ public class GoogleController {
         exchange.getResponse().addCookie(web.stateCookie("", true));
         if (expected == null || state == null || !MessageDigest.isEqual(
                 expected.getBytes(StandardCharsets.UTF_8), state.getBytes(StandardCharsets.UTF_8))) {
+            log.warn("Login com Google recusado: o state não confere (cookie {}, parâmetro {})",
+                    expected == null ? "ausente" : "presente", state == null ? "ausente" : "presente");
+            return redirect(exchange, props.homeUrl() + "login?error=google");
+        }
+        if (code == null || code.isBlank()) {
+            log.warn("Login com Google recusado: o Google voltou sem code (o usuário cancelou ou o Google recusou)");
             return redirect(exchange, props.homeUrl() + "login?error=google");
         }
         return auth.loginWithGoogle(code)
@@ -62,7 +68,8 @@ public class GoogleController {
                     return redirect(exchange, props.homeUrl());
                 })
                 .onErrorResume(error -> {
-                    log.warn("Login com Google recusado: {}", error.getMessage());
+                    log.warn("Login com Google recusado: {} ({})", error.getMessage(),
+                            error.getCause() == null ? error.getClass().getSimpleName() : error.getCause().getClass().getSimpleName());
                     return redirect(exchange, props.homeUrl() + "login?error=google");
                 });
     }

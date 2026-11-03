@@ -8,7 +8,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -19,6 +22,8 @@ import reactor.netty.http.client.HttpClient;
  * direto do Google por TLS, então o perfil é lido do endpoint userinfo, sem validar o ID token à mão.
  */
 public class GoogleOAuthClient implements GoogleIdentityProvider {
+
+    private static final Logger log = LoggerFactory.getLogger(GoogleOAuthClient.class);
 
     static final String AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
     static final String TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -90,6 +95,17 @@ public class GoogleOAuthClient implements GoogleIdentityProvider {
                         info.path("name").asText("")))
                 .filter(profile -> !profile.sub().isBlank() && !profile.email().isBlank())
                 .switchIfEmpty(Mono.error(new DomainException.Unauthorized("O Google não confirmou o login.")))
+                .doOnError(e -> {
+                    // A resposta de erro do Google (invalid_client, invalid_grant, redirect_uri_mismatch...) não tem segredo
+                    // e é o que diz por que o login falhou.
+                    if (e instanceof WebClientResponseException http) {
+                        log.warn("Google recusou ({} em {}): {}", http.getStatusCode().value(),
+                                http.getRequest() == null ? "?" : http.getRequest().getURI().getHost(),
+                                http.getResponseBodyAsString());
+                    } else if (!(e instanceof DomainException)) {
+                        log.warn("Falha ao falar com o Google: {}", e.toString());
+                    }
+                })
                 .onErrorMap(e -> !(e instanceof DomainException),
                         e -> new DomainException.Unauthorized("Não foi possível entrar com o Google.", e));
     }
