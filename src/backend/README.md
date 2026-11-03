@@ -19,13 +19,13 @@ Fluxo de uma requisição: `application` (rota) → `service` → `domain` + `ad
 
 | Camada | Situação |
 | --- | --- |
-| `infra` | **Pronta**: `config`, `database` (tabelas e repositórios) e `llm`. |
+| `infra` | **Pronta**: `config`, `database` (tabelas e repositórios), `llm` e `email`. |
 | `domain` | Parcial: só os modelos (`User`, `Vacancy`, `Resume`...) e `DomainException`. Faltam as regras e o JWT. |
 | `adapter` | As **interfaces** estão hoje em `application/port/out` e as **implementações** do banco em `infra/database/adapter`. Falta reorganizar para o desenho acima. |
 | `service` | Não existe ainda. |
 | `application` | Não existe ainda (não há rotas). |
 
-Ficou de fora de propósito, para entrar depois: e-mail, Redis, Kafka, JWT/BCrypt e leitura de PDF/DOCX.
+Ficou de fora de propósito, para entrar depois: Redis, Kafka, o JWT de sessão e BCrypt (o JWT do e-mail já existe em `infra/email`), leitura de PDF/DOCX e os templates HTML de e-mail.
 
 ## Estrutura de pastas
 
@@ -40,7 +40,7 @@ src/backend/
 │   ├── domain/
 │   │   ├── model/            User, Vacancy, Resume, ResumeFile, enums
 │   │   └── exception/        DomainException (Invalid, Unauthorized, Forbidden, NotFound, Conflict...)
-│   ├── application/port/out/ interfaces: UserRepository, VacancyRepository, ResumeRepository, AiProvider
+│   ├── application/port/out/ interfaces: UserRepository, VacancyRepository, ResumeRepository, AiProvider, EmailSender, EmailMessage
 │   └── infra/
 │       ├── config/           AppProperties (variáveis de ambiente), ClockConfig
 │       ├── database/
@@ -48,6 +48,7 @@ src/backend/
 │       │   ├── PostgresSqlExecutor, SqliteSqlExecutor
 │       │   ├── table/        Dialect, TableDefinition, UsersTable, VacanciesTable, ResumesTable, TableCreator
 │       │   └── adapter/      UserRepositoryAdapter, VacancyRepositoryAdapter, ResumeRepositoryAdapter
+│       ├── email/            N8nEmailSender, JwtHs256, EmailConfig
 │       └── llm/              OpenAiCompatibleProvider, FixedAiProvider, LlmConfig
 ├── resources/application.yml
 ├── test/
@@ -101,6 +102,23 @@ As consultas de metadados do currículo não selecionam a coluna `file`; o PDF s
 
 Os dois provedores usam a API `/chat/completions`. Qualquer falha de rede ou resposta vazia vira `AiException`.
 
+## E-mail
+
+O envio é feito pelo workflow **`gmail`** do n8n, que manda o e-mail pela conta Gmail conectada lá. `EmailSender.send(EmailMessage)` devolve `Mono<Void>`.
+
+O `N8nEmailSender` faz `POST` no webhook com um **JWT HS256** novo a cada chamada (`iss=rhhub`, validade de 1 minuto, assinado com `N8N_JWT_SECRET` como texto, igual à credencial "JWT Auth" do n8n, Key Type Passphrase) e este corpo:
+
+```json
+{ "type": "html", "to": "pessoa@gmail.com", "subject": "Assunto", "content": "<p>corpo</p>" }
+```
+
+`type` é `html` ou `text`. O `EmailMessage` tem os atalhos `EmailMessage.html(...)` e `EmailMessage.text(...)`.
+
+- **Validação antes da chamada.** O n8n responde 200 assim que recebe, *antes* de validar e enviar, então um corpo inválido não gera erro para quem chamou. Por isso o Java valida as mesmas regras do workflow (`to` com e-mail válido, `subject` e `content` não vazios, `type` informado) e falha com `DomainException.Invalid` sem chamar o n8n.
+- **Falha no envio.** Resposta diferente de 2xx (por exemplo 403 de JWT errado), timeout ou n8n fora do ar viram `EmailException`.
+- **Sem confirmação de entrega.** 200 do n8n quer dizer só "recebi". Se o Gmail falhar depois, o backend não fica sabendo; isso aparece nas execuções do workflow no n8n.
+- **Escolha pelo ambiente:** `ENVIRONMENT=test` não envia nada (só registra no log); com `N8N_JWT_SECRET` usa o n8n; sem o segredo a aplicação sobe, mas cada envio falha com `EmailException`.
+
 ## Variáveis de ambiente
 
 Veja o `.env.example`.
@@ -113,6 +131,8 @@ Veja o `.env.example`.
 | `DATABASE_POOL_SIZE` | `10` | Conexões do pool do PostgreSQL |
 | `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_BASE_URL` | modelo `gpt-4o-mini` | OpenAI |
 | `GROQ_API_KEY`, `GROQ_MODEL`, `GROQ_BASE_URL` | modelo `llama-3.3-70b-versatile` | Groq |
+| `N8N_JWT_SECRET` | vazio | Segredo da credencial JWT do webhook de e-mail do n8n |
+| `N8N_EMAIL_WEBHOOK_URL` | URL de produção do workflow `gmail` | Webhook de envio de e-mail |
 | `PORT` | `8080` | Porta HTTP |
 
 ## Como rodar
@@ -131,4 +151,4 @@ DATABASE_URL=postgresql://rhhub:rhhub@localhost:5432/rhhub ./mvnw spring-boot:ru
 
 - Os **mesmos 9 cenários** de repositório rodam contra o SQLite e contra o PostgreSQL, para os dois se comportarem igual.
 - O teste do PostgreSQL usa o banco `rhhub_test` em `localhost:5432` (usuário e senha `rhhub`) e é **pulado** se ele não estiver de pé.
-- Há também testes de `DatabaseUrl`, de `TableCreator` (criação do zero, idempotência e constraints) e da escolha do provedor de LLM.
+- Há também testes de `DatabaseUrl`, de `TableCreator` (criação do zero, idempotência e constraints) da escolha do provedor de LLM e do envio de e-mail (contrato do webhook, assinatura do JWT, validação e erros, contra um servidor HTTP local; nenhum e-mail real é enviado nos testes).

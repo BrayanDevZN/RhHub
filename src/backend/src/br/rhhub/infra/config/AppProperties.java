@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /** Configurações lidas das variáveis de ambiente (ver application.yml e .env.example). */
 @ConfigurationProperties(prefix = "app")
-public record AppProperties(@DefaultValue("production") String environment, Database database, Ai ai) {
+public record AppProperties(@DefaultValue("production") String environment, Database database, Ai ai, Email email) {
 
     /**
      * url: DATABASE_URL. Vazia, ausente ou "none" usa o SQLite local em sqlitePath.
@@ -23,6 +23,13 @@ public record AppProperties(@DefaultValue("production") String environment, Data
             String groqModel,
             String groqBaseUrl,
             Duration timeout) {
+    }
+
+    /**
+     * Envio de e-mail pelo workflow "gmail" do n8n (webhook com JWT).
+     * jwtSecret: N8N_JWT_SECRET, o mesmo segredo da credencial JWT do webhook. Vazio conta como ausente.
+     */
+    public record Email(String webhookUrl, String jwtSecret, Duration timeout) {
     }
 
     public boolean isTest() {

@@ -12,7 +12,8 @@ public final class TestSupport {
 
     public static AppProperties props() {
         return new AppProperties("test", new AppProperties.Database("none", "./data/test.db", 5),
-                new AppProperties.Ai("", "m", "http://x", "", "m", "http://x", Duration.ofSeconds(5)));
+                new AppProperties.Ai("", "m", "http://x", "", "m", "http://x", Duration.ofSeconds(5)),
+                new AppProperties.Email("http://x", "", Duration.ofSeconds(5)));
     }
 
     /** Testes de integração só rodam se o serviço estiver de pé (ex.: Postgres local ou no CI). */
