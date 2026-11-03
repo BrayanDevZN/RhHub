@@ -15,7 +15,7 @@ class DatabaseUrlTest {
             assertThat(url.kind()).as("[%s]", raw).isEqualTo(Kind.SQLITE);
             assertThat(url.sqliteFile().isAbsolute()).isTrue();
             assertThat(url.sqliteFile().toString()).endsWith("data/x.db");
-            assertThat(url.jdbcUrl()).startsWith("jdbc:sqlite:").endsWith("?foreign_keys=on");
+            assertThat(url.sqliteJdbcUrl()).startsWith("jdbc:sqlite:").endsWith("?foreign_keys=on");
         }
     }
 
@@ -30,7 +30,6 @@ class DatabaseUrlTest {
             assertThat(url.database()).isEqualTo("rhhub");
             assertThat(url.user()).isEqualTo("ana");
             assertThat(url.password()).isEqualTo("s@nha/x");
-            assertThat(url.jdbcUrl()).isEqualTo("jdbc:postgresql://db.railway.internal:6543/rhhub");
         }
     }
 
@@ -39,7 +38,6 @@ class DatabaseUrlTest {
         var url = DatabaseUrl.parse("postgresql://u:p@host/db?sslmode=require", "x");
         assertThat(url.port()).isEqualTo(5432);
         assertThat(url.ssl()).isTrue();
-        assertThat(url.jdbcUrl()).endsWith("?sslmode=require");
     }
 
     @Test

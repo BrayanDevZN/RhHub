@@ -1,5 +1,7 @@
 package br.rhhub.infra.database;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
@@ -25,7 +27,12 @@ public class SqliteSqlExecutor implements SqlExecutor, AutoCloseable {
     private final Scheduler scheduler = Schedulers.newSingle("sqlite", true);
 
     public SqliteSqlExecutor(DatabaseUrl url) {
-        this.dataSource = new SingleConnectionDataSource(url.jdbcUrl(), true);
+        try {
+            Files.createDirectories(url.sqliteFile().getParent());
+        } catch (IOException e) {
+            throw new IllegalStateException("Não foi possível criar a pasta do SQLite: " + url.sqliteFile(), e);
+        }
+        this.dataSource = new SingleConnectionDataSource(url.sqliteJdbcUrl(), true);
         this.dataSource.setAutoCommit(true);
         this.jdbc = new NamedParameterJdbcTemplate(dataSource);
     }

@@ -1,5 +1,7 @@
 package br.rhhub.infra.database;
 
+import br.rhhub.infra.database.table.Dialect;
+import br.rhhub.infra.database.table.TableCreator;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.condition.EnabledIf;
@@ -13,8 +15,8 @@ class PostgresRepositoryTest extends RepositoryContract {
     @BeforeAll
     static void open() {
         var url = DatabaseUrl.parse("postgresql://rhhub:rhhub@localhost:5432/rhhub_test", "unused");
-        new DatabaseMigrator(url).migrate();
         executor = new PostgresSqlExecutor(url, 5);
+        new TableCreator(executor, Dialect.POSTGRESQL).create();
     }
 
     @AfterAll

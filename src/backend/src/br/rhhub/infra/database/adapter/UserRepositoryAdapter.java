@@ -11,11 +11,13 @@ import br.rhhub.infra.database.Row;
 import br.rhhub.infra.database.SqlExecutor;
 import java.time.Clock;
 import java.util.UUID;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Repository
+@DependsOn("tableCreator")
 public class UserRepositoryAdapter implements UserRepository {
 
     private static final String COLUMNS =

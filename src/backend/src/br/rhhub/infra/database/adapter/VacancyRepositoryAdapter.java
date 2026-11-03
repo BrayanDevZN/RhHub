@@ -7,11 +7,13 @@ import br.rhhub.infra.database.Params;
 import br.rhhub.infra.database.Row;
 import br.rhhub.infra.database.SqlExecutor;
 import java.time.Clock;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Repository
+@DependsOn("tableCreator")
 public class VacancyRepositoryAdapter implements VacancyRepository {
 
     private static final String COLUMNS = "id, created_by, name, description, created_at";

@@ -1,5 +1,7 @@
 package br.rhhub.infra.database;
 
+import br.rhhub.infra.database.table.Dialect;
+import br.rhhub.infra.database.table.TableCreator;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.AfterAll;
@@ -15,8 +17,8 @@ class SqliteRepositoryTest extends RepositoryContract {
     static void open() throws Exception {
         dir = Files.createTempDirectory("rhhub-sqlite");
         var url = DatabaseUrl.parse("none", dir.resolve("rhhub.db").toString());
-        new DatabaseMigrator(url).migrate();
         executor = new SqliteSqlExecutor(url);
+        new TableCreator(executor, Dialect.SQLITE).create();
     }
 
     @AfterAll

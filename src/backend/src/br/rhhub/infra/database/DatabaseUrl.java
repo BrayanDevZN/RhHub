@@ -55,12 +55,9 @@ public record DatabaseUrl(
         return raw == null || raw.isBlank() || "none".equalsIgnoreCase(raw.strip()) || "null".equalsIgnoreCase(raw.strip());
     }
 
-    /** URL JDBC, usada só pelo Flyway na subida. */
-    public String jdbcUrl() {
-        return switch (kind) {
-            case POSTGRESQL -> "jdbc:postgresql://" + host + ":" + port + "/" + database + (ssl ? "?sslmode=require" : "");
-            case SQLITE -> "jdbc:sqlite:" + sqliteFile + "?foreign_keys=on";
-        };
+    /** URL JDBC do SQLite, com as chaves estrangeiras ligadas. */
+    public String sqliteJdbcUrl() {
+        return "jdbc:sqlite:" + sqliteFile + "?foreign_keys=on";
     }
 
     /** Para log: nunca inclui a senha. */

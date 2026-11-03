@@ -9,12 +9,14 @@ import br.rhhub.infra.database.Params;
 import br.rhhub.infra.database.Row;
 import br.rhhub.infra.database.SqlExecutor;
 import java.time.Clock;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /** As consultas de metadados não selecionam a coluna file, para não trazer o PDF junto. */
 @Repository
+@DependsOn("tableCreator")
 public class ResumeRepositoryAdapter implements ResumeRepository {
 
     private static final String COLUMNS = "id, user_id, vacancy_id, file_name, content_type, status, reason, created_at";
