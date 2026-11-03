@@ -18,6 +18,7 @@ import br.rhhub.application.port.out.ResumeAnalysisPublisher;
 import br.rhhub.service.AdminService;
 import br.rhhub.service.ProfilePhotoService;
 import br.rhhub.service.ResumeService;
+import br.rhhub.service.ResumeStageService;
 import br.rhhub.service.UserService;
 import br.rhhub.service.VacancyService;
 import java.time.Clock;
@@ -62,8 +63,14 @@ public class ServiceConfig {
 
     @Bean
     VacancyService vacancyService(VacancyRepository vacancies, br.rhhub.application.port.out.VacancyPhotoRepository photos,
-            AccessPolicy policy) {
-        return new VacancyService(vacancies, photos, policy);
+            AccessPolicy policy, ResumeRepository resumes) {
+        return new VacancyService(vacancies, photos, policy, resumes);
+    }
+
+    @Bean
+    ResumeStageService resumeStageService(ResumeRepository resumes, VacancyRepository vacancies, UserRepository users,
+            EmailPublisher emails, br.rhhub.application.port.out.EmailComposer composer, AccessPolicy policy) {
+        return new ResumeStageService(resumes, vacancies, users, emails, composer, policy);
     }
 
     @Bean

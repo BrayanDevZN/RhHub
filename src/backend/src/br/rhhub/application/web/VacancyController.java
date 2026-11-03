@@ -27,7 +27,8 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/api/vacancies")
 public class VacancyController {
 
-    public record VacancyRequest(String name, String description, String requirements, String responsibilities) {
+    public record VacancyRequest(String name, String description, String requirements, String responsibilities,
+            List<String> stages) {
     }
 
     private final VacancyService vacancies;
@@ -53,7 +54,7 @@ public class VacancyController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     Mono<Views.VacancyView> create(@RequestBody VacancyRequest body, ServerWebExchange exchange) {
-        return web.actor(exchange).flatMap(actor -> vacancies.create(actor, body.name(), body.description(), body.requirements(), body.responsibilities())
+        return web.actor(exchange).flatMap(actor -> vacancies.create(actor, body.name(), body.description(), body.requirements(), body.responsibilities(), body.stages())
                 .map(v -> Views.vacancy(v, true)));
     }
 
@@ -61,7 +62,7 @@ public class VacancyController {
     Mono<Views.VacancyView> update(@PathVariable String id, @RequestBody VacancyRequest body, ServerWebExchange exchange) {
         return web.actor(exchange).flatMap(actor -> vacancies
                 .update(actor, WebSupport.parseId(id, "Id"), body.name(), body.description(), body.requirements(),
-                        body.responsibilities())
+                        body.responsibilities(), body.stages())
                 .map(v -> Views.vacancy(v, true)));
     }
 

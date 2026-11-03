@@ -6,6 +6,7 @@ import br.rhhub.domain.model.Vacancy;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 /** O que a API devolve (campos em snake_case, como na DOCUMENTACAO.md). Nunca inclui hash de senha nem google_sub. */
@@ -39,6 +40,7 @@ public final class Views {
             String requirements,
             String responsibilities,
             @JsonProperty("has_photo") boolean hasPhoto,
+            List<String> stages,
             @JsonProperty("created_by") Long createdBy,
             @JsonProperty("created_at") Instant createdAt) {
     }
@@ -51,6 +53,7 @@ public final class Views {
             @JsonProperty("content_type") String contentType,
             String status,
             String reason,
+            String stage,
             @JsonProperty("created_at") Instant createdAt) {
     }
 
@@ -61,12 +64,12 @@ public final class Views {
     }
 
     public static VacancyView vacancy(Vacancy v, boolean admin) {
-        return new VacancyView(v.id(), v.name(), v.description(), v.requirements(), v.responsibilities(), v.hasPhoto(),
+        return new VacancyView(v.id(), v.name(), v.description(), v.requirements(), v.responsibilities(), v.hasPhoto(), v.stages(),
                 admin ? v.createdBy() : null, v.createdAt());
     }
 
     public static ResumeView resume(Resume r) {
         return new ResumeView(r.id(), r.userId(), r.vacancyId(), r.fileName(), r.contentType(), r.status().value(),
-                r.reason(), r.createdAt());
+                r.reason(), r.stage(), r.createdAt());
     }
 }

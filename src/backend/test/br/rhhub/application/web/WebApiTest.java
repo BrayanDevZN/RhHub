@@ -94,9 +94,13 @@ class WebApiTest {
         @Bean UserService userService(PasswordHasher hasher, Fakes.Refresh refresh, AccessPolicy policy) {
             return new UserService(users, hasher, refresh, policy);
         }
-        @Bean VacancyService vacancyService(Fakes.Vacancies v, AccessPolicy policy) { return new VacancyService(v, v.photos, policy); }
+        @Bean VacancyService vacancyService(Fakes.Vacancies v, AccessPolicy policy, Fakes.Resumes r) { return new VacancyService(v, v.photos, policy, r); }
         @Bean ResumeService resumeService(Fakes.Resumes r, Fakes.Vacancies v) {
             return new ResumeService(r, v, new PdfDocxTextExtractor(), analysis);
+        }
+        @Bean br.rhhub.service.ResumeStageService resumeStageService(Fakes.Resumes r, Fakes.Vacancies v, AccessPolicy policy) {
+            return new br.rhhub.service.ResumeStageService(r, v, users, (id, message) -> reactor.core.publisher.Mono.empty(),
+                    new br.rhhub.infra.email.HtmlEmailComposer(), policy);
         }
         @Bean AdminService adminService(Fakes.Refresh refresh, AccessPolicy policy) { return new AdminService(users, refresh, policy); }
         @Bean ProfilePhotoService photoService(Fakes.Photos p) { return new ProfilePhotoService(p, users); }
@@ -452,6 +456,15 @@ class WebApiTest {
                 .expectHeader().value(HttpHeaders.CONTENT_DISPOSITION, v -> assertThat(v).startsWith("attachment").contains("meu%20cv.pdf"))
                 .returnResult(byte[].class);
         assertThat(file.getResponseBodyContent()).isEqualTo(PDF);
+
+        // etapas: a vaga nasce com as padrão, a candidatura na Triagem, e só admin move quem foi aprovado
+        assertThat(created.get("stage").asText()).isEqualTo("Triagem");
+        var stagesView = json(get("/api/vacancies/" + vacancy, ana).expectStatus().isOk()).get("stages");
+        assertThat(stagesView).hasSize(3);
+        client.patch().uri("/api/resumes/" + id + "/stage").cookies(ana::apply).bodyValue(Map.of("stage", "Entrevista"))
+                .exchange().expectStatus().isForbidden();
+        client.patch().uri("/api/resumes/" + id + "/stage").cookies(root::apply).bodyValue(Map.of("stage", "Entrevista"))
+                .exchange().expectStatus().isEqualTo(422); // ainda pending: não passou da triagem
 
         client.delete().uri("/api/resumes/" + id).cookies(bia::apply).exchange().expectStatus().isForbidden();
         client.delete().uri("/api/resumes/" + id).cookies(ana::apply).exchange().expectStatus().isNoContent();

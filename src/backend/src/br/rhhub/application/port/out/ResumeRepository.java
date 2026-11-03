@@ -25,5 +25,8 @@ public interface ResumeRepository {
     /** Atualiza só status e reason. Erro DomainException.NotFound se a candidatura não existir. */
     Mono<Resume> updateResult(Long id, ResumeStatus status, String reason);
 
+    /** Muda só a etapa do processo seletivo. Erro DomainException.NotFound se a candidatura não existir. */
+    Mono<Resume> updateStage(Long id, String stage);
+
     Mono<Void> deleteById(Long id);
 }

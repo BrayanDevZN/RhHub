@@ -87,7 +87,13 @@ function upload<T = void>(path: string, method: string, form: FormData): Promise
   })
 }
 
-export type VacancyInput = { name: string; description: string; requirements?: string; responsibilities?: string }
+export type VacancyInput = {
+  name: string
+  description: string
+  requirements?: string
+  responsibilities?: string
+  stages?: string[] // a Triagem entra sempre; sem a lista, valem as etapas padrão (ou as atuais, ao editar)
+}
 
 type CodeSent = { code?: string } // o código só vem na resposta em ambiente de teste; em produção chega por e-mail
 
@@ -294,6 +300,11 @@ export const api = {
       link.download = resume.file_name
       link.click()
       URL.revokeObjectURL(url)
+    },
+
+    // PATCH /resumes/{id}/stage (admin): muda a etapa de um candidato aprovado e o sistema avisa por e-mail
+    setStage(id: number, stage: string): Promise<Resume> {
+      return call<Resume>(`/resumes/${id}/stage`, "PATCH", { stage })
     },
 
     // DELETE /resumes/{id}

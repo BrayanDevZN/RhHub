@@ -4,6 +4,7 @@ import br.rhhub.application.web.dto.Views;
 import br.rhhub.domain.exception.DomainException;
 import br.rhhub.domain.model.ResumeStatus;
 import br.rhhub.service.ResumeService;
+import br.rhhub.service.ResumeStageService;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.springframework.http.ContentDisposition;
@@ -14,8 +15,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -28,11 +31,16 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/api/resumes")
 public class ResumeController {
 
+    public record StageRequest(String stage) {
+    }
+
     private final ResumeService resumes;
+    private final ResumeStageService stages;
     private final WebSupport web;
 
-    public ResumeController(ResumeService resumes, WebSupport web) {
+    public ResumeController(ResumeService resumes, ResumeStageService stages, WebSupport web) {
         this.resumes = resumes;
+        this.stages = stages;
         this.web = web;
     }
 
@@ -75,6 +83,13 @@ public class ResumeController {
                         .header(HttpHeaders.CONTENT_DISPOSITION,
                                 ContentDisposition.attachment().filename(file.fileName(), StandardCharsets.UTF_8).build().toString())
                         .body(file.content()));
+    }
+
+    /** Só admin: move o candidato aprovado para outra etapa da vaga e avisa o candidato por e-mail. */
+    @PatchMapping("/{id}/stage")
+    Mono<Views.ResumeView> moveStage(@PathVariable String id, @RequestBody StageRequest body, ServerWebExchange exchange) {
+        return web.actor(exchange).flatMap(actor -> stages.move(actor, WebSupport.parseId(id, "Id"), body.stage()))
+                .map(Views::resume);
     }
 
     @DeleteMapping("/{id}")

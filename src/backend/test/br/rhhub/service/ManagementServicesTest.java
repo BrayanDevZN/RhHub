@@ -50,7 +50,7 @@ class ManagementServicesTest {
         photos = new Fakes.Photos();
         refresh = new Fakes.Refresh();
         policy = new AccessPolicy("root@gmail.com");
-        vacancyService = new VacancyService(vacancies, vacancies.photos, policy);
+        vacancyService = new VacancyService(vacancies, vacancies.photos, policy, resumes);
         resumeService = new ResumeService(resumes, vacancies, new PdfDocxTextExtractor(), analysis);
         adminService = new AdminService(users, refresh, policy);
         photoService = new ProfilePhotoService(photos, users);

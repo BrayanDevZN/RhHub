@@ -19,7 +19,7 @@ import reactor.core.publisher.Mono;
 @DependsOn("tableCreator")
 public class ResumeRepositoryAdapter implements ResumeRepository {
 
-    private static final String COLUMNS = "id, user_id, vacancy_id, file_name, content_type, status, reason, created_at";
+    private static final String COLUMNS = "id, user_id, vacancy_id, file_name, content_type, status, reason, stage, created_at";
 
     private final SqlExecutor sql;
     private final Clock clock;
@@ -80,10 +80,11 @@ public class ResumeRepositoryAdapter implements ResumeRepository {
                 .add("content_type", resume.contentType())
                 .add("status", resume.status().value())
                 .add("reason", resume.reason(), String.class)
+                .add("stage", resume.stage())
                 .add("created_at", resume.createdAt() != null ? resume.createdAt() : clock.instant());
         return sql.query("""
-                INSERT INTO resumes (user_id, vacancy_id, file, file_name, content_type, status, reason, created_at)
-                VALUES (:user_id, :vacancy_id, :file, :file_name, :content_type, :status, :reason, :created_at)
+                INSERT INTO resumes (user_id, vacancy_id, file, file_name, content_type, status, reason, stage, created_at)
+                VALUES (:user_id, :vacancy_id, :file, :file_name, :content_type, :status, :reason, :stage, :created_at)
                 RETURNING\s""" + COLUMNS, params)
                 .next()
                 .map(ResumeRepositoryAdapter::toDomain)
@@ -94,6 +95,15 @@ public class ResumeRepositoryAdapter implements ResumeRepository {
     public Mono<Resume> updateResult(Long id, ResumeStatus status, String reason) {
         return sql.query("UPDATE resumes SET status = :status, reason = :reason WHERE id = :id RETURNING " + COLUMNS,
                 Params.of().add("id", id).add("status", status.value()).add("reason", reason, String.class))
+                .next()
+                .map(ResumeRepositoryAdapter::toDomain)
+                .switchIfEmpty(Mono.error(new DomainException.NotFound("Candidatura não encontrada")));
+    }
+
+    @Override
+    public Mono<Resume> updateStage(Long id, String stage) {
+        return sql.query("UPDATE resumes SET stage = :stage WHERE id = :id RETURNING " + COLUMNS,
+                Params.of().add("id", id).add("stage", stage))
                 .next()
                 .map(ResumeRepositoryAdapter::toDomain)
                 .switchIfEmpty(Mono.error(new DomainException.NotFound("Candidatura não encontrada")));
@@ -114,6 +124,7 @@ public class ResumeRepositoryAdapter implements ResumeRepository {
 
     static Resume toDomain(Row r) {
         return new Resume(r.longValue("id"), r.longValue("user_id"), r.longValue("vacancy_id"), r.string("file_name"),
-                r.string("content_type"), ResumeStatus.from(r.string("status")), r.string("reason"), r.instant("created_at"));
+                r.string("content_type"), ResumeStatus.from(r.string("status")), r.string("reason"), r.instant("created_at"),
+                r.string("stage"));
     }
 }

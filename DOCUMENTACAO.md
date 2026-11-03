@@ -365,7 +365,7 @@ Prefixo `/api`. Respostas em JSON. Sessão por cookie, então o front usa `crede
 | --- | --- | --- | --- | --- |
 | `GET` | `/vacancies` | Logado | Lista as vagas (candidato não vê `created_by`) | `GET /vancancies` |
 | `GET` | `/vacancies/{id}` | Logado | Detalhe de uma vaga | `GET /vancancies` |
-| `POST` | `/vacancies` | Admin | Cria `{name, description, requirements?, responsibilities?}`. Nome único. **Só a descrição é obrigatória** | `POST /vancancies` |
+| `POST` | `/vacancies` | Admin | Cria `{name, description, requirements?, responsibilities?, stages?}`. Nome único. **Só a descrição é obrigatória**. `stages` são as etapas do processo: sem elas valem `Triagem`, `Entrevista` e `Contratado`; a **Triagem é obrigatória** e sempre a primeira | `POST /vancancies` |
 | `PATCH` | `/vacancies/{id}` | Admin | Edita os campos enviados. Texto vazio em requisitos ou responsabilidades apaga o campo | `PATCH /vancancies` |
 | `PUT` | `/vacancies/{id}/photo` | Admin | Envia a foto da vaga (`multipart`, campo `file`: JPEG, PNG ou WebP, até 2 MB, conferido pelo conteúdo). Troca a anterior | novo |
 | `GET` | `/vacancies/{id}/photo` | Logado | A imagem da vaga (`404` se não tiver). Fica 5 min em cache; o front força a troca com `?v=` | novo |
@@ -381,6 +381,7 @@ Prefixo `/api`. Respostas em JSON. Sessão por cookie, então o front usa `crede
 | `GET` | `/resumes` | Admin | Todas as candidaturas (filtro `status`, `vacancyId`) | `GET /resumes` com `get_all` |
 | `GET` | `/resumes/{id}` | Dono ou admin | Detalhe e resultado da IA | `GET /resumes` com `id` |
 | `GET` | `/resumes/{id}/file` | Dono ou admin | Baixa o arquivo (`application/pdf` ou DOCX, conforme `content_type`) | PDF em Base64 no JSON |
+| `PATCH` | `/resumes/{id}/stage` | Admin | Move o candidato **aprovado na triagem** para outra etapa da vaga (`{stage}`) e envia e-mail avisando o candidato | novo |
 | `DELETE` | `/resumes/{id}` | Dono ou admin | Exclui a candidatura | `DELETE /resumes` |
 
 **Administração**
@@ -509,6 +510,7 @@ O resultado real da análise usa o HTML gerado pela IA. Os templates do AgentRH 
 | `file` | PDF (`application/pdf`) ou DOCX (`application/vnd.openxmlformats-officedocument.wordprocessingml.document`), tamanho máximo configurável. O tipo é conferido pelo conteúdo (assinatura `%PDF`; ZIP com `word/document.xml`), não só pelo cabeçalho. `.doc` antigo não é aceito |
 | `vacancy.name` | Único |
 | `vacancy.description` | **Obrigatória**, até 5000 caracteres |
+| `vacancy.stages` | Até 10 etapas de até 40 caracteres, sem repetição. A `Triagem` entra sempre em primeiro. Uma etapa com candidatos não pode ser removida |
 | `vacancy.requirements`, `vacancy.responsibilities` | Opcionais (vazio vira nulo), até 5000 caracteres cada |
 | `vacancy.photo` | JPEG, PNG ou WebP, até 2 MB, conferido pelo conteúdo (SVG e GIF são recusados) |
 

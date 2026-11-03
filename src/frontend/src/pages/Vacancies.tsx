@@ -12,6 +12,8 @@ import {
 } from "lucide-react"
 import { cn } from "cn"
 import { PageHeader } from "@/components/PageHeader"
+import { StageEditor } from "@/components/StageEditor"
+import { StageProgress } from "@/components/StageProgress"
 import { StatusBadge } from "@/components/StatusBadge"
 import {
   AlertDialog,
@@ -52,7 +54,7 @@ import { toast } from "@/components/ui/toast"
 import { api, errorMessage } from "@/lib/api"
 import { useCurrentUser } from "@/lib/auth"
 import { formatDate } from "@/lib/format"
-import type { Resume, Vacancy } from "@/lib/types"
+import { DEFAULT_STAGES, type Resume, type Vacancy } from "@/lib/types"
 import { useQuery } from "@/lib/use-query"
 
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"]
@@ -134,6 +136,12 @@ function VacancyDetailsDialog({
               <DetailSection title="Sobre a vaga" text={vacancy.description} />
               {vacancy.requirements && <DetailSection title="Requisitos" text={vacancy.requirements} />}
               {vacancy.responsibilities && <DetailSection title="Responsabilidades" text={vacancy.responsibilities} />}
+              {resume && (
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-sm font-medium">Seu andamento</h3>
+                  <StageProgress stages={vacancy.stages} resume={resume} />
+                </div>
+              )}
               <div className="flex items-center justify-end border-t pt-5">
                 {resume ? (
                   <StatusBadge status={resume.status} />
@@ -261,6 +269,7 @@ function VacancyFormDialog({
   const [description, setDescription] = useState("")
   const [requirements, setRequirements] = useState("")
   const [responsibilities, setResponsibilities] = useState("")
+  const [stages, setStages] = useState<string[]>(DEFAULT_STAGES)
   const [file, setFile] = useState<File | null>(null)
   const [removed, setRemoved] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -274,6 +283,7 @@ function VacancyFormDialog({
       setDescription(vacancy?.description ?? "")
       setRequirements(vacancy?.requirements ?? "")
       setResponsibilities(vacancy?.responsibilities ?? "")
+      setStages(vacancy?.stages ?? DEFAULT_STAGES)
       setFile(null)
       setRemoved(false)
     }
@@ -283,7 +293,7 @@ function VacancyFormDialog({
     event.preventDefault()
     setBusy(true)
     try {
-      const data = { name, description, requirements, responsibilities } // vazio em requisitos/responsabilidades apaga
+      const data = { name, description, requirements, responsibilities, stages } // vazio em requisitos/responsabilidades apaga
       const saved = vacancy ? await api.vacancies.update(vacancy.id, data) : await api.vacancies.create(data)
       let photoProblem: string | null = null
       try {
@@ -359,6 +369,13 @@ function VacancyFormDialog({
                 onChange={(e) => setResponsibilities(e.target.value)}
               />
               <FieldDescription>Uma por linha: o que a pessoa vai fazer no dia a dia.</FieldDescription>
+            </Field>
+            <Field>
+              <FieldLabel>Etapas do processo</FieldLabel>
+              <StageEditor stages={stages} onChange={setStages} />
+              <FieldDescription>
+                Só a Triagem (análise do currículo) é obrigatória. O candidato é avisado por e-mail a cada etapa.
+              </FieldDescription>
             </Field>
           </FieldGroup>
           <DialogFooter>

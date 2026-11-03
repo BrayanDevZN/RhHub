@@ -27,6 +27,7 @@ export type Vacancy = {
   requirements?: string // opcional
   responsibilities?: string // opcional
   has_photo: boolean
+  stages: string[] // etapas do processo seletivo; a primeira é sempre a Triagem
   created_by?: number // só admins recebem
   created_at: string
 }
@@ -39,6 +40,7 @@ export type Resume = {
   content_type: string // application/pdf ou DOCX
   status: ResumeStatus
   reason: string | null
+  stage: string // etapa atual do candidato (uma das etapas da vaga)
   created_at: string
 }
 
@@ -62,3 +64,8 @@ export const GENDER_LABEL: Record<Gender, string> = {
   female: "Feminino",
   other: "Outro",
 }
+
+/** A Triagem (análise do currículo) é obrigatória em toda vaga e sempre a primeira etapa. */
+export const SCREENING_STAGE = "Triagem"
+export const DEFAULT_STAGES = [SCREENING_STAGE, "Entrevista", "Contratado"]
+export const MAX_STAGES = 10

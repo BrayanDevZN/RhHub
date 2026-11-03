@@ -31,6 +31,20 @@ public class HtmlEmailComposer implements EmailComposer {
         return EmailMessage.html(to, subject(purpose), html);
     }
 
+    @Override
+    public EmailMessage stageChanged(String to, String name, String vacancy, String stage, int position, int total) {
+        String html = """
+                <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#1a1a2e">
+                  <h2 style="margin:0 0 12px">Sua candidatura avançou</h2>
+                  <p>Olá, %s!</p>
+                  <p>Sua candidatura para a vaga <strong>%s</strong> está agora na etapa
+                     <strong>%s</strong> (etapa %d de %d).</p>
+                  <p style="color:#555">Você pode acompanhar o andamento a qualquer momento em
+                     <em>Minhas candidaturas</em> no RhHub.</p>
+                </div>""".formatted(escape(name), escape(vacancy), escape(stage), position, total);
+        return EmailMessage.html(to, "Sua candidatura para " + vacancy + ": etapa " + stage, html);
+    }
+
     static String subject(CodePurpose purpose) {
         return switch (purpose) {
             case SIGNUP -> "Seu código para criar a conta";

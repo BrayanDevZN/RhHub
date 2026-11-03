@@ -3,6 +3,7 @@ package br.rhhub.infra.database.adapter;
 import br.rhhub.application.port.out.VacancyRepository;
 import br.rhhub.domain.exception.DomainException;
 import br.rhhub.domain.model.Vacancy;
+import br.rhhub.domain.rule.Stages;
 import br.rhhub.infra.database.Params;
 import br.rhhub.infra.database.Row;
 import br.rhhub.infra.database.SqlExecutor;
@@ -17,7 +18,7 @@ import reactor.core.publisher.Mono;
 public class VacancyRepositoryAdapter implements VacancyRepository {
 
     /** has_photo vem de uma subconsulta (boolean no PostgreSQL, 0/1 no SQLite: Row.bool entende os dois). */
-    private static final String COLUMNS = "id, created_by, name, description, requirements, responsibilities, created_at, "
+    private static final String COLUMNS = "id, created_by, name, description, requirements, responsibilities, stages, created_at, "
             + "EXISTS (SELECT 1 FROM vacancy_photos p WHERE p.vacancy_id = vacancies.id) AS has_photo";
 
     private final SqlExecutor sql;
@@ -53,19 +54,21 @@ public class VacancyRepositoryAdapter implements VacancyRepository {
                 .add("description", v.description())
                 .add("requirements", v.requirements(), String.class)
                 .add("responsibilities", v.responsibilities(), String.class)
+                .add("stages", Stages.join(v.stages()))
                 .add("created_by", v.createdBy(), Long.class);
         Flux<Row> result;
         if (v.id() == null) {
             params.add("created_at", v.createdAt() != null ? v.createdAt() : clock.instant());
             result = sql.query("""
-                    INSERT INTO vacancies (created_by, name, description, requirements, responsibilities, created_at)
-                    VALUES (:created_by, :name, :description, :requirements, :responsibilities, :created_at)
+                    INSERT INTO vacancies (created_by, name, description, requirements, responsibilities, stages, created_at)
+                    VALUES (:created_by, :name, :description, :requirements, :responsibilities, :stages, :created_at)
                     RETURNING id""", params);
         } else {
             params.add("id", v.id());
             result = sql.query("""
                     UPDATE vacancies SET created_by = :created_by, name = :name, description = :description,
-                                         requirements = :requirements, responsibilities = :responsibilities
+                                         requirements = :requirements, responsibilities = :responsibilities,
+                                         stages = :stages
                     WHERE id = :id RETURNING id""", params);
         }
         // O RETURNING só traz o id; a vaga completa (com has_photo) vem de uma leitura, igual nos dois bancos.
@@ -83,6 +86,7 @@ public class VacancyRepositoryAdapter implements VacancyRepository {
 
     static Vacancy toDomain(Row r) {
         return new Vacancy(r.longValue("id"), r.string("name"), r.string("description"), r.string("requirements"),
-                r.string("responsibilities"), r.longValue("created_by"), r.instant("created_at"), r.bool("has_photo"));
+                r.string("responsibilities"), r.longValue("created_by"), r.instant("created_at"), r.bool("has_photo"),
+                Stages.parse(r.string("stages")));
     }
 }

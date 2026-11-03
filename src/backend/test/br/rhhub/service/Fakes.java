@@ -133,7 +133,7 @@ public final class Fakes {
             }
             Long id = v.id() == null ? seq.incrementAndGet() : v.id();
             Vacancy stored = new Vacancy(id, v.name(), v.description(), v.requirements(), v.responsibilities(),
-                    v.createdBy(), Instant.parse("2026-11-03T12:00:00Z"), false);
+                    v.createdBy(), Instant.parse("2026-11-03T12:00:00Z"), false, v.stages());
             byId.put(id, stored);
             return Mono.just(view(stored));
         }
@@ -169,14 +169,20 @@ public final class Fakes {
         @Override public Mono<Resume> create(Resume r, byte[] file) {
             Long id = seq.incrementAndGet();
             Resume stored = new Resume(id, r.userId(), r.vacancyId(), r.fileName(), r.contentType(), r.status(), r.reason(),
-                    Instant.parse("2026-11-03T12:00:00Z"));
+                    Instant.parse("2026-11-03T12:00:00Z"), r.stage());
             byId.put(id, stored);
             files.put(id, file);
             return Mono.just(stored);
         }
         @Override public Mono<Resume> updateResult(Long id, ResumeStatus status, String reason) {
             Resume r = byId.get(id);
-            Resume next = new Resume(r.id(), r.userId(), r.vacancyId(), r.fileName(), r.contentType(), status, reason, r.createdAt());
+            Resume next = new Resume(r.id(), r.userId(), r.vacancyId(), r.fileName(), r.contentType(), status, reason, r.createdAt(), r.stage());
+            byId.put(id, next);
+            return Mono.just(next);
+        }
+        @Override public Mono<Resume> updateStage(Long id, String stage) {
+            Resume r = byId.get(id);
+            Resume next = new Resume(r.id(), r.userId(), r.vacancyId(), r.fileName(), r.contentType(), r.status(), r.reason(), r.createdAt(), stage);
             byId.put(id, next);
             return Mono.just(next);
         }

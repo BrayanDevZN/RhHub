@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { DownloadIcon, EyeIcon, FileTextIcon, MoreHorizontalIcon, Trash2Icon } from "lucide-react"
+import { StageProgress } from "@/components/StageProgress"
 import { StatusBadge } from "@/components/StatusBadge"
 import {
   AlertDialog,
@@ -23,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { toast } from "@/components/ui/toast"
@@ -55,7 +57,18 @@ export function ResumeTable({
   const [deleting, setDeleting] = useState<Resume | null>(null)
 
   const vacancyName = (id: number) => vacancies.find((v) => v.id === id)?.name ?? "Vaga removida"
+  const stagesOf = (id: number) => vacancies.find((v) => v.id === id)?.stages ?? []
   const userName = (id: number) => users?.find((u) => u.id === id)?.name ?? "Usuário removido"
+
+  async function changeStage(resume: Resume, stage: string) {
+    try {
+      await api.resumes.setStage(resume.id, stage)
+      toast.add({ title: `Candidato movido para ${stage}`, description: "Ele foi avisado por e-mail.", type: "success" })
+      onChanged()
+    } catch (error) {
+      toast.add({ title: "Erro", description: errorMessage(error), type: "error" })
+    }
+  }
 
   async function confirmDelete() {
     if (!deleting) return
@@ -98,6 +111,7 @@ export function ResumeTable({
               <TableHead className="hidden sm:table-cell">Arquivo</TableHead>
               <TableHead className="hidden md:table-cell">Enviado em</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Etapa</TableHead>
               <TableHead className="w-10">
                 <span className="sr-only">Ações</span>
               </TableHead>
@@ -116,6 +130,26 @@ export function ResumeTable({
                 </TableCell>
                 <TableCell>
                   <StatusBadge status={resume.status} />
+                </TableCell>
+                <TableCell>
+                  {users && resume.status === "aproved" ? (
+                    <Select items={stagesOf(resume.vacancy_id).map((s) => ({ value: s, label: s }))} value={resume.stage} onValueChange={(value) => value && changeStage(resume, value as string)}>
+                      <SelectTrigger size="sm" aria-label="Etapa do candidato">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {stagesOf(resume.vacancy_id).map((stage) => (
+                            <SelectItem key={stage} value={stage}>
+                              {stage}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">{resume.status === "recuse" ? "—" : resume.stage}</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
@@ -160,6 +194,9 @@ export function ResumeTable({
             <div className="flex flex-col gap-3">
               <StatusBadge status={viewing.status} />
               <p className="text-sm leading-relaxed">{viewing.reason || "Sem detalhes da análise."}</p>
+              {stagesOf(viewing.vacancy_id).length > 0 && (
+                <StageProgress stages={stagesOf(viewing.vacancy_id)} resume={viewing} />
+              )}
             </div>
           )}
         </DialogContent>
