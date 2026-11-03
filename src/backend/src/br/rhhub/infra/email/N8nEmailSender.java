@@ -38,7 +38,7 @@ public class N8nEmailSender implements EmailSender {
         this.timeout = timeout;
         this.client = WebClient.builder()
                 .baseUrl(webhookUrl)
-                .clientConnector(new ReactorClientHttpConnector(HttpClient.create().responseTimeout(timeout)))
+                .clientConnector(new ReactorClientHttpConnector(HttpClient.create().proxyWithSystemProperties().responseTimeout(timeout)))
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }

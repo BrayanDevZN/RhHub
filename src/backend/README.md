@@ -114,7 +114,11 @@ As consultas de metadados do currículo não selecionam a coluna `file`; o PDF s
 3. `GROQ_API_KEY` preenchida: Groq.
 4. Nenhuma chave: sobe normalmente, mas cada chamada falha com `AiException`.
 
-Os dois provedores usam a API `/chat/completions`. Qualquer falha de rede ou resposta vazia vira `AiException`.
+Os dois provedores usam a API `/chat/completions`. Qualquer falha de rede ou resposta vazia vira `AiException`, e a mensagem traz o provedor, o status HTTP e o começo do corpo do erro.
+
+**Limite de taxa (429).** O plano gratuito do Groq limita tokens por minuto e cada análise manda o prompt inteiro. Ao receber 429, o cliente espera o tempo do cabeçalho `Retry-After` (padrão 20 s, no máximo 60 s) e tenta de novo, até 2 vezes. Esgotadas as esperas, o erro sobe e o job é repetido pelo consumer. O cliente usa os proxies das propriedades do sistema (`https.proxyHost` etc.), quando existirem.
+
+O modelo padrão é `llama-3.3-70b-versatile`; se a sua conta não o tiver, defina `GROQ_MODEL` (o teste real do Groq usou `openai/gpt-oss-120b`).
 
 ## Redis
 
