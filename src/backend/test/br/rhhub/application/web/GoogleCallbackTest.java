@@ -80,7 +80,11 @@ class GoogleCallbackTest {
     }
 
     private String begin() {
-        var res = client.get().uri("/oauth2/authorization/google").exchange().expectStatus().isFound().returnResult(String.class);
+        return begin("signup");
+    }
+
+    private String begin(String mode) {
+        var res = client.get().uri("/oauth2/authorization/google?mode=" + mode).exchange().expectStatus().isFound().returnResult(String.class);
         var cookie = res.getResponseCookies().getFirst("X-oauth_state");
         assertThat(cookie.isHttpOnly()).isTrue();
         assertThat(cookie.getSameSite()).isEqualTo("Lax"); // precisa voltar numa navegação vinda do Google
@@ -109,6 +113,36 @@ class GoogleCallbackTest {
         assertThat(res.getResponseCookies().getFirst("X-user_refresh_token").getSameSite()).isEqualTo("Lax");
         assertThat(res.getResponseCookies().getFirst("X-oauth_state").getMaxAge().isZero()).isTrue(); // state usado uma vez
         assertThat(users.byId.values()).extracting("email").containsExactly("ana@gmail.com");
+    }
+
+    @Test
+    void loginDoesNotCreateAnAccountAndTellsThereIsNone() {
+        String state = begin("login");
+        assertThat(state).startsWith("login.");
+        assertThat(callbackLocation(state, "?code=abc&state=" + state))
+                .isEqualTo("https://front.exemplo.com/login?error=google&reason=no_account");
+        assertThat(users.byId).isEmpty();
+    }
+
+    @Test
+    void loginWithoutAModeNeverCreatesAnAccountEither() {
+        var res = client.get().uri("/oauth2/authorization/google").exchange().expectStatus().isFound().returnResult(String.class);
+        String state = res.getResponseCookies().getFirst("X-oauth_state").getValue();
+        assertThat(state).startsWith("login.");
+        assertThat(callbackLocation(state, "?code=abc&state=" + state)).contains("reason=no_account");
+        assertThat(users.byId).isEmpty();
+    }
+
+    @Test
+    void loginEntersAnExistingAccountAndSignupCreatesOnlyOnce() {
+        String signup = begin("signup");
+        assertThat(callbackLocation(signup, "?code=abc&state=" + signup)).isEqualTo("https://front.exemplo.com/");
+        assertThat(users.byId).hasSize(1);
+        String login = begin("login");
+        assertThat(callbackLocation(login, "?code=abc&state=" + login)).isEqualTo("https://front.exemplo.com/");
+        String again = begin("signup");
+        assertThat(callbackLocation(again, "?code=abc&state=" + again)).isEqualTo("https://front.exemplo.com/");
+        assertThat(users.byId).hasSize(1);
     }
 
     @Test

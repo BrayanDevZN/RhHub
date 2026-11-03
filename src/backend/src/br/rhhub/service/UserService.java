@@ -63,6 +63,24 @@ public class UserService {
         }));
     }
 
+    /**
+     * Completa o cadastro de quem entrou com o Google (CPF, idade e gênero são obrigatórios, como no cadastro comum).
+     * Os três vêm juntos. O CPF só entra se a conta ainda não tem um; se já tem, o enviado precisa ser o mesmo.
+     */
+    public Mono<User> completeProfile(UUID publicId, String cpf, Integer age, String gender) {
+        return Mono.defer(() -> {
+            if (cpf == null || cpf.isBlank() || age == null || gender == null || gender.isBlank()) {
+                throw new DomainException.Invalid("Informe CPF, idade e gênero.");
+            }
+            return me(publicId).flatMap(user -> {
+                if (user.cpf() != null && !user.cpf().equals(Rules.cpf(cpf))) {
+                    return Mono.<User>error(new DomainException.Unprocessable("O CPF não pode ser alterado."));
+                }
+                return update(publicId, new Update(age, gender, null, user.cpf() == null ? cpf : null));
+            });
+        });
+    }
+
     /** Conta local confirma com a senha; conta do Google não tem senha e confirma pela própria sessão. */
     public Mono<Void> deleteOwn(UUID publicId, String password) {
         return me(publicId).flatMap(user -> {

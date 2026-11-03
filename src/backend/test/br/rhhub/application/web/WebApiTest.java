@@ -262,7 +262,7 @@ class WebApiTest {
         post("/api/users", Map.of("name", "Bia"), null).expectStatus().isBadRequest();
         client.post().uri("/api/users").contentType(MediaType.APPLICATION_JSON).bodyValue("{quebrado").exchange().expectStatus().isBadRequest();
         post("/api/auth/login", Map.of("email", "ana@gmail.com", "password", "Errada123"), null).expectStatus().isUnauthorized();
-        post("/api/auth/login", Map.of("email", "ninguem@gmail.com", "password", "Senha123"), null).expectStatus().isUnauthorized();
+        post("/api/auth/login", Map.of("email", "ninguem@gmail.com", "password", "Senha123"), null).expectStatus().isNotFound(); // conta que não existe
     }
 
     @Test

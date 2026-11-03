@@ -4,6 +4,8 @@ import { Spinner } from "@/components/ui/spinner"
 import { Toaster } from "@/components/ui/toast"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { AuthProvider, useAuth } from "@/lib/auth"
+import { isProfileIncomplete } from "@/lib/types"
+import CompleteProfile from "@/pages/CompleteProfile"
 import AdminResumes from "@/pages/AdminResumes"
 import AdminUsers from "@/pages/AdminUsers"
 import Dashboard from "@/pages/Dashboard"
@@ -22,6 +24,16 @@ function Loading() {
 }
 
 function ProtectedRoute() {
+  const { user, loading } = useAuth()
+  if (loading) return <Loading />
+  if (!user) return <Navigate to="/login" replace />
+  // Conta criada com o Google: CPF, idade e gênero são obrigatórios, então ela passa primeiro pelo cadastro.
+  if (isProfileIncomplete(user)) return <Navigate to="/completar-cadastro" replace />
+  return <Outlet />
+}
+
+/** Rota do primeiro acesso: precisa de login, mas não do cadastro completo (é ela que o completa). */
+function SessionRoute() {
   const { user, loading } = useAuth()
   if (loading) return <Loading />
   return user ? <Outlet /> : <Navigate to="/login" replace />
@@ -48,6 +60,9 @@ export default function App() {
               <Route element={<PublicRoute />}>
                 <Route path="/login" element={<Login />} />
                 <Route path="/cadastro" element={<Register />} />
+              </Route>
+              <Route element={<SessionRoute />}>
+                <Route path="/completar-cadastro" element={<CompleteProfile />} />
               </Route>
               <Route element={<ProtectedRoute />}>
                 <Route element={<AppLayout />}>

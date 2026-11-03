@@ -25,6 +25,8 @@ public class GoogleController {
 
     private static final Logger log = LoggerFactory.getLogger(GoogleController.class);
     private static final SecureRandom RANDOM = new SecureRandom();
+    private static final String SIGNUP = "signup";
+    private static final String LOGIN = "login";
 
     private final AuthService auth;
     private final WebSupport web;
@@ -36,11 +38,16 @@ public class GoogleController {
         this.props = props;
     }
 
+    /**
+     * ?mode=signup cria a conta se ela não existir (o botão "Cadastrar com Google"); sem isso, ou com mode=login, só
+     * entra quem já tem conta. O modo viaja no state (signup.xxxx / login.xxxx), que o cookie confere na volta.
+     */
     @GetMapping("/oauth2/authorization/google")
-    Mono<Void> start(ServerWebExchange exchange) {
+    Mono<Void> start(@RequestParam(required = false) String mode, ServerWebExchange exchange) {
         byte[] bytes = new byte[24];
         RANDOM.nextBytes(bytes);
-        String state = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        String state = ("signup".equals(mode) ? SIGNUP : LOGIN) + "."
+                + Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
         String url = auth.googleAuthorizationUrl(state); // 404 se estiver desligado
         exchange.getResponse().addCookie(web.stateCookie(state, false));
         return redirect(exchange, url);
@@ -68,7 +75,7 @@ public class GoogleController {
             log.warn("Login com Google recusado: o Google voltou sem code");
             return failed(exchange, "no_code");
         }
-        return auth.loginWithGoogle(code)
+        return auth.loginWithGoogle(code, state.startsWith(SIGNUP + "."))
                 .flatMap(session -> {
                     AuthController.openGoogleSession(web, exchange, session);
                     return redirect(exchange, props.homeUrl());
@@ -87,6 +94,9 @@ public class GoogleController {
     static String reasonOf(Throwable failure) {
         if (failure instanceof GoogleIdentityProvider.LoginFailure google) {
             return google.reason();
+        }
+        if (failure instanceof DomainException.NotFound) {
+            return "no_account";
         }
         if (failure instanceof DomainException.Forbidden) {
             return "not_gmail";

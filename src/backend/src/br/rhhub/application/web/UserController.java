@@ -42,6 +42,9 @@ public class UserController {
     public record DeleteRequest(String password) {
     }
 
+    public record ProfileRequest(String cpf, Integer age, String gender) {
+    }
+
     private final AuthService auth;
     private final UserService users;
     private final ProfilePhotoService photos;
@@ -78,6 +81,14 @@ public class UserController {
     @PatchMapping("/users/me")
     Mono<Views.UserView> update(@RequestBody PatchRequest body, ServerWebExchange exchange) {
         return web.actor(exchange).flatMap(actor -> users.update(actor.publicId(), change(body)))
+                .flatMap(user -> photos.has(user).map(has -> Views.user(user, has)));
+    }
+
+    /** Completa o cadastro (CPF, idade e gênero juntos): o passo que a conta criada com o Google precisa fazer. */
+    @PutMapping("/users/me/profile")
+    Mono<Views.UserView> completeProfile(@RequestBody ProfileRequest body, ServerWebExchange exchange) {
+        return web.actor(exchange)
+                .flatMap(actor -> users.completeProfile(actor.publicId(), body.cpf(), body.age(), body.gender()))
                 .flatMap(user -> photos.has(user).map(has -> Views.user(user, has)));
     }
 

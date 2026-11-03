@@ -144,7 +144,8 @@ export const api = {
 
     // Login e cadastro com Google: o botão sempre aparece. Se não der para entrar, diz o motivo em vez de mandar o
     // navegador para uma página de erro. Ligado, sai do app e volta logado pelo back end.
-    async startGoogleLogin(): Promise<void> {
+    // mode "login" só entra quem já tem conta; "signup" cria a conta se ela não existir.
+    async startGoogleLogin(mode: "login" | "signup" = "login"): Promise<void> {
       let google: boolean
       try {
         google = (await api.auth.providers()).google === true
@@ -155,7 +156,7 @@ export const api = {
       if (!google) {
         throw new ApiError("O login com Google não está ativado neste servidor. Use seu e-mail e senha.")
       }
-      window.location.assign("/oauth2/authorization/google")
+      window.location.assign(`/oauth2/authorization/google?mode=${mode}`)
     },
 
     // POST /auth/logout
@@ -187,6 +188,11 @@ export const api = {
     // PATCH /users/me: set em age, gender, two_factor ou cpf (o CPF só pode ser preenchido uma vez)
     update(set: "two_factor" | "age" | "gender" | "cpf", value: boolean | number | string | Gender): Promise<User> {
       return call<User>("/users/me", "PATCH", { set, value })
+    },
+
+    // PUT /users/me/profile: completa o cadastro (CPF, idade e gênero juntos). Passo obrigatório da conta do Google.
+    completeProfile(data: { cpf: string; age: number; gender: Gender }): Promise<User> {
+      return call<User>("/users/me/profile", "PUT", data)
     },
 
     // DELETE /users/me

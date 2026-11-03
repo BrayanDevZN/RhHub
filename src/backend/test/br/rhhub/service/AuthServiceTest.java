@@ -95,12 +95,20 @@ class AuthServiceTest {
     }
 
     @Test
-    void wrongPasswordAndUnknownUserGetTheSameError() {
+    void wrongPasswordIsUnauthorizedAndAnUnknownAccountIsReportedAsNotFound() {
         signUp();
         var wrong = catchThrowable(() -> auth.login(EMAIL, "Errada123").block());
         var unknown = catchThrowable(() -> auth.login("ninguem@gmail.com", "Senha123").block());
         assertThat(wrong).isInstanceOf(DomainException.Unauthorized.class);
-        assertThat(unknown).isInstanceOf(DomainException.Unauthorized.class).hasMessage(wrong.getMessage());
+        assertThat(unknown).isInstanceOf(DomainException.NotFound.class).hasMessage(AuthService.NO_ACCOUNT);
+    }
+
+    @Test
+    void googleLoginWithoutCreatingFailsWhenThereIsNoAccount() {
+        var failure = catchThrowable(() -> auth.loginWithGoogle("ok", false).block());
+        assertThat(failure).isInstanceOf(DomainException.NotFound.class);
+        assertThat(auth.loginWithGoogle("ok", true).block().user()).isNotNull();
+        assertThat(auth.loginWithGoogle("ok", false).block().user()).isNotNull();
     }
 
     private static Throwable catchThrowable(Runnable r) {

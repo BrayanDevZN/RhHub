@@ -317,6 +317,8 @@ Fluxo, quando ligado:
 2. O Google autentica e volta para `/login/oauth2/code/google`.
 3. O back end busca o usuário pelo e-mail verificado. Se existir, **vincula** à mesma conta; se não, cria um com `provider = google`.
 4. Emite os mesmos cookies e redireciona para o front. Contas Google **não passam pelo 2FA por e-mail** e não têm troca de senha.
+5. **Login x cadastro:** `?mode=login` (padrão) só entra quem já tem conta; sem conta, volta para `/login?error=google&reason=no_account` e o front avisa "Conta não encontrada". `?mode=signup` (botão "Cadastrar com Google") cria a conta. O modo viaja no `state`.
+6. **Cadastro obrigatório:** conta criada pelo Google nasce sem CPF, idade e gênero, e o front leva a `/completar-cadastro`: aba 1 com os três campos (`PUT /users/me/profile`) e aba 2 para a foto (pode pular). Enquanto faltar algum, as demais telas ficam bloqueadas.
 
 **Recuperar senha:** `POST /api/auth/password/reset-code` envia o código (válido por 8 min) e `POST /api/auth/password/reset` troca a senha.
 
@@ -348,7 +350,7 @@ Prefixo `/api`. Respostas em JSON. Sessão por cookie, então o front usa `crede
 | `GET` | `/users/me` | Logado | Dados do usuário logado | `GET /users` |
 | `PATCH` | `/users/me` | Logado | Altera `age`, `gender` ou `two_factor` `{set, value}` | `PATCH /users` |
 | `DELETE` | `/users/me` | Logado | Exclui a própria conta `{password}` | `DELETE /users` |
-| `POST` | `/auth/login` | Público | Valida e-mail e senha | `GET /auth` |
+| `POST` | `/auth/login` | Público | Valida e-mail e senha. E-mail sem conta responde `404` (o front avisa e oferece criar a conta); senha errada, `401` | `GET /auth` |
 | `POST` | `/auth/2fa/send` | Cookie 2FA | Envia o código de 2FA | `POST /sender/2fa` |
 | `POST` | `/auth/2fa/verify` | Cookie 2FA | Confere o código e abre a sessão | `GET /auth` com `code` |
 | `POST` | `/auth/refresh` | Cookie refresh | Renova o token de acesso | `PUT /auth` |
@@ -357,7 +359,8 @@ Prefixo `/api`. Respostas em JSON. Sessão por cookie, então o front usa `crede
 | `POST` | `/auth/password/reset-code` | Público | Envia o código de recuperação `{email}` | `PATCH /sender` |
 | `POST` | `/auth/password/reset` | Público | Troca a senha com o código `{email, code, newPassword}` | `PATCH /auth` com `sender` |
 | `GET` | `/auth/providers` | Público | Informa quais logins externos estão ativos `{google}` | novo |
-| `GET` | `/oauth2/authorization/google` | Público | Inicia o login com Google. `404` se `GOOGLE_OAUTH_ENABLED=false` | novo |
+| `GET` | `/oauth2/authorization/google` | Público | Inicia o login (`?mode=login`) ou o cadastro (`?mode=signup`) com Google. `404` se `GOOGLE_OAUTH_ENABLED=false` | novo |
+| `PUT` | `/users/me/profile` | Logado | Completa o cadastro: `{cpf, age, gender}`, os três obrigatórios. O CPF só entra uma vez | novo |
 
 **Vagas**
 

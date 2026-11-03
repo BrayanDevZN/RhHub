@@ -71,3 +71,9 @@ export const GENDER_LABEL: Record<Gender, string> = {
 export const SCREENING_STAGE = "Triagem"
 export const DEFAULT_STAGES = [SCREENING_STAGE, "Entrevista", "Contratado"]
 export const MAX_STAGES = 10
+
+/** Conta que entrou com o Google e ainda não informou CPF, idade e gênero (todos obrigatórios). */
+export function isProfileIncomplete(user: Pick<User, "cpf" | "age" | "gender" | "provider">) {
+  // Contas locais já nascem completas (o cadastro exige os três); o admin raiz criado pelo servidor fica de fora.
+  return user.provider === "google" && (!user.cpf || user.age == null || !user.gender)
+}

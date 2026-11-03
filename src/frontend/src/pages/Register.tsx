@@ -43,6 +43,10 @@ export default function Register() {
 
   function handleForm(event: FormEvent) {
     event.preventDefault()
+    if (!gender) {
+      toast.add({ title: "Informe o gênero", description: "CPF, idade e gênero são obrigatórios.", type: "error" })
+      return
+    }
     run(async () => {
       await api.auth.sendSignupCode(name, email)
       toast.add({ title: "Código enviado para o seu e-mail", description: "Ele vale por 15 minutos." })
@@ -64,7 +68,7 @@ export default function Register() {
   }
 
   function handleGoogle() {
-    run(() => api.auth.startGoogleLogin())
+    run(() => api.auth.startGoogleLogin("signup"))
   }
 
   if (step === "code") {
@@ -133,6 +137,7 @@ export default function Register() {
                   <Input
                     id="cpf"
                     inputMode="numeric"
+                    required
                     maxLength={11}
                     placeholder="Somente números"
                     value={cpf}
@@ -141,7 +146,7 @@ export default function Register() {
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="age">Idade</FieldLabel>
-                  <Input id="age" type="number" min={18} value={age} onChange={(e) => setAge(e.target.value)} />
+                  <Input id="age" type="number" min={18} required value={age} onChange={(e) => setAge(e.target.value)} />
                 </Field>
               </div>
               <Field>

@@ -12,7 +12,7 @@ import { Field, FieldDescription, FieldGroup, FieldLabel, FieldSeparator } from 
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { toast } from "@/components/ui/toast"
-import { api, errorMessage } from "@/lib/api"
+import { ApiError, api, errorMessage } from "@/lib/api"
 import { useAuth } from "@/lib/auth"
 
 /** Texto para cada motivo que o back end devolve em /login?error=google&reason=... (o código aparece junto, para suporte). */
@@ -25,6 +25,7 @@ function googleFailure(reason: string): string {
     invalid_grant: "A autorização do Google expirou ou já foi usada. Tente de novo.",
     redirect_uri_mismatch: "O endereço de retorno do servidor não bate com o cadastrado no Google.",
     google_unreachable: "O servidor não conseguiu falar com o Google. Tente de novo em instantes.",
+    no_account: "Não encontramos uma conta com esse e-mail do Google.",
     not_gmail: "Só contas @gmail.com podem entrar.",
     email_not_verified: "O Google não verificou o e-mail dessa conta.",
   }
@@ -45,13 +46,17 @@ export default function Login() {
 
   // O back end volta para /login?error=google&reason=... quando o login com Google não se completa.
   const googleReason = params.get("error") === "google" ? (params.get("reason") ?? "desconhecido") : null
+  const [noAccount, setNoAccount] = useState(false)
+  // Conta que não existe (Google ou e-mail) tem aviso próprio, com o caminho para criar a conta.
+  const showNoAccount = noAccount || googleReason === "no_account"
 
   async function run(action: () => Promise<void>) {
     setBusy(true)
     try {
       await action()
     } catch (error) {
-      toast.add({ title: "Erro", description: errorMessage(error), type: "error" })
+      if (error instanceof ApiError && error.status === 404) setNoAccount(true)
+      else toast.add({ title: "Erro", description: errorMessage(error), type: "error" })
     } finally {
       setBusy(false)
     }
@@ -81,7 +86,7 @@ export default function Login() {
   }
 
   function handleGoogle() {
-    run(() => api.auth.startGoogleLogin())
+    run(() => api.auth.startGoogleLogin("login"))
   }
 
   if (step === "twoFactor") {
@@ -125,7 +130,18 @@ export default function Login() {
           <CardDescription>Acesse sua conta para acompanhar vagas e candidaturas.</CardDescription>
         </CardHeader>
         <CardContent>
-          {googleReason && (
+          {showNoAccount && (
+            <Alert className="mb-4">
+              <AlertTitle>Conta não encontrada</AlertTitle>
+              <AlertDescription>
+                Não existe uma conta com esses dados.{" "}
+                <Link to="/cadastro" className="font-medium underline underline-offset-4">
+                  Criar conta
+                </Link>
+              </AlertDescription>
+            </Alert>
+          )}
+          {googleReason && googleReason !== "no_account" && (
             <Alert variant="destructive" className="mb-4">
               <AlertTitle>Não foi possível entrar com o Google</AlertTitle>
               <AlertDescription>

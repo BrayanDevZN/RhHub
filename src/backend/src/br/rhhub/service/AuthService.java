@@ -39,6 +39,8 @@ public class AuthService {
     }
 
     private static final String BAD_CREDENTIALS = "E-mail ou senha incorretos.";
+    /** Mensagem de login com e-mail ou Google que não têm conta: o front mostra o aviso e leva ao cadastro. */
+    public static final String NO_ACCOUNT = "Não encontramos uma conta com esse e-mail. Crie uma conta para entrar.";
 
     private final UserRepository users;
     private final Passwords passwords;
@@ -50,7 +52,6 @@ public class AuthService {
     private final GoogleIdentityProvider google;
     private final Clock clock;
     private final boolean exposeCode;
-    private final String dummyHash;
 
     public AuthService(UserRepository users, PasswordHasher hasher, JwtService jwt, RefreshTokenStore refreshTokens,
             VerificationCodeStore codes, EmailComposer composer, EmailSender email, GoogleIdentityProvider google,
@@ -65,7 +66,6 @@ public class AuthService {
         this.google = google;
         this.clock = clock;
         this.exposeCode = exposeCode;
-        this.dummyHash = passwords.hashNow("senha-que-ninguem-usa");
     }
 
     // ---- cadastro ----
@@ -110,8 +110,7 @@ public class AuthService {
         return Mono.defer(() -> {
             String address = Rules.email(rawEmail);
             return users.findByEmail(address)
-                    .switchIfEmpty(Mono.defer(() -> passwords.matches(password, dummyHash) // mesmo tempo de um usuário real
-                            .then(Mono.<User>empty())))
+                    .switchIfEmpty(Mono.error(new DomainException.NotFound(NO_ACCOUNT)))
                     .flatMap(user -> {
                         if (user.isGoogle() || user.passwordHash() == null) {
                             return Mono.<LoginResult>error(new DomainException.Unauthorized(
@@ -220,8 +219,16 @@ public class AuthService {
         return google.authorizationUrl(state);
     }
 
-    /** Entra (ou cria a conta, ou vincula à existente pelo e-mail). Contas do Google não passam pelo 2FA. */
     public Mono<Session> loginWithGoogle(String code) {
+        return loginWithGoogle(code, true);
+    }
+
+    /**
+     * Entra com a conta que já existe (pelo Google ou pelo e-mail, vinculando as duas). Se não existir, cria a conta só
+     * quando createIfMissing é verdadeiro (o cadastro com Google); no login comum devolve NotFound, para o front avisar
+     * que a conta não existe. Contas do Google não passam pelo 2FA.
+     */
+    public Mono<Session> loginWithGoogle(String code, boolean createIfMissing) {
         return google.fetchProfile(code).flatMap(profile -> {
             if (!profile.emailVerified()) {
                 return Mono.<User>error(new DomainException.Unauthorized("O Google não verificou esse e-mail."));
@@ -235,7 +242,9 @@ public class AuthService {
             return users.findByGoogleSub(profile.sub())
                     .switchIfEmpty(Mono.defer(() -> users.findByEmail(address)
                             .flatMap(existing -> users.save(existing.withGoogleSub(profile.sub())))))
-                    .switchIfEmpty(Mono.defer(() -> users.save(new User(null, UUID.randomUUID(),
+                    .switchIfEmpty(Mono.defer(() -> !createIfMissing
+                            ? Mono.<User>error(new DomainException.NotFound(NO_ACCOUNT))
+                            : users.save(new User(null, UUID.randomUUID(),
                             profile.name().isBlank() ? address.substring(0, address.indexOf('@')) : Rules.name(profile.name()),
                             address, null, null, null, null, false, Role.USER, AuthProvider.GOOGLE, profile.sub(), null))));
         }).flatMap(this::openSession);

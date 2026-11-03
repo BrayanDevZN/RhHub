@@ -1,5 +1,5 @@
 # Project Anatomy: RhHub
-Generated: 2026-11-03 | 245 files | ~247.4K tokens if all read
+Generated: 2026-11-03 | 247 files | ~252.3K tokens if all read
 
 ## Structure
 | Path | Lines | ~Tokens | Type |
@@ -13,12 +13,12 @@ Generated: 2026-11-03 | 245 files | ~247.4K tokens if all read
 | src/backend/src/br/rhhub/application/web/AuthFilter.java | 73 | 648 | source |
 | src/backend/src/br/rhhub/application/web/CorsConfig.java | 42 | 406 | source |
 | src/backend/src/br/rhhub/application/web/dto/Views.java | 78 | 720 | source |
-| src/backend/src/br/rhhub/application/web/GoogleController.java | 112 | 1.3K | source |
+| src/backend/src/br/rhhub/application/web/GoogleController.java | 122 | 1.4K | source |
 | src/backend/src/br/rhhub/application/web/HealthController.java | 15 | 86 | source |
 | src/backend/src/br/rhhub/application/web/RateLimitFilter.java | 67 | 684 | source |
 | src/backend/src/br/rhhub/application/web/ResumeController.java | 112 | 1.3K | source |
 | src/backend/src/br/rhhub/application/web/SecurityHeadersFilter.java | 27 | 214 | source |
-| src/backend/src/br/rhhub/application/web/UserController.java | 149 | 1.6K | source |
+| src/backend/src/br/rhhub/application/web/UserController.java | 160 | 1.7K | source |
 | src/backend/src/br/rhhub/application/web/VacancyController.java | 99 | 1.2K | source |
 | src/backend/src/br/rhhub/application/web/WebSupport.java | 122 | 1.2K | source |
 | src/backend/src/br/rhhub/domain/auth/AccessPolicy.java | 65 | 525 | source |
@@ -106,17 +106,17 @@ Generated: 2026-11-03 | 245 files | ~247.4K tokens if all read
 | src/backend/src/br/rhhub/RhHubApplication.java | 21 | 228 | source |
 | src/backend/src/br/rhhub/service/AdminService.java | 76 | 674 | source |
 | src/backend/src/br/rhhub/service/AnalyzeResumeService.java | 146 | 1.7K | source |
-| src/backend/src/br/rhhub/service/AuthService.java | 281 | 3.4K | source |
+| src/backend/src/br/rhhub/service/AuthService.java | 290 | 3.5K | source |
 | src/backend/src/br/rhhub/service/DeliverEmailService.java | 22 | 156 | source |
 | src/backend/src/br/rhhub/service/Passwords.java | 29 | 235 | source |
 | src/backend/src/br/rhhub/service/ProfilePhotoService.java | 53 | 501 | source |
 | src/backend/src/br/rhhub/service/ResumeService.java | 139 | 1.6K | source |
 | src/backend/src/br/rhhub/service/ResumeStageService.java | 96 | 1.1K | source |
-| src/backend/src/br/rhhub/service/UserService.java | 78 | 917 | source |
+| src/backend/src/br/rhhub/service/UserService.java | 96 | 1.2K | source |
 | src/backend/src/br/rhhub/service/VacancyService.java | 193 | 2.3K | source |
 | src/frontend/40-rhhub-listen.sh | 23 | 172 | source |
 | src/frontend/41-rhhub-api.sh | 68 | 616 | source |
-| src/frontend/src/App.tsx | 72 | 617 | source |
+| src/frontend/src/App.tsx | 87 | 801 | source |
 | src/frontend/src/components/AppLayout.tsx | 145 | 1.7K | source |
 | src/frontend/src/components/AuthLayout.tsx | 35 | 376 | source |
 | src/frontend/src/components/CodeInput.tsx | 28 | 167 | source |
@@ -157,20 +157,21 @@ Generated: 2026-11-03 | 245 files | ~247.4K tokens if all read
 | src/frontend/src/components/ui/toggle.tsx | 45 | 438 | source |
 | src/frontend/src/components/ui/tooltip.tsx | 66 | 709 | source |
 | src/frontend/src/hooks/use-mobile.ts | 20 | 142 | source |
-| src/frontend/src/lib/api.ts | 323 | 2.9K | source |
+| src/frontend/src/lib/api.ts | 329 | 3.0K | source |
 | src/frontend/src/lib/auth.tsx | 71 | 526 | source |
 | src/frontend/src/lib/format.ts | 31 | 269 | source |
-| src/frontend/src/lib/types.ts | 74 | 501 | source |
+| src/frontend/src/lib/types.ts | 80 | 602 | source |
 | src/frontend/src/lib/use-query.ts | 35 | 292 | source |
 | src/frontend/src/lib/utils.ts | 2 | 6 | source |
 | src/frontend/src/main.tsx | 11 | 58 | source |
 | src/frontend/src/pages/AdminResumes.tsx | 53 | 463 | source |
 | src/frontend/src/pages/AdminUsers.tsx | 172 | 1.7K | source |
+| src/frontend/src/pages/CompleteProfile.tsx | 220 | 2.3K | source |
 | src/frontend/src/pages/Dashboard.tsx | 150 | 2.6K | source |
-| src/frontend/src/pages/Login.tsx | 183 | 1.9K | source |
+| src/frontend/src/pages/Login.tsx | 199 | 2.1K | source |
 | src/frontend/src/pages/MyResumes.tsx | 39 | 316 | source |
 | src/frontend/src/pages/Profile.tsx | 409 | 3.7K | source |
-| src/frontend/src/pages/Register.tsx | 192 | 1.9K | source |
+| src/frontend/src/pages/Register.tsx | 197 | 1.9K | source |
 | src/frontend/src/pages/Vacancies.tsx | 711 | 6.6K | source |
 | src/frontend/vite.config.ts | 13 | 81 | source |
 | .github/workflows/ci.yml | 104 | 725 | config |
@@ -185,7 +186,7 @@ Generated: 2026-11-03 | 245 files | ~247.4K tokens if all read
 | src/frontend/tsconfig.app.json | 28 | 173 | config |
 | src/frontend/tsconfig.json | 9 | 45 | config |
 | src/frontend/tsconfig.node.json | 24 | 140 | config |
-| src/backend/test/br/rhhub/application/web/GoogleCallbackTest.java | 153 | 2.1K | test |
+| src/backend/test/br/rhhub/application/web/GoogleCallbackTest.java | 187 | 2.5K | test |
 | src/backend/test/br/rhhub/application/web/WebApiTest.java | 588 | 8.9K | test |
 | src/backend/test/br/rhhub/domain/AnalysisResultTest.java | 74 | 863 | test |
 | src/backend/test/br/rhhub/domain/AuthDomainTest.java | 121 | 1.5K | test |
@@ -218,12 +219,13 @@ Generated: 2026-11-03 | 245 files | ~247.4K tokens if all read
 | src/backend/test/br/rhhub/infra/security/AuthConfigTest.java | 39 | 352 | test |
 | src/backend/test/br/rhhub/infra/TestSupport.java | 57 | 627 | test |
 | src/backend/test/br/rhhub/service/AnalyzeResumeServiceTest.java | 192 | 2.4K | test |
-| src/backend/test/br/rhhub/service/AuthServiceTest.java | 252 | 3.3K | test |
+| src/backend/test/br/rhhub/service/AuthServiceTest.java | 260 | 3.4K | test |
 | src/backend/test/br/rhhub/service/Fakes.java | 213 | 2.9K | test |
 | src/backend/test/br/rhhub/service/ManagementServicesTest.java | 332 | 5.0K | test |
+| src/backend/test/br/rhhub/service/ProfileCompletionTest.java | 57 | 621 | test |
 | src/backend/test/br/rhhub/service/ResumeStageServiceTest.java | 146 | 1.6K | test |
 | src/backend/test/br/rhhub/service/VacancyExpirationTest.java | 85 | 991 | test |
-| DOCUMENTACAO.md | 780 | 11.0K | docs |
+| DOCUMENTACAO.md | 783 | 11.2K | docs |
 | src/backend/HISTORICO.md | 145 | 3.3K | docs |
 | src/backend/README.md | 276 | 5.2K | docs |
 | src/backend/resources/prompt/resume_analysis.md | 342 | 6.7K | docs |
@@ -251,15 +253,15 @@ Generated: 2026-11-03 | 245 files | ~247.4K tokens if all read
 | src/frontend/nginx.conf | 23 | 150 | other |
 
 ## Summary
-- source: 169 files, ~128.9K tokens
+- source: 170 files, ~132.5K tokens
 - config: 12 files, ~3.3K tokens
-- test: 38 files, ~66.2K tokens
-- docs: 5 files, ~26.6K tokens
+- test: 39 files, ~67.3K tokens
+- docs: 5 files, ~26.8K tokens
 - style: 1 files, ~7.5K tokens
 - other: 20 files, ~14.9K tokens
 
 ## Heaviest files (read with offset/limit, not whole)
-1. DOCUMENTACAO.md — 780 lines (~11.0K tokens)
+1. DOCUMENTACAO.md — 783 lines (~11.2K tokens)
 2. src/frontend/src/components/ui/sidebar.tsx — 724 lines (~5.4K tokens)
 3. src/frontend/src/pages/Vacancies.tsx — 711 lines (~6.6K tokens)
 4. src/backend/test/br/rhhub/application/web/WebApiTest.java — 588 lines (~8.9K tokens)
