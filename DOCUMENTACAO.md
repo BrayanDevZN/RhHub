@@ -174,23 +174,9 @@ flowchart LR
 
 ### 4.1 Estrutura de pacotes
 
-```
-backend/src/main/java/br/rhhub
-├── RhHubApplication.java
-├── config/            # Security, CORS, Kafka, Redis, propriedades
-├── auth/              # JWT, cookies, filtro, OAuth2, 2FA
-├── user/              # entidade, repositório, service, controller
-├── vacancy/           # vagas
-├── resume/            # candidaturas e upload de PDF
-├── admin/             # gestão de usuários
-├── messaging/         # producers, consumers e DTOs das mensagens
-│   ├── analysis/      # topic resume.analysis
-│   └── email/         # topic email.send
-├── ai/                # provedores de IA (OpenAI e Groq) e leitura de PDF/DOCX
-├── mail/              # JavaMailSender e templates HTML
-├── cache/             # códigos temporários e rate limit
-└── common/            # erros, DTOs de resposta, utilidades
-```
+A arquitetura em camadas (`domain`, `adapter`, `service`, `application` e `infra`), a estrutura de pastas real do código, o banco (PostgreSQL ou SQLite por `DATABASE_URL`) e o estado de cada camada estão em [`src/backend/README.md`](src/backend/README.md).
+
+> O desenho por pacotes de funcionalidade que existia aqui (`auth/`, `user/`, `vacancy/`, `messaging/`...) foi substituído por esse. As seções abaixo seguem como **plano funcional** do back end: o Flyway foi trocado por classes Java de tabela, e Redis, Kafka, e-mail e JWT ainda não foram implementados.
 
 ### 4.2 Modelo de dados
 
