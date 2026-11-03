@@ -1,0 +1,26 @@
+# API do RhHub (Spring Boot WebFlux): rotas /api, login, vagas e candidaturas.
+# É o mesmo jar do Dockerfile.Consumer; o que muda é o serviço: este recebe HTTP, aquele lê o Kafka.
+# Uso: docker build -f Dockerfile.Api -t rhhub-api .
+#      docker run --env-file src/backend/.env -p 8080:8080 rhhub-api
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /app
+COPY src/backend/pom.xml .
+RUN mvn -q -B dependency:go-offline
+COPY src/backend/src ./src
+COPY src/backend/resources ./resources
+RUN mvn -q -B -DskipTests package && cp target/*.jar /app/app.jar
+
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+# curl só para o healthcheck do docker-compose
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --uid 1001 rhhub
+COPY --from=build /app/app.jar app.jar
+USER rhhub
+
+# Variáveis lidas: DATABASE_URL, REDIS_*, KAFKA_URL, KAFKA_API_KEY, gmail_secret, JWT_SECRET, ADMIN_EMAIL,
+# ADMIN_PASSWORD, FRONTEND_ORIGIN, COOKIE_SECURE, COOKIE_SAMESITE e, se ligar o Google, GOOGLE_*.
+# O Railway injeta a PORT; sem ela a API ouve na 8080.
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75"
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

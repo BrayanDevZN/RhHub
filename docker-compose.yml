@@ -1,0 +1,113 @@
+# RhHub completo em um comando: Postgres, Redis, Kafka, API, consumers e front.
+#   cp .env.compose.example .env   (e preencha)
+#   docker compose up --build
+# Front em http://localhost:9000 ; a API fica atrás do nginx do front, em /api (mesmo domínio, por causa dos cookies).
+name: rhhub
+
+x-backend-env: &backend-env
+  DATABASE_URL: postgresql://rhhub:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}@postgres:5432/rhhub
+  REDIS_HOST: redis
+  REDIS_PASSWORD: ${REDIS_PASSWORD:?defina REDIS_PASSWORD}
+  KAFKA_URL: kafka:9092
+  KAFKA_API_USER: rhhub
+  KAFKA_API_KEY: ${KAFKA_API_KEY:?defina KAFKA_API_KEY (32+ caracteres, letras, numeros, _ ou -)}
+  ENVIRONMENT: ${ENVIRONMENT:-production}
+  groq_key: ${groq_key:-}
+  open_ai_key: ${open_ai_key:-}
+  gmail_secret: ${gmail_secret:-}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: rhhub
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}
+      POSTGRES_DB: rhhub
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rhhub -d rhhub"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:?defina REDIS_PASSWORD}", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+  kafka:
+    build:
+      context: .
+      dockerfile: Dockerfile.kafka
+    environment:
+      KAFKA_API_KEY: ${KAFKA_API_KEY:?defina KAFKA_API_KEY}
+      KAFKA_API_USER: rhhub
+      KAFKA_ADVERTISED_HOST: kafka
+    volumes:
+      - kafkadata:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.Api
+    environment:
+      <<: *backend-env
+      JWT_SECRET: ${JWT_SECRET:-}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?defina ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?defina ADMIN_PASSWORD}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:9000}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      GOOGLE_OAUTH_ENABLED: ${GOOGLE_OAUTH_ENABLED:-false}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+
+  consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile.Consumer
+    environment:
+      <<: *backend-env
+      PORT: "8081"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+
+  front:
+    build:
+      context: .
+      dockerfile: Dockerfile.front
+    environment:
+      API_UPSTREAM: http://api:8080
+    ports:
+      - "9000:9000"
+    depends_on:
+      api: { condition: service_healthy }
+
+volumes:
+  pgdata:
+  kafkadata:

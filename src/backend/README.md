@@ -21,13 +21,27 @@ Fluxo de uma requisição: `application` (rota) → `service` → `domain` + `ad
 
 | Camada | Situação |
 | --- | --- |
-| `infra` | **Pronta**: `config`, `database` (tabelas e repositórios), `redis`, `messaging` (Kafka), `llm` e `email`. |
-| `domain` | Parcial: só os modelos (`User`, `Vacancy`, `Resume`...) e `DomainException`. Faltam as regras e o JWT. |
-| `adapter` | As **interfaces** estão hoje em `application/port/out` e as **implementações** do banco em `infra/database/adapter`. Falta reorganizar para o desenho acima. |
-| `service` | Começou: `AnalyzeResumeService` (a análise com a IA) e `DeliverEmailService`. Faltam os casos de uso de autenticação, usuários, vagas, candidaturas e administração. |
-| `application` | Não existe ainda (não há rotas). |
+| `infra` | **Pronta**: `config`, `database` (tabelas e repositórios), `redis` (códigos, refresh token, rate limit), `messaging` (Kafka), `llm`, `email` (n8n e templates), `google` (OAuth) e `security` (BCrypt, JWT). |
+| `domain` | **Pronta**: modelos, regras de validação (`Rules`), JWT de sessão, política de acesso (`AccessPolicy`) e erros. |
+| `service` | **Pronta**: autenticação, conta do usuário, foto de perfil, vagas, candidaturas, administração e a análise com a IA. |
+| `application` | **Pronta**: rotas sob `/api` (controllers), filtros de login, de limite e de segurança, CORS e erros padronizados. |
 
-Ficou de fora de propósito, para entrar depois: o JWT de sessão e BCrypt (o JWT do e-mail já existe em `infra/email`), leitura de PDF/DOCX e os templates HTML de e-mail.
+As interfaces dos adapters ainda ficam em `application/port/out` (e as de entrada em `application/port/in`).
+
+### Rotas
+
+Todas em `/api`, JSON em snake_case, sessão por cookie `HttpOnly`. A lista completa e quem acessa cada uma está na seção 4.5 da [`DOCUMENTACAO.md`](../../DOCUMENTACAO.md). Além delas: `GET /api/health`, `PUT/GET/DELETE /api/users/me/photo` (foto de perfil: JPEG, PNG ou WebP, até 2 MB) e, com `GOOGLE_OAUTH_ENABLED=true`, `/oauth2/authorization/google`.
+
+### Deploy
+
+| Serviço | Dockerfile | Config do Railway |
+| --- | --- | --- |
+| API | `Dockerfile.Api` | `railway.api.json` |
+| Consumers (análise e e-mail) | `Dockerfile.Consumer` | `railway.consumer.json` |
+| Kafka | `Dockerfile.kafka` | `railway.kafka.json` |
+| Front (nginx, repassa `/api` para a API com `API_UPSTREAM`) | `Dockerfile.front` | `railway.json` |
+
+`docker compose up --build` sobe tudo local (veja `.env.compose.example` na raiz). Front e API precisam estar no **mesmo domínio**: os cookies são `SameSite=Strict`.
 
 ## Estrutura de pastas
 

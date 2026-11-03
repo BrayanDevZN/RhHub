@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Back end (testes)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: src/backend
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: rhhub
+          POSTGRES_PASSWORD: rhhub
+          POSTGRES_DB: rhhub_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rhhub -d rhhub_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: src/backend/pom.xml
+      # Um dos testes sobe um redis-server próprio (com senha), então o binário precisa existir.
+      - name: Redis
+        working-directory: .
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq redis-server
+          redis-cli ping || (redis-server --port 6379 --save "" --daemonize yes && sleep 1 && redis-cli ping)
+      - name: Testes
+        run: mvn -B test
+      - name: Relatórios dos testes
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: src/backend/target/surefire-reports
+          retention-days: 7
+
+  frontend:
+    name: Front end (lint e build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: src/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: src/frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  images:
+    name: Imagens Docker (só build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { file: Dockerfile.Api, tag: rhhub-api }
+          - { file: Dockerfile.Consumer, tag: rhhub-consumer }
+          - { file: Dockerfile.front, tag: rhhub-front }
+          - { file: Dockerfile.kafka, tag: rhhub-kafka }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.file }}
+          push: false
+          tags: ${{ matrix.tag }}:ci
+          cache-from: type=gha,scope=${{ matrix.tag }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.tag }}

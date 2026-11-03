@@ -106,31 +106,28 @@ domínio não muda isso. Por isso o Kafka real precisa ser testado no computador
 
 ## 7. Estado atual
 
-- **Código:** 69 arquivos Java no back end e 21 de teste.
-- **Pronto:** `infra` (`config`, `database`, `redis`, `messaging`, `llm`, `email`, `document`), tabelas e repositórios
-  de usuários, vagas, candidaturas e DLQ, análise da candidatura de ponta a ponta, envio de e-mail e a DLQ.
-- **Parcial:** `domain` (só modelos e erros: faltam as regras e o JWT de sessão); `service` (só a análise e a entrega de
-  e-mail); `adapter` (as interfaces ainda estão em `application/port/out` e as implementações do banco em
-  `infra/database/adapter`).
-- **Ainda não existe:** `application` (rotas, cookies, filtro JWT, rate limit, tratamento de erros), autenticação,
-  2FA, login com Google, casos de uso de usuários, vagas, candidaturas e administração, Dockerfile e compose do back end.
+Etapas feitas depois da primeira versão deste histórico (todas na `main`):
 
-## 8. O que falta, em etapas
+| Etapa | O que entrou |
+| --- | --- |
+| 1. `domain` | `Rules` (e-mail só `@gmail.com`, senha, CPF, idade, gênero, código de 6 dígitos, vaga), `JwtService` (access 15 min, refresh 7 dias, 2FA 5 min), `AccessPolicy` (admin e admin raiz), ciclo da candidatura, BCrypt. |
+| 2. `infra` | Códigos de verificação, refresh token e rate limit no Redis; templates HTML de e-mail; cliente OAuth do Google (desligado por padrão); `JWT_SECRET` aleatório quando não definido. |
+| 3. `service` | `AuthService` (cadastro, login, 2FA, refresh, logout, troca e recuperação de senha, Google, admin raiz na subida) e `UserService`. |
+| 4. `service` | `VacancyService`, `ResumeService`, `AdminService` e `ProfilePhotoService` (tabela `user_photos`). |
+| 5. `application` | Controllers, filtros (login, limite, cabeçalhos), CORS e erros padronizados. |
+| 6. Entrega | `Dockerfile.Api`, `docker-compose.yml`, proxy `/api` no nginx do front e GitHub Actions. |
 
-1. **Arrumar a base:** mover as interfaces para `adapter` e reativar as dependências que saíram (Security, JWT).
-2. **`domain`:** validações (e-mail `@gmail.com` por sufixo, senha, CPF, idade, gênero, código, nome de vaga), papéis
-   (`user`, `admin`, admin raiz), ciclo da candidatura, tokens JWT (`access` 15 min, `refresh` 7 dias, `2fa` 5 min) e BCrypt.
-3. **`adapter` e `infra` restantes:** códigos de verificação e refresh token no Redis, rate limit, templates HTML de
-   e-mail, login com Google.
-4. **`service`:** autenticação (cadastro com código, login, 2FA, refresh, logout, senha), usuário, vagas,
-   candidaturas (upload e download), administração, criação do admin inicial.
-5. **`application`:** controllers sob `/api`, cookies `HttpOnly`, filtro JWT, autorização por papel, rate limit,
-   mapeamento de erros e CORS.
-6. **Entrega:** Dockerfile do back end, `docker-compose`, serviço no Railway, GitHub Actions.
-7. **Testes de ponta a ponta:** rotas com `WebTestClient` e o fluxo completo.
+Decisões tomadas nessas etapas: limite de reenvio de código de 1 minuto; 5 tentativas por código; um único admin raiz (`ADMIN_EMAIL`); BCrypt fora da thread do servidor; o IP do cliente é a última entrada do `X-Forwarded-For`.
 
-**Decisões em aberto** (seção 9 da `DOCUMENTACAO.md`): CPF, idade e gênero em conta Google; e-mail só `@gmail.com` ou
-qualquer um; um ou vários admins raiz; limite de reenvio de código; paginação.
+**Não verificado de verdade:** o build das imagens Docker (a sessão não tem daemon; o CI faz o build), o login com o Google real, e o Kafka do Railway.
+
+## 8. O que falta
+
+- Trocar a API simulada do front pela real (seção 6 da `DOCUMENTACAO.md`).
+- Credenciais do Google Cloud e `GOOGLE_OAUTH_ENABLED=true`, quando houver URL pública.
+- O workflow `gmail` do n8n responde 200 antes de enviar: uma falha do Gmail passa despercebida.
+- O campo `attempts` da DLQ é uma constante (retries + 1), não a contagem real de tentativas.
+- Paginação de vagas e candidaturas, se houver volume.
 
 ## 9. Como rodar e testar
 
