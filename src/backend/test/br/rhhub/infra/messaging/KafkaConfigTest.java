@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import br.rhhub.domain.exception.DomainException;
+import br.rhhub.infra.TestSupport;
 import br.rhhub.infra.config.AppProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -100,5 +101,18 @@ class KafkaConfigTest {
                 org.mockito.Mockito.mock(org.springframework.kafka.core.ConsumerFactory.class),
                 org.mockito.Mockito.mock(org.springframework.kafka.listener.CommonErrorHandler.class), env);
         assertThat(org.springframework.test.util.ReflectionTestUtils.getField(on, "autoStartup")).isEqualTo(true);
+    }
+
+    @Test
+    void producerNeverWaitsAMinuteForAnUnreachableBroker() {
+        var props = TestSupport.props();
+        var factory = (org.springframework.kafka.core.DefaultKafkaProducerFactory<String, String>)
+                new KafkaConfig().kafkaProducerFactory(props);
+        var config = factory.getConfigurationProperties();
+        assertThat(config).containsEntry("max.block.ms", KafkaConfig.PRODUCER_MAX_BLOCK_MS)
+                .containsEntry("request.timeout.ms", KafkaConfig.PRODUCER_REQUEST_TIMEOUT_MS)
+                .containsEntry("delivery.timeout.ms", KafkaConfig.PRODUCER_DELIVERY_TIMEOUT_MS);
+        assertThat(KafkaConfig.PRODUCER_MAX_BLOCK_MS).isLessThanOrEqualTo(10_000); // o padrão eram 60 000
+        assertThat(KafkaConfig.PRODUCER_DELIVERY_TIMEOUT_MS).isGreaterThanOrEqualTo(KafkaConfig.PRODUCER_REQUEST_TIMEOUT_MS);
     }
 }

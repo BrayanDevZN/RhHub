@@ -53,6 +53,9 @@ public class KafkaConfig {
     private static final Pattern SAFE = Pattern.compile("^[A-Za-z0-9_-]+$");
 
     /** Tentativas extras depois da primeira. O e-mail tem menos para não reenviar à toa. */
+    static final int PRODUCER_MAX_BLOCK_MS = 5_000;
+    static final int PRODUCER_REQUEST_TIMEOUT_MS = 8_000;
+    static final int PRODUCER_DELIVERY_TIMEOUT_MS = 12_000; // precisa ser >= request.timeout.ms (idempotência)
     static final int ANALYSIS_RETRIES = 3;
     static final int EMAIL_RETRIES = 2;
 
@@ -102,6 +105,11 @@ public class KafkaConfig {
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         config.put(ProducerConfig.ACKS_CONFIG, "all");
         config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+        // Limites curtos: o padrão do cliente espera 60 s (max.block.ms) por um Kafka que não responde, e quem envia um
+        // currículo ficava esse minuto inteiro olhando a tela. Com o Kafka no ar a publicação leva milissegundos.
+        config.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, PRODUCER_MAX_BLOCK_MS);
+        config.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, PRODUCER_REQUEST_TIMEOUT_MS);
+        config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, PRODUCER_DELIVERY_TIMEOUT_MS);
         return new DefaultKafkaProducerFactory<>(config);
     }
 

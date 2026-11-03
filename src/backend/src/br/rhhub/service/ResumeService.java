@@ -16,6 +16,8 @@ import reactor.core.publisher.Mono;
 /** Candidaturas: o candidato envia e acompanha; o dono e os admins leem e excluem. */
 public class ResumeService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ResumeService.class);
+
     public static final int MAX_BYTES = 5 * 1024 * 1024;
 
     private final ResumeRepository resumes;
@@ -57,7 +59,11 @@ public class ResumeService {
                             : resumes.create(new Resume(null, actor.id(), vacancyId, name, type.contentType(),
                                     ResumeStatus.PENDING, null, null), content))
                     .flatMap(saved -> analysis.publish(saved.id()).thenReturn(saved)
-                            .onErrorResume(error -> resumes.deleteById(saved.id()).then(Mono.error(error))));
+                            .onErrorResume(error -> {
+                                log.error("Candidatura {}: não foi possível enfileirar a análise, desfazendo o envio", saved.id(), error);
+                                return resumes.deleteById(saved.id()).then(Mono.error(new DomainException.Unprocessable(
+                                        "Não foi possível iniciar a análise agora. Tente de novo em instantes.")));
+                            }));
         });
     }
 

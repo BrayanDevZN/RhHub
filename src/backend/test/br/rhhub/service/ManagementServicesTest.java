@@ -133,7 +133,8 @@ class ManagementServicesTest {
     void ifQueueingFailsTheResumeIsRolledBackSoTheUserCanRetry() {
         Long vacancy = vacancyId();
         analysis.failing = true;
-        assertThatThrownBy(() -> resumeService.submit(ana, vacancy, "a.pdf", PDF).block()).hasMessageContaining("kafka");
+        assertThatThrownBy(() -> resumeService.submit(ana, vacancy, "a.pdf", PDF).block())
+                .isInstanceOf(DomainException.Unprocessable.class).hasMessageContaining("Tente de novo");
         assertThat(resumes.byId).isEmpty();
         analysis.failing = false;
         assertThat(resumeService.submit(ana, vacancy, "a.pdf", PDF).block().id()).isNotNull();
