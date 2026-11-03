@@ -100,7 +100,7 @@ services:
   front:
     build:
       context: .
-      dockerfile: Dockerfile.front
+      dockerfile: Dockerfile
     environment:
       BACKEND_URL: http://api:8080
     ports:

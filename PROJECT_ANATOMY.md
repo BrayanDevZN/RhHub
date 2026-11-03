@@ -1,5 +1,5 @@
 # Project Anatomy: RhHub
-Generated: 2026-11-03 | 229 files | ~215.7K tokens if all read
+Generated: 2026-11-03 | 228 files | ~215.9K tokens if all read
 
 ## Structure
 | Path | Lines | ~Tokens | Type |
@@ -148,7 +148,7 @@ Generated: 2026-11-03 | 229 files | ~215.7K tokens if all read
 | src/frontend/src/components/ui/toggle.tsx | 45 | 438 | source |
 | src/frontend/src/components/ui/tooltip.tsx | 66 | 709 | source |
 | src/frontend/src/hooks/use-mobile.ts | 20 | 142 | source |
-| src/frontend/src/lib/api.ts | 290 | 2.5K | source |
+| src/frontend/src/lib/api.ts | 292 | 2.6K | source |
 | src/frontend/src/lib/auth.tsx | 71 | 526 | source |
 | src/frontend/src/lib/format.ts | 13 | 80 | source |
 | src/frontend/src/lib/types.ts | 62 | 335 | source |
@@ -164,11 +164,10 @@ Generated: 2026-11-03 | 229 files | ~215.7K tokens if all read
 | src/frontend/src/pages/Register.tsx | 192 | 1.9K | source |
 | src/frontend/src/pages/Vacancies.tsx | 344 | 3.1K | source |
 | src/frontend/vite.config.ts | 13 | 81 | source |
-| .github/workflows/ci.yml | 101 | 691 | config |
-| docker-compose.yml | 114 | 849 | config |
+| .github/workflows/ci.yml | 101 | 690 | config |
+| docker-compose.yml | 114 | 848 | config |
 | railway.api.json | 14 | 77 | config |
 | railway.consumer.json | 8 | 38 | config |
-| railway.json | 8 | 37 | config |
 | railway.kafka.json | 8 | 37 | config |
 | src/backend/resources/application.yml | 71 | 693 | config |
 | src/frontend/.oxlintrc.json | 9 | 62 | config |
@@ -208,18 +207,18 @@ Generated: 2026-11-03 | 229 files | ~215.7K tokens if all read
 | src/backend/test/br/rhhub/service/AuthServiceTest.java | 252 | 3.3K | test |
 | src/backend/test/br/rhhub/service/Fakes.java | 195 | 2.5K | test |
 | src/backend/test/br/rhhub/service/ManagementServicesTest.java | 255 | 3.6K | test |
-| DOCUMENTACAO.md | 762 | 10.4K | docs |
+| DOCUMENTACAO.md | 762 | 10.5K | docs |
 | src/backend/HISTORICO.md | 144 | 3.2K | docs |
-| src/backend/README.md | 270 | 4.8K | docs |
+| src/backend/README.md | 272 | 4.9K | docs |
 | src/backend/resources/prompt/resume_analysis.md | 342 | 6.7K | docs |
 | src/frontend/README.md | 33 | 320 | docs |
 | src/frontend/src/index.css | 483 | 7.5K | style |
 | .dockerignore | 4 | 10 | other |
 | .env.compose.example | 18 | 152 | other |
 | .gitignore | 4 | 9 | other |
+| Dockerfile | 17 | 150 | other |
 | Dockerfile.Api | 27 | 301 | other |
 | Dockerfile.Consumer | 23 | 249 | other |
-| Dockerfile.front | 17 | 150 | other |
 | Dockerfile.kafka | 28 | 315 | other |
 | src/backend/.env.example | 46 | 445 | other |
 | src/backend/.gitignore | 8 | 13 | other |
@@ -236,13 +235,13 @@ Generated: 2026-11-03 | 229 files | ~215.7K tokens if all read
 
 ## Summary
 - source: 160 files, ~111.7K tokens
-- config: 13 files, ~3.2K tokens
+- config: 12 files, ~3.2K tokens
 - test: 31 files, ~53.2K tokens
-- docs: 5 files, ~25.4K tokens
+- docs: 5 files, ~25.6K tokens
 - style: 1 files, ~7.5K tokens
 - other: 19 files, ~14.6K tokens
 
 ## Heaviest files (read with offset/limit, not whole)
-1. DOCUMENTACAO.md — 762 lines (~10.4K tokens)
+1. DOCUMENTACAO.md — 762 lines (~10.5K tokens)
 2. src/frontend/src/components/ui/sidebar.tsx — 724 lines (~5.4K tokens)
 3. src/backend/test/br/rhhub/application/web/WebApiTest.java — 525 lines (~7.8K tokens)

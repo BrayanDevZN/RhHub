@@ -85,7 +85,7 @@ jobs:
         include:
           - { file: Dockerfile.Api, tag: rhhub-api }
           - { file: Dockerfile.Consumer, tag: rhhub-consumer }
-          - { file: Dockerfile.front, tag: rhhub-front }
+          - { file: Dockerfile, tag: rhhub-front }
           - { file: Dockerfile.kafka, tag: rhhub-kafka }
     steps:
       - uses: actions/checkout@v4

@@ -36,10 +36,12 @@ Todas em `/api`, JSON em snake_case, sessão por cookie `HttpOnly`. A lista comp
 
 | Serviço | Dockerfile | Config do Railway |
 | --- | --- | --- |
-| API | `Dockerfile.Api` | `railway.api.json` |
-| Consumers (análise e e-mail) | `Dockerfile.Consumer` | `railway.consumer.json` |
-| Kafka | `Dockerfile.kafka` | `railway.kafka.json` |
-| Front (nginx, repassa `/api` para a API; lê `BACKEND_URL`) | `Dockerfile.front` | `railway.json` |
+| API | `Dockerfile.Api` | `railway.api.json` (ou `RAILWAY_DOCKERFILE_PATH=Dockerfile.Api`) |
+| Consumers (análise e e-mail) | `Dockerfile.Consumer` | `railway.consumer.json` (ou `RAILWAY_DOCKERFILE_PATH=Dockerfile.Consumer`) |
+| Kafka | `Dockerfile.kafka` | `railway.kafka.json` (ou `RAILWAY_DOCKERFILE_PATH=Dockerfile.kafka`) |
+| Front (nginx, repassa `/api` para a API; lê `BACKEND_URL`) | `Dockerfile` (o padrão da raiz) | nenhum: é o que o Railway usa sem configuração |
+
+**Cada serviço do Railway precisa apontar para o seu Dockerfile** (config path ou a variável acima). Sem isso ele constrói o `Dockerfile` da raiz, que é o do front: o sintoma é a URL da API mostrar a tela de login do site.
 
 `docker compose up --build` sobe tudo local (veja `.env.compose.example` na raiz). Front e API precisam estar no **mesmo domínio**: os cookies são `SameSite=Strict`.
 
