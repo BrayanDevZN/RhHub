@@ -12,14 +12,17 @@ if [ -z "${API_UPSTREAM:-}" ]; then
   exit 0
 fi
 
-# Só o esquema e o host:porta (sem barra no fim). Recusa caracteres que quebrariam o arquivo do nginx.
-upstream="${API_UPSTREAM%/}"
+# Aceita o valor como o Railway mostra (api.railway.internal:8080, sem o http://) e limpa aspas e espaços.
+upstream="$(printf '%s' "$API_UPSTREAM" | tr -d '"'"'"' \t\r\n')"
+upstream="${upstream%/}"
 case "$upstream" in
   http://*|https://*) ;;
-  *) echo "rhhub: API_UPSTREAM precisa começar com http:// ou https://" >&2; exit 1 ;;
+  *://*) echo "rhhub: ERRO: API_UPSTREAM só aceita http:// ou https:// (recebi: $upstream). /api NÃO será repassado." >&2; exit 0 ;;
+  *) upstream="http://$upstream" ;;
 esac
+# Recusa o que quebraria o arquivo do nginx. O front continua no ar, só sem o /api.
 case "$upstream" in
-  *[!A-Za-z0-9.:/_-]*) echo "rhhub: API_UPSTREAM tem caracteres inválidos" >&2; exit 1 ;;
+  *[!A-Za-z0-9.:/_-]*) echo "rhhub: ERRO: API_UPSTREAM tem caracteres inválidos. /api NÃO será repassado." >&2; exit 0 ;;
 esac
 
 # O DNS do nginx é o do container (resolvido de novo a cada 10 s, para a API poder trocar de IP).
