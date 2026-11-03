@@ -1,13 +1,13 @@
-# Project Anatomy: rhhub
-Generated: 2026-10-20 | 72 files | ~62.4K tokens if all read
+# Project Anatomy: RhHub
+Generated: 2026-11-03 | 71 files | ~70.9K tokens if all read
 
 ## Structure
 | Path | Lines | ~Tokens | Type |
 |------|-------|---------|------|
 | src/frontend/40-rhhub-listen.sh | 23 | 172 | source |
-| src/frontend/src/App.tsx | 72 | 617 | source |
-| src/frontend/src/components/AppLayout.tsx | 177 | 1.4K | source |
-| src/frontend/src/components/AuthLayout.tsx | 35 | 374 | source |
+| src/frontend/src/App.tsx | 73 | 646 | source |
+| src/frontend/src/components/AppLayout.tsx | 143 | 1.7K | source |
+| src/frontend/src/components/AuthLayout.tsx | 35 | 376 | source |
 | src/frontend/src/components/CodeInput.tsx | 28 | 167 | source |
 | src/frontend/src/components/ForgotPasswordDialog.tsx | 108 | 935 | source |
 | src/frontend/src/components/GoogleButton.tsx | 22 | 251 | source |
@@ -44,7 +44,7 @@ Generated: 2026-10-20 | 72 files | ~62.4K tokens if all read
 | src/frontend/src/components/ui/toggle.tsx | 45 | 438 | source |
 | src/frontend/src/components/ui/tooltip.tsx | 66 | 709 | source |
 | src/frontend/src/hooks/use-mobile.ts | 20 | 142 | source |
-| src/frontend/src/lib/api.ts | 425 | 3.3K | source |
+| src/frontend/src/lib/api.ts | 473 | 3.6K | source |
 | src/frontend/src/lib/auth.tsx | 55 | 349 | source |
 | src/frontend/src/lib/format.ts | 13 | 80 | source |
 | src/frontend/src/lib/types.ts | 61 | 310 | source |
@@ -53,8 +53,8 @@ Generated: 2026-10-20 | 72 files | ~62.4K tokens if all read
 | src/frontend/src/main.tsx | 11 | 58 | source |
 | src/frontend/src/pages/AdminResumes.tsx | 53 | 463 | source |
 | src/frontend/src/pages/AdminUsers.tsx | 172 | 1.7K | source |
-| src/frontend/src/pages/Dashboard.tsx | 110 | 1.2K | source |
-| src/frontend/src/pages/Login.tsx | 154 | 1.4K | source |
+| src/frontend/src/pages/Dashboard.tsx | 150 | 2.5K | source |
+| src/frontend/src/pages/Login.tsx | 165 | 1.5K | source |
 | src/frontend/src/pages/MyResumes.tsx | 39 | 316 | source |
 | src/frontend/src/pages/Profile.tsx | 310 | 2.8K | source |
 | src/frontend/src/pages/Register.tsx | 195 | 1.9K | source |
@@ -67,22 +67,21 @@ Generated: 2026-10-20 | 72 files | ~62.4K tokens if all read
 | src/frontend/tsconfig.app.json | 28 | 173 | config |
 | src/frontend/tsconfig.json | 9 | 45 | config |
 | src/frontend/tsconfig.node.json | 24 | 140 | config |
-| CLAUDE.md | 10 | 86 | docs |
 | DOCUMENTACAO.md | 730 | 9.2K | docs |
 | src/frontend/README.md | 33 | 320 | docs |
-| src/frontend/src/index.css | 130 | 1.1K | style |
+| src/frontend/src/index.css | 483 | 7.5K | style |
 | .dockerignore | 4 | 8 | other |
 | Dockerfile.front | 16 | 130 | other |
 | src/frontend/.gitignore | 25 | 64 | other |
-| src/frontend/index.html | 14 | 94 | other |
+| src/frontend/index.html | 15 | 106 | other |
 | src/frontend/nginx.conf | 15 | 62 | other |
 
 ## Summary
-- source: 56 files, ~50.5K tokens
+- source: 56 files, ~52.7K tokens
 - config: 7 files, ~838 tokens
-- docs: 3 files, ~9.6K tokens
-- style: 1 files, ~1.1K tokens
-- other: 5 files, ~358 tokens
+- docs: 2 files, ~9.5K tokens
+- style: 1 files, ~7.5K tokens
+- other: 5 files, ~370 tokens
 
 ## Heaviest files (read with offset/limit, not whole)
 1. DOCUMENTACAO.md — 730 lines (~9.2K tokens)
