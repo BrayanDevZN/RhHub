@@ -176,4 +176,16 @@ class AnalyzeResumeServiceTest {
         verify(resumes).updateResult(eq(7L), eq(ResumeStatus.APROVED), anyString());
         verify(resumes).updateResult(7L, ResumeStatus.PENDING, null); // desfeito, para a repetição analisar de novo
     }
+
+    @Test
+    void theAiReceivesRequirementsAndResponsibilitiesWhenTheVacancyHasThem() {
+        var user = new br.rhhub.domain.model.User(1L, java.util.UUID.randomUUID(), "Ana", "ana@gmail.com", null, null, null, null,
+                false, br.rhhub.domain.model.Role.USER, br.rhhub.domain.model.AuthProvider.LOCAL, null, null);
+        var full = new br.rhhub.domain.model.Vacancy(1L, "Dev", "Descrição", "Java e SQL", "Criar APIs", null, null, false);
+        String input = AnalyzeResumeService.input(full, user, "meu cv");
+        assertThat(input).contains("Title: Dev").contains("Descrição").contains("REQUIREMENTS:\nJava e SQL")
+                .contains("RESPONSIBILITIES:\nCriar APIs").contains("CANDIDATE_NAME: Ana").contains("CANDIDATE_RESUME:\nmeu cv");
+        var bare = new br.rhhub.domain.model.Vacancy(2L, "QA", "Só descrição", null, null);
+        assertThat(AnalyzeResumeService.input(bare, user, "cv")).doesNotContain("REQUIREMENTS").doesNotContain("RESPONSIBILITIES");
+    }
 }

@@ -50,7 +50,7 @@ class ManagementServicesTest {
         photos = new Fakes.Photos();
         refresh = new Fakes.Refresh();
         policy = new AccessPolicy("root@gmail.com");
-        vacancyService = new VacancyService(vacancies, policy);
+        vacancyService = new VacancyService(vacancies, vacancies.photos, policy);
         resumeService = new ResumeService(resumes, vacancies, new PdfDocxTextExtractor(), analysis);
         adminService = new AdminService(users, refresh, policy);
         photoService = new ProfilePhotoService(photos, users);
@@ -64,12 +64,12 @@ class ManagementServicesTest {
 
     @Test
     void onlyAdminsManageVacanciesAndNamesAreUnique() {
-        assertThatThrownBy(() -> vacancyService.create(ana, "Dev", "desc").block()).isInstanceOf(DomainException.Forbidden.class);
-        var vacancy = vacancyService.create(admin, "  Dev   Java ", "Backend").block();
+        assertThatThrownBy(() -> vacancyService.create(ana, "Dev", "desc", null, null).block()).isInstanceOf(DomainException.Forbidden.class);
+        var vacancy = vacancyService.create(admin, "  Dev   Java ", "Backend", null, null).block();
         assertThat(vacancy.name()).isEqualTo("Dev Java");
         assertThat(vacancy.createdBy()).isEqualTo(admin.id());
-        assertThatThrownBy(() -> vacancyService.create(root, "Dev Java", "outra").block()).isInstanceOf(DomainException.Conflict.class);
-        assertThatThrownBy(() -> vacancyService.create(admin, " ", "d").block()).isInstanceOf(DomainException.Invalid.class);
+        assertThatThrownBy(() -> vacancyService.create(root, "Dev Java", "outra", null, null).block()).isInstanceOf(DomainException.Conflict.class);
+        assertThatThrownBy(() -> vacancyService.create(admin, " ", "d", null, null).block()).isInstanceOf(DomainException.Invalid.class);
 
         assertThat(vacancyService.list().collectList().block()).hasSize(1);
         assertThat(vacancyService.get(vacancy.id()).block().description()).isEqualTo("Backend");
@@ -78,16 +78,16 @@ class ManagementServicesTest {
 
     @Test
     void updateKeepsUntouchedFieldsAndChecksNameClash() {
-        var java = vacancyService.create(admin, "Dev Java", "Backend").block();
-        var qa = vacancyService.create(admin, "QA", "Testes").block();
+        var java = vacancyService.create(admin, "Dev Java", "Backend", null, null).block();
+        var qa = vacancyService.create(admin, "QA", "Testes", null, null).block();
 
-        var edited = vacancyService.update(admin, java.id(), null, "Backend sênior").block();
+        var edited = vacancyService.update(admin, java.id(), null, "Backend sênior", null, null).block();
         assertThat(edited.name()).isEqualTo("Dev Java");
         assertThat(edited.description()).isEqualTo("Backend sênior");
-        assertThat(vacancyService.update(admin, java.id(), "Dev Java", null).block().name()).isEqualTo("Dev Java");
-        assertThatThrownBy(() -> vacancyService.update(admin, qa.id(), "Dev Java", null).block()).isInstanceOf(DomainException.Conflict.class);
-        assertThatThrownBy(() -> vacancyService.update(ana, qa.id(), "X", null).block()).isInstanceOf(DomainException.Forbidden.class);
-        assertThatThrownBy(() -> vacancyService.update(admin, 99L, "X", null).block()).isInstanceOf(DomainException.NotFound.class);
+        assertThat(vacancyService.update(admin, java.id(), "Dev Java", null, null, null).block().name()).isEqualTo("Dev Java");
+        assertThatThrownBy(() -> vacancyService.update(admin, qa.id(), "Dev Java", null, null, null).block()).isInstanceOf(DomainException.Conflict.class);
+        assertThatThrownBy(() -> vacancyService.update(ana, qa.id(), "X", null, null, null).block()).isInstanceOf(DomainException.Forbidden.class);
+        assertThatThrownBy(() -> vacancyService.update(admin, 99L, "X", null, null, null).block()).isInstanceOf(DomainException.NotFound.class);
 
         vacancyService.delete(admin, qa.id()).block();
         assertThat(vacancies.byId).hasSize(1);
@@ -95,10 +95,71 @@ class ManagementServicesTest {
         assertThatThrownBy(() -> vacancyService.delete(admin, qa.id()).block()).isInstanceOf(DomainException.NotFound.class);
     }
 
+    @Test
+    void onlyTheDescriptionIsRequiredAndRequirementsAndResponsibilitiesAreOptional() {
+        var full = vacancyService.create(admin, "Dev", "Descrição", "  Java e SQL ", "Criar APIs").block();
+        assertThat(full.requirements()).isEqualTo("Java e SQL");
+        assertThat(full.responsibilities()).isEqualTo("Criar APIs");
+
+        var bare = vacancyService.create(admin, "QA", "Só a descrição", null, null).block();
+        assertThat(bare.requirements()).isNull();
+        var blank = vacancyService.create(admin, "Ops", "Descrição", "   ", "").block();
+        assertThat(blank.requirements()).isNull();
+        assertThat(blank.responsibilities()).isNull();
+
+        assertThatThrownBy(() -> vacancyService.create(admin, "Sem desc", null, "x", "y").block()).isInstanceOf(DomainException.Invalid.class);
+        assertThatThrownBy(() -> vacancyService.create(admin, "Sem desc", "  ", "x", "y").block()).isInstanceOf(DomainException.Invalid.class);
+        assertThatThrownBy(() -> vacancyService.create(admin, "Longa", "d", "x".repeat(5001), null).block()).isInstanceOf(DomainException.Invalid.class);
+        assertThatThrownBy(() -> vacancyService.create(admin, "Longa", "d", null, "x".repeat(5001)).block()).isInstanceOf(DomainException.Invalid.class);
+    }
+
+    @Test
+    void updateKeepsClearsOrReplacesTheOptionalFieldsButNeverEmptiesTheDescription() {
+        var v = vacancyService.create(admin, "Dev", "Descrição", "Req", "Resp").block();
+        assertThat(vacancyService.update(admin, v.id(), null, null, null, null).block().requirements()).isEqualTo("Req"); // null = mantém
+        assertThat(vacancyService.update(admin, v.id(), null, null, "Req 2", null).block().requirements()).isEqualTo("Req 2");
+        var cleared = vacancyService.update(admin, v.id(), null, null, "", "  ").block(); // vazio = apaga
+        assertThat(cleared.requirements()).isNull();
+        assertThat(cleared.responsibilities()).isNull();
+        assertThat(cleared.description()).isEqualTo("Descrição");
+        assertThatThrownBy(() -> vacancyService.update(admin, v.id(), null, " ", null, null).block()).isInstanceOf(DomainException.Invalid.class);
+    }
+
+    @Test
+    void vacancyPhotoIsManagedByAdminsAndSeenByEveryone() {
+        var v = vacancyService.create(admin, "Dev", "Descrição", null, null).block();
+        assertThat(vacancyService.get(v.id()).block().hasPhoto()).isFalse();
+        assertThatThrownBy(() -> vacancyService.photo(v.id()).block()).isInstanceOf(DomainException.NotFound.class);
+
+        assertThatThrownBy(() -> vacancyService.uploadPhoto(ana, v.id(), JPEG).block()).isInstanceOf(DomainException.Forbidden.class);
+        vacancyService.uploadPhoto(admin, v.id(), JPEG).block();
+        assertThat(vacancyService.get(v.id()).block().hasPhoto()).isTrue();
+        assertThat(vacancyService.list().collectList().block()).allMatch(br.rhhub.domain.model.Vacancy::hasPhoto);
+        assertThat(vacancyService.photo(v.id()).block().contentType()).isEqualTo("image/jpeg");
+
+        byte[] png = {(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A, 1};
+        vacancyService.uploadPhoto(admin, v.id(), png).block(); // troca
+        assertThat(vacancyService.photo(v.id()).block().contentType()).isEqualTo("image/png");
+
+        // por conteúdo: SVG, GIF, vazio e grande demais são recusados, e a foto anterior fica
+        assertThatThrownBy(() -> vacancyService.uploadPhoto(admin, v.id(), "<svg onload=alert(1)>".getBytes()).block()).isInstanceOf(DomainException.Invalid.class);
+        assertThatThrownBy(() -> vacancyService.uploadPhoto(admin, v.id(), new byte[0]).block()).isInstanceOf(DomainException.Invalid.class);
+        assertThat(vacancyService.photo(v.id()).block().contentType()).isEqualTo("image/png");
+        assertThatThrownBy(() -> vacancyService.uploadPhoto(admin, 999L, JPEG).block()).isInstanceOf(DomainException.NotFound.class);
+
+        assertThatThrownBy(() -> vacancyService.removePhoto(ana, v.id()).block()).isInstanceOf(DomainException.Forbidden.class);
+        vacancyService.removePhoto(admin, v.id()).block();
+        assertThat(vacancyService.get(v.id()).block().hasPhoto()).isFalse();
+        // excluir a vaga leva a foto junto
+        vacancyService.uploadPhoto(admin, v.id(), JPEG).block();
+        vacancyService.delete(admin, v.id()).block();
+        assertThat(vacancies.photos.byVacancy).isEmpty();
+    }
+
     // ---- candidaturas ----
 
     private Long vacancyId() {
-        return vacancyService.create(admin, "Dev", "Backend").block().id();
+        return vacancyService.create(admin, "Dev", "Backend", null, null).block().id();
     }
 
     @Test

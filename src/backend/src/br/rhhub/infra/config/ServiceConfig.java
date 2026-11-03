@@ -61,8 +61,9 @@ public class ServiceConfig {
     }
 
     @Bean
-    VacancyService vacancyService(VacancyRepository vacancies, AccessPolicy policy) {
-        return new VacancyService(vacancies, policy);
+    VacancyService vacancyService(VacancyRepository vacancies, br.rhhub.application.port.out.VacancyPhotoRepository photos,
+            AccessPolicy policy) {
+        return new VacancyService(vacancies, photos, policy);
     }
 
     @Bean

@@ -16,6 +16,7 @@ import br.rhhub.domain.model.Vacancy;
 import br.rhhub.infra.database.adapter.DeadLetterRepositoryAdapter;
 import br.rhhub.domain.model.ProfilePhoto;
 import br.rhhub.infra.database.adapter.ProfilePhotoRepositoryAdapter;
+import br.rhhub.infra.database.adapter.VacancyPhotoRepositoryAdapter;
 import br.rhhub.infra.database.adapter.ResumeRepositoryAdapter;
 import br.rhhub.infra.database.adapter.UserRepositoryAdapter;
 import br.rhhub.infra.database.adapter.VacancyRepositoryAdapter;
@@ -43,7 +44,7 @@ abstract class RepositoryContract {
 
     @AfterEach
     void clean() {
-        for (String table : new String[] {"dead_letters", "resumes", "vacancies", "user_photos", "users"}) {
+        for (String table : new String[] {"dead_letters", "resumes", "vacancy_photos", "vacancies", "user_photos", "users"}) {
             executor().update("DELETE FROM " + table, Params.of()).block();
         }
     }
@@ -302,5 +303,79 @@ abstract class RepositoryContract {
         photos.save(other.id(), new ProfilePhoto(jpeg, "image/jpeg")).block();
         photos.delete(other.id()).block();
         assertThat(photos.exists(other.id()).block()).isFalse();
+    }
+
+    @Test
+    void vacancyKeepsOptionalFieldsAndOnlyTheDescriptionIsRequired() {
+        init();
+        var full = vacancies.save(new Vacancy(null, "Dev " + UUID.randomUUID(), "Descrição", "Java e SQL", "Criar APIs", null, null, false)).block();
+        assertThat(full.requirements()).isEqualTo("Java e SQL");
+        assertThat(full.responsibilities()).isEqualTo("Criar APIs");
+        assertThat(full.hasPhoto()).isFalse();
+        assertThat(vacancies.findById(full.id()).block()).isEqualTo(full);
+
+        var bare = vacancies.save(new Vacancy(null, "QA " + UUID.randomUUID(), "Só descrição", null, null)).block();
+        assertThat(bare.requirements()).isNull();
+        assertThat(bare.responsibilities()).isNull();
+
+        // editar troca e também apaga os opcionais (null)
+        var edited = vacancies.save(new Vacancy(full.id(), full.name(), "Nova", null, "Só isto", null, full.createdAt(), false)).block();
+        assertThat(edited.description()).isEqualTo("Nova");
+        assertThat(edited.requirements()).isNull();
+        assertThat(edited.responsibilities()).isEqualTo("Só isto");
+        assertThat(vacancies.findAll().collectList().block()).extracting(Vacancy::id).contains(full.id(), bare.id());
+    }
+
+    @Test
+    void vacancyPhotoIsSavedReplacedReportedInTheVacancyAndDeletedWithIt() {
+        init();
+        var photos = new VacancyPhotoRepositoryAdapter(executor(), Clock.systemUTC());
+        var vacancy = vacancies.save(new Vacancy(null, "Foto " + UUID.randomUUID(), "d", null, null)).block();
+        assertThat(vacancy.hasPhoto()).isFalse();
+        assertThat(photos.find(vacancy.id()).block()).isNull();
+
+        byte[] jpeg = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 1, 2, 3};
+        photos.save(vacancy.id(), new ProfilePhoto(jpeg, "image/jpeg")).block();
+        assertThat(photos.find(vacancy.id()).block().content()).isEqualTo(jpeg);
+        assertThat(vacancies.findById(vacancy.id()).block().hasPhoto()).isTrue(); // vem da subconsulta, na leitura única e na lista
+        assertThat(vacancies.findAll().collectList().block()).filteredOn(v -> v.id().equals(vacancy.id()))
+                .allMatch(Vacancy::hasPhoto);
+
+        byte[] png = {(byte) 0x89, 'P', 'N', 'G', 9, 9};
+        photos.save(vacancy.id(), new ProfilePhoto(png, "image/png")).block(); // troca sem duplicar
+        assertThat(photos.find(vacancy.id()).block().contentType()).isEqualTo("image/png");
+        assertThat(executor().query("SELECT COUNT(*) AS n FROM vacancy_photos", Params.of()).next().block().longValue("n")).isEqualTo(1L);
+
+        // editar a vaga não perde a foto
+        vacancies.save(new Vacancy(vacancy.id(), vacancy.name(), "outra", null, null, null, vacancy.createdAt(), false)).block();
+        assertThat(vacancies.findById(vacancy.id()).block().hasPhoto()).isTrue();
+
+        photos.delete(vacancy.id()).block();
+        assertThat(vacancies.findById(vacancy.id()).block().hasPhoto()).isFalse();
+        photos.save(vacancy.id(), new ProfilePhoto(jpeg, "image/jpeg")).block();
+        vacancies.deleteById(vacancy.id()).block(); // cascata
+        assertThat(photos.find(vacancy.id()).block()).isNull();
+        assertThatThrownBy(() -> photos.save(-1L, new ProfilePhoto(jpeg, "image/jpeg")).block())
+                .isInstanceOf(DomainException.NotFound.class);
+    }
+
+    @Test
+    void anExistingDatabaseWithoutTheNewColumnsIsMigratedKeepingItsData() {
+        init();
+        var dialect = executor() instanceof PostgresSqlExecutor ? br.rhhub.infra.database.table.Dialect.POSTGRESQL
+                : br.rhhub.infra.database.table.Dialect.SQLITE;
+        // como estava em produção antes: sem requirements e responsabilities
+        executor().update("ALTER TABLE vacancies DROP COLUMN requirements", Params.of()).block();
+        executor().update("ALTER TABLE vacancies DROP COLUMN responsibilities", Params.of()).block();
+        executor().update("INSERT INTO vacancies (name, description) VALUES ('Vaga antiga', 'Descrição antiga')", Params.of()).block();
+
+        new br.rhhub.infra.database.table.TableCreator(executor(), dialect).create();
+        new br.rhhub.infra.database.table.TableCreator(executor(), dialect).create(); // idempotente
+
+        var old = vacancies.findAll().collectList().block().stream().filter(v -> v.name().equals("Vaga antiga")).findFirst().orElseThrow();
+        assertThat(old.description()).isEqualTo("Descrição antiga");
+        assertThat(old.requirements()).isNull();
+        var saved = vacancies.save(new Vacancy(old.id(), old.name(), old.description(), "Novo requisito", "Nova tarefa", null, old.createdAt(), false)).block();
+        assertThat(saved.requirements()).isEqualTo("Novo requisito");
     }
 }

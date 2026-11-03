@@ -118,6 +118,18 @@ public final class Rules {
         return value;
     }
 
+    /** Texto opcional (requisitos, responsabilidades): vazio vira nulo; só se limita o tamanho. */
+    public static String optionalText(String raw, String label) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        String value = raw.strip();
+        if (value.length() > VACANCY_DESCRIPTION_MAX) {
+            throw new DomainException.Invalid(label + " pode ter no máximo " + VACANCY_DESCRIPTION_MAX + " caracteres.");
+        }
+        return value;
+    }
+
     public static String vacancyDescription(String raw) {
         if (raw == null || raw.isBlank()) {
             throw new DomainException.Invalid("Informe a descrição da vaga.");

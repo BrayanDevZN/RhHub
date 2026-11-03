@@ -23,7 +23,10 @@ export type User = {
 export type Vacancy = {
   id: number
   name: string
-  description: string
+  description: string // obrigatória
+  requirements?: string // opcional
+  responsibilities?: string // opcional
+  has_photo: boolean
   created_by?: number // só admins recebem
   created_at: string
 }

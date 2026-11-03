@@ -36,6 +36,9 @@ public final class Views {
             Long id,
             String name,
             String description,
+            String requirements,
+            String responsibilities,
+            @JsonProperty("has_photo") boolean hasPhoto,
             @JsonProperty("created_by") Long createdBy,
             @JsonProperty("created_at") Instant createdAt) {
     }
@@ -58,7 +61,8 @@ public final class Views {
     }
 
     public static VacancyView vacancy(Vacancy v, boolean admin) {
-        return new VacancyView(v.id(), v.name(), v.description(), admin ? v.createdBy() : null, v.createdAt());
+        return new VacancyView(v.id(), v.name(), v.description(), v.requirements(), v.responsibilities(), v.hasPhoto(),
+                admin ? v.createdBy() : null, v.createdAt());
     }
 
     public static ResumeView resume(Resume r) {

@@ -18,8 +18,16 @@ public class VacanciesTable implements TableDefinition {
                     created_by  %s REFERENCES users (id) ON DELETE SET NULL,
                     name        %s NOT NULL,
                     description %s NOT NULL,
+                    requirements %s,
+                    responsibilities %s,
                     created_at  %s,
                     CONSTRAINT uq_vacancies_name UNIQUE (name)
-                )""".formatted(d.id(), d.bigint(), d.varchar(160), d.text(), d.timestampNow()));
+                )""".formatted(d.id(), d.bigint(), d.varchar(160), d.text(), d.text(), d.text(), d.timestampNow()));
+    }
+
+    /** Requisitos e responsabilidades vieram depois: bancos já criados ganham as colunas na subida. */
+    @Override
+    public List<ColumnAddition> newColumns(Dialect d) {
+        return List.of(new ColumnAddition("requirements", d.text()), new ColumnAddition("responsibilities", d.text()));
     }
 }

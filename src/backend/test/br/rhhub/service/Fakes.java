@@ -7,6 +7,7 @@ import br.rhhub.application.port.out.ProfilePhotoRepository;
 import br.rhhub.application.port.out.RefreshTokenStore;
 import br.rhhub.application.port.out.ResumeAnalysisPublisher;
 import br.rhhub.application.port.out.ResumeRepository;
+import br.rhhub.application.port.out.VacancyPhotoRepository;
 import br.rhhub.application.port.out.VacancyRepository;
 import br.rhhub.application.port.out.UserRepository;
 import br.rhhub.application.port.out.VerificationCodeStore;
@@ -116,9 +117,12 @@ public final class Fakes {
 
     public static class Vacancies implements VacancyRepository {
         public final Map<Long, Vacancy> byId = new HashMap<>();
+        /** Como a subconsulta has_photo do banco: a vaga sabe se tem foto pela mesma fonte do VacancyPhotos. */
+        public VacancyPhotos photos = new VacancyPhotos();
         private final AtomicLong seq = new AtomicLong();
-        @Override public Mono<Vacancy> findById(Long id) { return Mono.justOrEmpty(byId.get(id)); }
-        @Override public Flux<Vacancy> findAll() { return Flux.fromIterable(new ArrayList<>(byId.values())); }
+        private Vacancy view(Vacancy v) { return v.withHasPhoto(photos.byVacancy.containsKey(v.id())); }
+        @Override public Mono<Vacancy> findById(Long id) { return Mono.justOrEmpty(byId.get(id)).map(this::view); }
+        @Override public Flux<Vacancy> findAll() { return Flux.fromStream(new ArrayList<>(byId.values()).stream().map(this::view)); }
         @Override public Mono<Boolean> existsByName(String name) {
             return Mono.just(byId.values().stream().anyMatch(v -> v.name().equals(name)));
         }
@@ -128,11 +132,19 @@ public final class Fakes {
                 return Mono.error(new DomainException.Conflict("nome repetido"));
             }
             Long id = v.id() == null ? seq.incrementAndGet() : v.id();
-            Vacancy stored = new Vacancy(id, v.name(), v.description(), v.createdBy(), Instant.parse("2026-11-03T12:00:00Z"));
+            Vacancy stored = new Vacancy(id, v.name(), v.description(), v.requirements(), v.responsibilities(),
+                    v.createdBy(), Instant.parse("2026-11-03T12:00:00Z"), false);
             byId.put(id, stored);
-            return Mono.just(stored);
+            return Mono.just(view(stored));
         }
-        @Override public Mono<Void> deleteById(Long id) { byId.remove(id); return Mono.empty(); }
+        @Override public Mono<Void> deleteById(Long id) { byId.remove(id); photos.byVacancy.remove(id); return Mono.empty(); }
+    }
+
+    public static class VacancyPhotos implements VacancyPhotoRepository {
+        public final Map<Long, ProfilePhoto> byVacancy = new HashMap<>();
+        @Override public Mono<Void> save(Long id, ProfilePhoto p) { byVacancy.put(id, p); return Mono.empty(); }
+        @Override public Mono<ProfilePhoto> find(Long id) { return Mono.justOrEmpty(byVacancy.get(id)); }
+        @Override public Mono<Void> delete(Long id) { byVacancy.remove(id); return Mono.empty(); }
     }
 
     public static class Resumes implements ResumeRepository {

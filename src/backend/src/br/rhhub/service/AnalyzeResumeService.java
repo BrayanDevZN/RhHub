@@ -131,7 +131,14 @@ public class AnalyzeResumeService implements AnalyzeResume {
     }
 
     static String input(Vacancy vacancy, User user, String resumeText) {
-        return "JOB_DESCRIPTION:\nTitle: " + vacancy.name() + "\n" + vacancy.description()
+        var job = new StringBuilder("JOB_DESCRIPTION:\nTitle: " + vacancy.name() + "\n" + vacancy.description());
+        if (vacancy.requirements() != null) {
+            job.append("\n\nREQUIREMENTS:\n").append(vacancy.requirements());
+        }
+        if (vacancy.responsibilities() != null) {
+            job.append("\n\nRESPONSIBILITIES:\n").append(vacancy.responsibilities());
+        }
+        return job
                 + "\n\nCANDIDATE_NAME: " + user.name()
                 + "\n\nCANDIDATE_RESUME:\n" + resumeText;
     }

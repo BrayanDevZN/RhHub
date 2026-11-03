@@ -184,6 +184,7 @@ A arquitetura em camadas (`domain`, `adapter`, `service`, `application` e `infra
 erDiagram
     USERS ||--o{ VACANCIES : "created_by"
     USERS ||--o{ RESUMES : "user_id"
+    VACANCIES ||--o| VACANCY_PHOTOS : "vacancy_id"
     VACANCIES ||--o{ RESUMES : "vacancy_id"
 
     USERS {
@@ -205,8 +206,16 @@ erDiagram
         bigint id PK
         bigint created_by FK
         varchar name UK
-        text description
+        text description "obrigatória"
+        text requirements "opcional"
+        text responsibilities "opcional"
         timestamp created_at
+    }
+    VACANCY_PHOTOS {
+        bigint vacancy_id PK "e FK, uma foto por vaga"
+        bytea content "JPEG, PNG ou WebP"
+        varchar content_type
+        timestamp updated_at
     }
     RESUMES {
         bigint id PK
@@ -356,8 +365,11 @@ Prefixo `/api`. Respostas em JSON. Sessão por cookie, então o front usa `crede
 | --- | --- | --- | --- | --- |
 | `GET` | `/vacancies` | Logado | Lista as vagas (candidato não vê `created_by`) | `GET /vancancies` |
 | `GET` | `/vacancies/{id}` | Logado | Detalhe de uma vaga | `GET /vancancies` |
-| `POST` | `/vacancies` | Admin | Cria `{name, description}`. Nome único | `POST /vancancies` |
-| `PATCH` | `/vacancies/{id}` | Admin | Edita nome e descrição | `PATCH /vancancies` |
+| `POST` | `/vacancies` | Admin | Cria `{name, description, requirements?, responsibilities?}`. Nome único. **Só a descrição é obrigatória** | `POST /vancancies` |
+| `PATCH` | `/vacancies/{id}` | Admin | Edita os campos enviados. Texto vazio em requisitos ou responsabilidades apaga o campo | `PATCH /vancancies` |
+| `PUT` | `/vacancies/{id}/photo` | Admin | Envia a foto da vaga (`multipart`, campo `file`: JPEG, PNG ou WebP, até 2 MB, conferido pelo conteúdo). Troca a anterior | novo |
+| `GET` | `/vacancies/{id}/photo` | Logado | A imagem da vaga (`404` se não tiver). Fica 5 min em cache; o front força a troca com `?v=` | novo |
+| `DELETE` | `/vacancies/{id}/photo` | Admin | Remove a foto | novo |
 | `DELETE` | `/vacancies/{id}` | Admin | Exclui a vaga e as candidaturas dela | `DELETE /vancancies` |
 
 **Candidaturas**
@@ -496,6 +508,9 @@ O resultado real da análise usa o HTML gerado pela IA. Os templates do AgentRH 
 | `code` | 6 dígitos (no AgentRH eram 5) |
 | `file` | PDF (`application/pdf`) ou DOCX (`application/vnd.openxmlformats-officedocument.wordprocessingml.document`), tamanho máximo configurável. O tipo é conferido pelo conteúdo (assinatura `%PDF`; ZIP com `word/document.xml`), não só pelo cabeçalho. `.doc` antigo não é aceito |
 | `vacancy.name` | Único |
+| `vacancy.description` | **Obrigatória**, até 5000 caracteres |
+| `vacancy.requirements`, `vacancy.responsibilities` | Opcionais (vazio vira nulo), até 5000 caracteres cada |
+| `vacancy.photo` | JPEG, PNG ou WebP, até 2 MB, conferido pelo conteúdo (SVG e GIF são recusados) |
 
 ### 4.11 Padrão de erros
 
@@ -593,11 +608,12 @@ Código em `src/frontend`. Hoje roda sobre uma **API simulada** (`src/lib/api.ts
 
 | Funcionalidade | Perfil | Status |
 | --- | --- | --- |
-| Listar vagas em cartões | Todos | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
-| Buscar por nome ou descrição | Todos | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
+| Listar vagas em cartões, com a foto de capa (ou um fundo com ícone) | Todos | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
+| Buscar por nome, descrição, requisitos ou responsabilidades | Todos |
+| Ver os detalhes: sobre a vaga, requisitos e responsabilidades separados (listas) | Todos | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 | Candidatar-se enviando PDF | Todos | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 | Ver o status quando já se candidatou | Todos | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
-| Criar vaga | Admin | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
+| Criar vaga (descrição obrigatória; requisitos, responsabilidades e foto opcionais) | Admin | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 | Editar vaga | Admin | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 | Excluir vaga (com confirmação) | Admin | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 | Paginação | Todos | ![ideia](https://img.shields.io/badge/-sugest%C3%A3o-lightgrey?style=flat-square) |

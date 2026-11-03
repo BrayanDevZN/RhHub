@@ -87,6 +87,8 @@ function upload<T = void>(path: string, method: string, form: FormData): Promise
   })
 }
 
+export type VacancyInput = { name: string; description: string; requirements?: string; responsibilities?: string }
+
 type CodeSent = { code?: string } // o código só vem na resposta em ambiente de teste; em produção chega por e-mail
 
 export const api = {
@@ -231,14 +233,31 @@ export const api = {
       return call<Vacancy[]>("/vacancies")
     },
 
-    // POST /vacancies
-    create(name: string, description: string): Promise<Vacancy> {
-      return call<Vacancy>("/vacancies", "POST", { name, description })
+    // POST /vacancies (só a descrição é obrigatória; requisitos e responsabilidades são opcionais)
+    create(data: VacancyInput): Promise<Vacancy> {
+      return call<Vacancy>("/vacancies", "POST", data)
     },
 
-    // PATCH /vacancies/{id}
-    update(id: number, data: { name: string; description: string }): Promise<Vacancy> {
+    // PATCH /vacancies/{id}. Texto vazio em requisitos ou responsabilidades apaga o campo.
+    update(id: number, data: VacancyInput): Promise<Vacancy> {
       return call<Vacancy>(`/vacancies/${id}`, "PATCH", data)
+    },
+
+    // PUT /vacancies/{id}/photo (JPEG, PNG ou WebP, até 2 MB)
+    async uploadPhoto(id: number, file: File): Promise<void> {
+      const form = new FormData()
+      form.append("file", file)
+      await upload(`/vacancies/${id}/photo`, "PUT", form)
+    },
+
+    // DELETE /vacancies/{id}/photo
+    removePhoto(id: number): Promise<void> {
+      return call(`/vacancies/${id}/photo`, "DELETE")
+    },
+
+    // GET /vacancies/{id}/photo. O parâmetro v força buscar de novo depois de uma troca (a foto fica em cache).
+    photoUrl(id: number, version: number | string = 0): string {
+      return `${BASE}/vacancies/${id}/photo?v=${version}`
     },
 
     // DELETE /vacancies/{id} (as candidaturas da vaga vão junto)

@@ -94,7 +94,7 @@ class WebApiTest {
         @Bean UserService userService(PasswordHasher hasher, Fakes.Refresh refresh, AccessPolicy policy) {
             return new UserService(users, hasher, refresh, policy);
         }
-        @Bean VacancyService vacancyService(Fakes.Vacancies v, AccessPolicy policy) { return new VacancyService(v, policy); }
+        @Bean VacancyService vacancyService(Fakes.Vacancies v, AccessPolicy policy) { return new VacancyService(v, v.photos, policy); }
         @Bean ResumeService resumeService(Fakes.Resumes r, Fakes.Vacancies v) {
             return new ResumeService(r, v, new PdfDocxTextExtractor(), analysis);
         }
@@ -182,7 +182,7 @@ class WebApiTest {
         builder.part(field, new org.springframework.core.io.ByteArrayResource(bytes) {
             @Override public String getFilename() { return fileName; }
         }).contentType(MediaType.APPLICATION_OCTET_STREAM);
-        return client.method(uri.equals("/api/users/me/photo") ? org.springframework.http.HttpMethod.PUT : org.springframework.http.HttpMethod.POST)
+        return client.method(uri.endsWith("/photo") ? org.springframework.http.HttpMethod.PUT : org.springframework.http.HttpMethod.POST)
                 .uri(uri).cookies(c -> { if (cookies != null) cookies.apply(c); })
                 .body(BodyInserters.fromMultipartData(builder.build())).exchange();
     }
@@ -365,6 +365,56 @@ class WebApiTest {
         assertThat(edited.get("description").asText()).isEqualTo("Sênior");
         client.delete().uri("/api/vacancies/" + id).cookies(ana::apply).exchange().expectStatus().isForbidden();
         client.delete().uri("/api/vacancies/" + id).cookies(root::apply).exchange().expectStatus().isNoContent();
+    }
+
+    @Test
+    void vacancyHasSeparatedFieldsAndAPhotoThatEveryoneSeesButOnlyAdminsChange() throws Exception {
+        var ana = signup("Ana", "ana@gmail.com", "12345678901");
+        var root = rootLogin();
+
+        // só a descrição é obrigatória
+        post("/api/vacancies", Map.of("name", "Sem descricao"), root).expectStatus().isBadRequest();
+        post("/api/vacancies", Map.of("name", "Sem descricao", "description", "  ", "requirements", "x"), root).expectStatus().isBadRequest();
+        var bare = json(post("/api/vacancies", Map.of("name", "So descricao", "description", "Descrição"), root).expectStatus().isCreated());
+        assertThat(bare.has("requirements")).isFalse();
+        assertThat(bare.has("responsibilities")).isFalse();
+        assertThat(bare.get("has_photo").asBoolean()).isFalse();
+
+        var created = json(post("/api/vacancies", Map.of("name", "Completa", "description", "Descrição", "requirements", "Java e SQL",
+                "responsibilities", "Criar APIs"), root).expectStatus().isCreated());
+        long id = created.get("id").asLong();
+        assertThat(created.get("requirements").asText()).isEqualTo("Java e SQL");
+        assertThat(created.get("responsibilities").asText()).isEqualTo("Criar APIs");
+
+        // foto: só admin envia; o formato é conferido pelo conteúdo
+        upload("/api/vacancies/" + id + "/photo", "file", "capa.png", PNG, null, ana).expectStatus().isForbidden();
+        upload("/api/vacancies/" + id + "/photo", "file", "capa.png", "<svg onload=alert(1)>".getBytes(), null, root).expectStatus().isBadRequest();
+        upload("/api/vacancies/999/photo", "file", "capa.png", PNG, null, root).expectStatus().isNotFound();
+        get("/api/vacancies/" + id + "/photo", ana).expectStatus().isNotFound(); // ainda sem foto
+        upload("/api/vacancies/" + id + "/photo", "file", "capa.png", PNG, null, root).expectStatus().isOk();
+
+        var served = get("/api/vacancies/" + id + "/photo", ana).expectStatus().isOk()
+                .expectHeader().contentType("image/png").expectHeader().valueEquals("X-Content-Type-Options", "nosniff")
+                .returnResult(byte[].class);
+        assertThat(served.getResponseBodyContent()).isEqualTo(PNG);
+        get("/api/vacancies/" + id + "/photo", null).expectStatus().isUnauthorized();
+
+        var forCandidate = json(get("/api/vacancies/" + id, ana).expectStatus().isOk());
+        assertThat(forCandidate.get("has_photo").asBoolean()).isTrue();
+        assertThat(forCandidate.get("requirements").asText()).isEqualTo("Java e SQL");
+        assertThat(forCandidate.has("created_by")).isFalse();
+
+        // editar mantém a foto; texto vazio apaga requisitos
+        var edited = json(client.patch().uri("/api/vacancies/" + id).cookies(root::apply).contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(Map.of("requirements", "", "responsibilities", "Novas tarefas")).exchange().expectStatus().isOk());
+        assertThat(edited.has("requirements")).isFalse();
+        assertThat(edited.get("responsibilities").asText()).isEqualTo("Novas tarefas");
+        assertThat(edited.get("has_photo").asBoolean()).isTrue();
+
+        client.delete().uri("/api/vacancies/" + id + "/photo").cookies(ana::apply).exchange().expectStatus().isForbidden();
+        client.delete().uri("/api/vacancies/" + id + "/photo").cookies(root::apply).exchange().expectStatus().isNoContent();
+        get("/api/vacancies/" + id + "/photo", ana).expectStatus().isNotFound();
+        assertThat(json(get("/api/vacancies/" + id, ana).expectStatus().isOk()).get("has_photo").asBoolean()).isFalse();
     }
 
     @Test
