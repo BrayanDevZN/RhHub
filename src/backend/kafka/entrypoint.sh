@@ -54,5 +54,19 @@ fi
 export KAFKA_ADVERTISED_LISTENERS="SASL_PLAINTEXT://${ADV_HOST}:${ADV_PORT}"
 echo "kafka: anunciando ${ADV_HOST}:${ADV_PORT} (o broker escuta na 9092; o TCP Proxy do Railway deve apontar para a 9092)"
 
+# Onde o Kafka grava os dados. Um volume novo vem com a pasta lost+found na raiz, e o Kafka recusa subir se achar nela
+# qualquer coisa que não seja tópico ("log directories should only contain Kafka topic data"). Por isso os dados ficam
+# numa subpasta do volume, nunca na raiz dele.
+VOLUME_ROOT=/var/lib/kafka/data
+LOG_DIRS="${KAFKA_LOG_DIRS:-$VOLUME_ROOT/kafka-logs}"
+case "$LOG_DIRS" in
+  "$VOLUME_ROOT"|"$VOLUME_ROOT"/)
+    LOG_DIRS="$VOLUME_ROOT/kafka-logs"
+    echo "kafka: KAFKA_LOG_DIRS apontava para a raiz do volume (tem lost+found); usando $LOG_DIRS" >&2
+    ;;
+esac
+export KAFKA_LOG_DIRS="$LOG_DIRS"
+echo "kafka: dados em $LOG_DIRS"
+
 # Passa para o entrypoint original da imagem apache/kafka.
 exec /__cacert_entrypoint.sh "$@"

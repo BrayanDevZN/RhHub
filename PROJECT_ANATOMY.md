@@ -1,10 +1,10 @@
 # Project Anatomy: RhHub
-Generated: 2026-11-03 | 238 files | ~236.0K tokens if all read
+Generated: 2026-11-03 | 238 files | ~236.2K tokens if all read
 
 ## Structure
 | Path | Lines | ~Tokens | Type |
 |------|-------|---------|------|
-| src/backend/kafka/entrypoint.sh | 59 | 564 | source |
+| src/backend/kafka/entrypoint.sh | 73 | 727 | source |
 | src/backend/src/br/rhhub/application/port/in/AnalyzeResume.java | 10 | 63 | source |
 | src/backend/src/br/rhhub/application/port/in/DeliverEmail.java | 11 | 73 | source |
 | src/backend/src/br/rhhub/application/web/AdminController.java | 66 | 675 | source |
@@ -244,7 +244,7 @@ Generated: 2026-11-03 | 238 files | ~236.0K tokens if all read
 | src/frontend/nginx.conf | 23 | 150 | other |
 
 ## Summary
-- source: 165 files, ~121.3K tokens
+- source: 165 files, ~121.5K tokens
 - config: 12 files, ~3.3K tokens
 - test: 36 files, ~62.8K tokens
 - docs: 5 files, ~26.4K tokens
