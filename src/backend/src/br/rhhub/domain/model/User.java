@@ -22,4 +22,29 @@ public record User(
     public boolean isAdmin() {
         return role == Role.ADMIN;
     }
+
+    public User withPasswordHash(String hash) {
+        return new User(id, publicId, name, email, cpf, age, gender, hash, twoFactor, role, provider, googleSub, createdAt);
+    }
+
+    public User withTwoFactor(boolean enabled) {
+        return new User(id, publicId, name, email, cpf, age, gender, passwordHash, enabled, role, provider, googleSub, createdAt);
+    }
+
+    public User withProfile(String newCpf, Integer newAge, Gender newGender) {
+        return new User(id, publicId, name, email, newCpf, newAge, newGender, passwordHash, twoFactor, role, provider,
+                googleSub, createdAt);
+    }
+
+    public User withRole(Role newRole) {
+        return new User(id, publicId, name, email, cpf, age, gender, passwordHash, twoFactor, newRole, provider, googleSub, createdAt);
+    }
+
+    public User withGoogleSub(String sub) {
+        return new User(id, publicId, name, email, cpf, age, gender, passwordHash, twoFactor, role, provider, sub, createdAt);
+    }
+
+    public boolean isGoogle() {
+        return provider == AuthProvider.GOOGLE;
+    }
 }
