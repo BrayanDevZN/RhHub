@@ -16,6 +16,11 @@ public enum ResumeStatus {
         return value;
     }
 
+    /** Ciclo da candidatura: nasce pending e a análise leva a aproved ou recuse, que são finais. */
+    public boolean canMoveTo(ResumeStatus next) {
+        return this == PENDING && (next == APROVED || next == RECUSE);
+    }
+
     public static ResumeStatus from(String value) {
         for (ResumeStatus status : values()) {
             if (status.value.equalsIgnoreCase(value.trim())) {
