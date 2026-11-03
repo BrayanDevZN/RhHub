@@ -101,13 +101,9 @@ export const api = {
       }
     },
 
-    // GET /auth/providers: quais logins externos estão ligados
-    async providers(): Promise<{ google: boolean }> {
-      try {
-        return await call<{ google: boolean }>("/auth/providers")
-      } catch {
-        return { google: false }
-      }
+    // GET /auth/providers: quais logins externos estão ligados. Falha se o back end não responder um JSON válido.
+    providers(): Promise<{ google: boolean }> {
+      return call<{ google: boolean }>("/auth/providers")
     },
 
     // POST /sender/signup-code
@@ -137,12 +133,18 @@ export const api = {
       return call<User>("/auth/2fa/verify", "POST", { code })
     },
 
-    // Login e cadastro com Google: o botão sempre aparece. Se o back end estiver com o Google desligado ou fora do ar,
-    // avisa em vez de mandar o navegador para uma página de erro. Ligado, sai do app e volta logado pelo back end.
+    // Login e cadastro com Google: o botão sempre aparece. Se não der para entrar, diz o motivo em vez de mandar o
+    // navegador para uma página de erro. Ligado, sai do app e volta logado pelo back end.
     async startGoogleLogin(): Promise<void> {
-      const { google } = await api.auth.providers()
+      let google: boolean
+      try {
+        google = (await api.auth.providers()).google === true
+      } catch {
+        // sem resposta, resposta que não é JSON (ex.: o front sem BACKEND_URL devolve a própria página) ou erro do proxy
+        throw new ApiError("Não foi possível falar com o servidor. Tente de novo em instantes.")
+      }
       if (!google) {
-        throw new ApiError("O login com Google não está disponível no momento. Use seu e-mail e senha.")
+        throw new ApiError("O login com Google não está ativado neste servidor. Use seu e-mail e senha.")
       }
       window.location.assign("/oauth2/authorization/google")
     },
