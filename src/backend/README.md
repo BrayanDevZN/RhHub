@@ -19,13 +19,13 @@ Fluxo de uma requisição: `application` (rota) → `service` → `domain` + `ad
 
 | Camada | Situação |
 | --- | --- |
-| `infra` | **Pronta**: `config`, `database` (tabelas e repositórios), `redis`, `llm` e `email`. Falta só a conexão do Kafka. |
+| `infra` | **Pronta**: `config`, `database` (tabelas e repositórios), `redis`, `messaging` (Kafka), `llm` e `email`. |
 | `domain` | Parcial: só os modelos (`User`, `Vacancy`, `Resume`...) e `DomainException`. Faltam as regras e o JWT. |
 | `adapter` | As **interfaces** estão hoje em `application/port/out` e as **implementações** do banco em `infra/database/adapter`. Falta reorganizar para o desenho acima. |
-| `service` | Não existe ainda. |
+| `service` | Começou: `DeliverEmailService` (consumer de e-mail → `EmailSender`). Falta o resto dos casos de uso, em especial `AnalyzeResume`. |
 | `application` | Não existe ainda (não há rotas). |
 
-Ficou de fora de propósito, para entrar depois: Kafka, o JWT de sessão e BCrypt (o JWT do e-mail já existe em `infra/email`), leitura de PDF/DOCX e os templates HTML de e-mail.
+Ficou de fora de propósito, para entrar depois: o JWT de sessão e BCrypt (o JWT do e-mail já existe em `infra/email`), leitura de PDF/DOCX e os templates HTML de e-mail.
 
 ## Estrutura de pastas
 
@@ -40,7 +40,9 @@ src/backend/
 │   ├── domain/
 │   │   ├── model/            User, Vacancy, Resume, ResumeFile, enums
 │   │   └── exception/        DomainException (Invalid, Unauthorized, Forbidden, NotFound, Conflict...)
-│   ├── application/port/out/ interfaces: UserRepository, VacancyRepository, ResumeRepository, AiProvider, EmailSender, EmailMessage
+│   ├── service/              DeliverEmailService
+│   ├── application/port/in/  AnalyzeResume, DeliverEmail (casos de uso que os consumers chamam)
+│   ├── application/port/out/ interfaces: UserRepository, VacancyRepository, ResumeRepository, AiProvider, EmailSender, EmailMessage, EmailPublisher, ResumeAnalysisPublisher, DeadLetterRepository
 │   └── infra/
 │       ├── config/           AppProperties (variáveis de ambiente), ClockConfig
 │       ├── database/
@@ -50,6 +52,7 @@ src/backend/
 │       │   └── adapter/      UserRepositoryAdapter, VacancyRepositoryAdapter, ResumeRepositoryAdapter
 │       ├── email/            N8nEmailSender, JwtHs256, EmailConfig
 │       ├── redis/            RedisConfig (conexão), RedisStore (operações)
+│       ├── messaging/        KafkaConfig, KafkaUrl, KafkaTopics, publishers, AnalysisConsumer, EmailConsumer, DeadLetterRecoverer
 │       └── llm/              OpenAiCompatibleProvider, FixedAiProvider, LlmConfig
 ├── resources/application.yml
 ├── test/
@@ -129,6 +132,40 @@ Na subida o log diz se o Redis respondeu (`Redis conectado em host:porta (com se
 
 `RedisStore` reúne as operações, todas devolvendo `Mono`: `set` (com ou sem expiração), `setIfAbsent`, `get`, `exists`, `delete`, `increment`, `incrementWithTtl` (soma 1 e define a expiração só na primeira vez, de forma atômica), `expire`, `ttl` e `ping`. Os adapters que vêm depois (códigos de verificação, refresh token, rate limit) só montam as chaves e usam esses métodos.
 
+## Kafka
+
+Configurado em `infra/messaging/KafkaConfig`.
+
+| Variável | Comportamento |
+| --- | --- |
+| `KAFKA_URL` | `none`, vazia ou ausente: Kafka local, `localhost:9092`. Aceita `host`, `host:porta`, `kafka://host:porta` e lista separada por vírgula. `KAFKA_BOOTSTRAP_SERVERS` também é aceita. |
+| `KAFKA_API_KEY` | Preenchida: conecta por **SASL_PLAINTEXT/PLAIN** com `KAFKA_API_USER` (padrão `rhhub`), igual ao `Dockerfile.kafka`. Vazia ou `none`: sem autenticação. Só aceita letras, números, `_` e `-`. |
+
+**Tópicos** (criados na subida, o broker roda com criação automática desligada): `resume.analysis` e `email.send`, cada um com **3 partições**, mais `resume.analysis.DLT` e `email.send.DLT`, também com 3 (a mensagem morta vai para a mesma partição). Se o Kafka não estiver no ar, a aplicação sobe do mesmo jeito (em cerca de 10 s) e registra erros de conexão.
+
+**Chave da mensagem:** o id da candidatura nos dois tópicos. A análise e o e-mail de uma candidatura caem na mesma partição, e a ordem de uma candidatura é mantida. Os e-mails de cadastro, 2FA e senha **não** passam pelo Kafka: saem direto pelo `EmailSender`.
+
+```
+resume.analysis  {"resumeId": 42}
+email.send       {"resumeId": 42, "to": "...", "subject": "...", "content": "<html>", "type": "html"}
+```
+
+**Publishers** (`ResumeAnalysisPublisher`, `EmailPublisher`) devolvem `Mono<Void>` e só terminam quando o broker confirma (`acks=all`, idempotente).
+
+**Consumers** (grupos `rhhub-analysis` e `rhhub-email`, 3 threads cada, uma por partição):
+- `AnalysisConsumer` chama o caso de uso `AnalyzeResume`. Enquanto ele não existir, cada mensagem falha e vai para a DLQ.
+- `EmailConsumer` chama `DeliverEmail`, que usa o `EmailSender` (n8n).
+
+**Falhas.** O consumer repete com espera crescente (2 s, 4 s, 8 s) e, esgotadas as tentativas:
+
+| Tópico | Tentativas |
+| --- | --- |
+| `resume.analysis` | 4 (1 + 3 repetições) |
+| `email.send` | 3 (1 + 2: poucas, porque o n8n responde 200 antes de enviar e uma repetição pode duplicar o e-mail) |
+| Mensagem malformada ou e-mail inválido | 1 (repetir não adianta) |
+
+Depois disso o `DeadLetterRecoverer` **grava o job na tabela `dead_letters`** (com tópico, chave, partição, offset, mensagem original, erro e tentativas) e **publica a mensagem no `.DLT`**. Se a gravação ou a publicação falhar, o Kafka entrega a mensagem de novo (gravar duas vezes não duplica), então o job não se perde.
+
 ## E-mail
 
 O envio é feito pelo workflow **`gmail`** do n8n, que manda o e-mail pela conta Gmail conectada lá. `EmailSender.send(EmailMessage)` devolve `Mono<Void>`.
@@ -160,6 +197,7 @@ Veja o `.env.example`.
 | `GROQ_API_KEY`, `GROQ_MODEL`, `GROQ_BASE_URL` | modelo `llama-3.3-70b-versatile` | Groq |
 | `gmail_secret` | vazio | Segredo da credencial JWT do webhook de e-mail do n8n |
 | `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` | `localhost`, `6379`, vazio | Redis (sem senha: só host e porta) |
+| `KAFKA_URL`, `KAFKA_API_USER`, `KAFKA_API_KEY` | `none` (local), `rhhub`, vazio | Kafka (com a chave, SASL/PLAIN) |
 | `N8N_EMAIL_WEBHOOK_URL` | URL de produção do workflow `gmail` | Webhook de envio de e-mail |
 | `PORT` | `8080` | Porta HTTP |
 
@@ -179,4 +217,4 @@ DATABASE_URL=postgresql://rhhub:rhhub@localhost:5432/rhhub ./mvnw spring-boot:ru
 
 - Os **mesmos 13 cenários** de repositório rodam contra o SQLite e contra o PostgreSQL, para os dois se comportarem igual.
 - O teste do PostgreSQL usa o banco `rhhub_test` em `localhost:5432` (usuário e senha `rhhub`) e é **pulado** se ele não estiver de pé.
-- Há também testes de `DatabaseUrl`, de `TableCreator` (criação do zero, idempotência e constraints) da escolha do provedor de LLM, da conexão e das operações do Redis (contra um Redis local, inclusive um com senha) e do envio de e-mail (contrato do webhook, assinatura do JWT, validação e erros, contra um servidor HTTP local; nenhum e-mail real é enviado nos testes).
+- Há também testes de `DatabaseUrl`, de `TableCreator` (criação do zero, idempotência e constraints) da escolha do provedor de LLM, da conexão e das operações do Redis (contra um Redis local, inclusive um com senha) do Kafka (broker embutido: tópicos, publicação, consumers, novas tentativas, DLT e DLQ) e do envio de e-mail (contrato do webhook, assinatura do JWT, validação e erros, contra um servidor HTTP local; nenhum e-mail real é enviado nos testes).

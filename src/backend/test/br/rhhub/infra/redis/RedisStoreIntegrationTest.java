@@ -26,7 +26,7 @@ class RedisStoreIntegrationTest {
     private static AppProperties props(int port, String password) {
         var base = TestSupport.props();
         return new AppProperties("test", base.database(), new AppProperties.Redis("localhost", port, password),
-                base.ai(), base.email());
+                base.kafka(), base.ai(), base.email());
     }
 
     private static RedisStore storeFor(AppProperties props) {

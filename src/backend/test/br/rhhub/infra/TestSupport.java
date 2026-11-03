@@ -13,6 +13,7 @@ public final class TestSupport {
     public static AppProperties props() {
         return new AppProperties("test", new AppProperties.Database("none", "./data/test.db", 5),
                 new AppProperties.Redis("localhost", 6379, null),
+                new AppProperties.Kafka("none", "rhhub", null, 3, java.time.Duration.ofMillis(50), "email.send", "resume.analysis"),
                 new AppProperties.Ai("", "m", "http://x", "", "m", "http://x", Duration.ofSeconds(5)),
                 new AppProperties.Email("http://x", "", Duration.ofSeconds(5)));
     }

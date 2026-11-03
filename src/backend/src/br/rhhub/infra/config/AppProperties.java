@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /** Configurações lidas das variáveis de ambiente (ver application.yml e .env.example). */
 @ConfigurationProperties(prefix = "app")
-public record AppProperties(@DefaultValue("production") String environment, Database database, Redis redis, Ai ai, Email email) {
+public record AppProperties(@DefaultValue("production") String environment, Database database, Redis redis, Kafka kafka, Ai ai, Email email) {
 
     /**
      * url: DATABASE_URL. Vazia, ausente ou "none" usa o SQLite local em sqlitePath.
@@ -32,6 +32,26 @@ public record AppProperties(@DefaultValue("production") String environment, Data
         public boolean hasPassword() {
             return password != null && !password.isBlank()
                     && !"none".equalsIgnoreCase(password.strip()) && !"null".equalsIgnoreCase(password.strip());
+        }
+    }
+
+    /**
+     * url: KAFKA_URL. Vazia, ausente ou "none" usa o Kafka local (localhost:9092). Aceita host, host:porta,
+     * kafka://host:porta e uma lista separada por vírgula.
+     * apiKey: KAFKA_API_KEY. Preenchida liga SASL/PLAIN com apiUser (KAFKA_API_USER); vazia conecta sem autenticação.
+     */
+    public record Kafka(
+            String url,
+            @DefaultValue("rhhub") String apiUser,
+            String apiKey,
+            @DefaultValue("3") int partitions,
+            @DefaultValue("2s") Duration retryInterval,
+            @DefaultValue("email.send") String emailTopic,
+            @DefaultValue("resume.analysis") String analysisTopic) {
+
+        public boolean hasApiKey() {
+            return apiKey != null && !apiKey.isBlank()
+                    && !"none".equalsIgnoreCase(apiKey.strip()) && !"null".equalsIgnoreCase(apiKey.strip());
         }
     }
 

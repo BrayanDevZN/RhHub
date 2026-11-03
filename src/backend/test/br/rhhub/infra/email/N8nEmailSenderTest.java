@@ -136,9 +136,9 @@ class N8nEmailSenderTest {
     void configPicksSenderByEnvironmentAndSecret() {
         var config = new EmailConfig();
         var base = TestSupport.props();
-        AppProperties prod = new AppProperties("production", base.database(), base.redis(), base.ai(),
+        AppProperties prod = new AppProperties("production", base.database(), base.redis(), base.kafka(), base.ai(),
                 new AppProperties.Email("http://x", SECRET, Duration.ofSeconds(1)));
-        AppProperties noSecret = new AppProperties("production", base.database(), base.redis(), base.ai(),
+        AppProperties noSecret = new AppProperties("production", base.database(), base.redis(), base.kafka(), base.ai(),
                 new AppProperties.Email("http://x", "  ", Duration.ofSeconds(1)));
 
         assertThat(config.emailSender(prod, Clock.systemUTC(), mapper).name()).isEqualTo("n8n");

@@ -17,6 +17,16 @@ app:
     host: ${REDIS_HOST:localhost}
     port: ${REDIS_PORT:6379}
     password: ${REDIS_PASSWORD:}
+  kafka:
+    # none (ou vazia): Kafka local em localhost:9092. KAFKA_BOOTSTRAP_SERVERS também é aceita.
+    url: ${KAFKA_URL:${KAFKA_BOOTSTRAP_SERVERS:none}}
+    # Com a chave, conecta por SASL/PLAIN (o Dockerfile.kafka exige KAFKA_API_KEY); sem ela, sem autenticação.
+    api-user: ${KAFKA_API_USER:rhhub}
+    api-key: ${KAFKA_API_KEY:}
+    partitions: 3
+    retry-interval: 2s
+    email-topic: email.send
+    analysis-topic: resume.analysis
   ai:
     openai-key: ${OPENAI_API_KEY:}
     openai-model: ${OPENAI_MODEL:gpt-4o-mini}
