@@ -1,5 +1,5 @@
 # Project Anatomy: RhHub
-Generated: 2026-11-03 | 234 files | ~224.4K tokens if all read
+Generated: 2026-11-03 | 236 files | ~225.8K tokens if all read
 
 ## Structure
 | Path | Lines | ~Tokens | Type |
@@ -92,6 +92,7 @@ Generated: 2026-11-03 | 234 files | ~224.4K tokens if all read
 | src/backend/src/br/rhhub/infra/messaging/KafkaUrl.java | 46 | 462 | source |
 | src/backend/src/br/rhhub/infra/messaging/PendingResumeRepublisher.java | 80 | 933 | source |
 | src/backend/src/br/rhhub/infra/messaging/ResumeAnalysisMessage.java | 6 | 49 | source |
+| src/backend/src/br/rhhub/infra/messaging/TopicEnsurer.java | 37 | 355 | source |
 | src/backend/src/br/rhhub/infra/redis/RedisConfig.java | 57 | 624 | source |
 | src/backend/src/br/rhhub/infra/redis/RedisRateLimiter.java | 27 | 211 | source |
 | src/backend/src/br/rhhub/infra/redis/RedisRefreshTokenStore.java | 37 | 251 | source |
@@ -204,6 +205,7 @@ Generated: 2026-11-03 | 234 files | ~224.4K tokens if all read
 | src/backend/test/br/rhhub/infra/messaging/KafkaUrlTest.java | 35 | 418 | test |
 | src/backend/test/br/rhhub/infra/messaging/PendingResumeRepublisherTest.java | 94 | 954 | test |
 | src/backend/test/br/rhhub/infra/messaging/RemoteKafkaSetupTest.java | 77 | 1.0K | test |
+| src/backend/test/br/rhhub/infra/messaging/TopicEnsurerIntegrationTest.java | 88 | 889 | test |
 | src/backend/test/br/rhhub/infra/redis/AuthStoresIntegrationTest.java | 117 | 1.3K | test |
 | src/backend/test/br/rhhub/infra/redis/RedisConfigTest.java | 42 | 418 | test |
 | src/backend/test/br/rhhub/infra/redis/RedisStoreIntegrationTest.java | 157 | 1.5K | test |
@@ -215,7 +217,7 @@ Generated: 2026-11-03 | 234 files | ~224.4K tokens if all read
 | src/backend/test/br/rhhub/service/ManagementServicesTest.java | 271 | 3.8K | test |
 | DOCUMENTACAO.md | 762 | 10.5K | docs |
 | src/backend/HISTORICO.md | 144 | 3.2K | docs |
-| src/backend/README.md | 274 | 5.1K | docs |
+| src/backend/README.md | 276 | 5.2K | docs |
 | src/backend/resources/prompt/resume_analysis.md | 342 | 6.7K | docs |
 | src/frontend/README.md | 33 | 320 | docs |
 | src/frontend/src/index.css | 483 | 7.5K | style |
@@ -240,10 +242,10 @@ Generated: 2026-11-03 | 234 files | ~224.4K tokens if all read
 | src/frontend/nginx.conf | 23 | 150 | other |
 
 ## Summary
-- source: 162 files, ~115.0K tokens
+- source: 163 files, ~115.4K tokens
 - config: 12 files, ~3.3K tokens
-- test: 35 files, ~58.1K tokens
-- docs: 5 files, ~25.8K tokens
+- test: 36 files, ~59.0K tokens
+- docs: 5 files, ~25.9K tokens
 - style: 1 files, ~7.5K tokens
 - other: 19 files, ~14.6K tokens
 
