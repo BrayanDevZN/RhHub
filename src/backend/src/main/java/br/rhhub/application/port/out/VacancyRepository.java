@@ -12,7 +12,7 @@ public interface VacancyRepository {
 
     boolean existsByName(String name);
 
-    /** Lança DomainException.Conflict se o nome já existir. */
+    /** Insere (id nulo) ou atualiza. Lança DomainException.Conflict se o nome já existir. */
     Vacancy save(Vacancy vacancy);
 
     void deleteById(Long id);

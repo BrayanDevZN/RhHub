@@ -1,9 +1,9 @@
 package br.rhhub.domain.model;
 
 public enum Role {
-    USER,
-    ADMIN;
+    USER, ADMIN;
 
+    /** Valor gravado no banco e devolvido na API (minúsculo). */
     public String value() {
         return name().toLowerCase();
     }

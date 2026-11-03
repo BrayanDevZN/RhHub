@@ -12,8 +12,4 @@ public record Resume(
         ResumeStatus status,
         String reason,
         Instant createdAt) {
-
-    public Resume withResult(ResumeStatus newStatus, String newReason) {
-        return new Resume(id, userId, vacancyId, fileName, contentType, newStatus, newReason, createdAt);
-    }
 }

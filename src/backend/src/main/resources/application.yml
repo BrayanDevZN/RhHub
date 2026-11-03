@@ -1,0 +1,92 @@
+spring:
+  application:
+    name: rhhub
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/rhhub}
+    username: ${DATABASE_USER:rhhub}
+    password: ${DATABASE_PASSWORD:rhhub}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    properties:
+      # Local: PLAINTEXT. Com o Dockerfile.kafka: SASL_PLAINTEXT + KAFKA_JAAS_ENABLED=true + KAFKA_API_KEY.
+      security.protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
+      sasl.mechanism: PLAIN
+    jaas:
+      enabled: ${KAFKA_JAAS_ENABLED:false}
+      login-module: org.apache.kafka.common.security.plain.PlainLoginModule
+      control-flag: required
+      options:
+        username: ${KAFKA_API_USER:rhhub}
+        password: ${KAFKA_API_KEY:}
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        enable.idempotence: true
+    consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: record
+  mail:
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USER:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.connectiontimeout: 10000
+      mail.smtp.timeout: 10000
+      mail.smtp.writetimeout: 10000
+
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: framework
+
+app:
+  environment: ${ENVIRONMENT:production}
+  jwt:
+    secret: ${JWT_SECRET:}
+    access-ttl: 15m
+    refresh-ttl: 7d
+    two-factor-ttl: 5m
+  topics:
+    email: email.send
+    resume-analysis: resume.analysis
+    partitions: 3
+    consumer-group: rhhub
+  ai:
+    openai-key: ${OPENAI_API_KEY:}
+    openai-model: ${OPENAI_MODEL:gpt-4o-mini}
+    openai-base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+    groq-key: ${GROQ_API_KEY:}
+    groq-model: ${GROQ_MODEL:llama-3.3-70b-versatile}
+    groq-base-url: ${GROQ_BASE_URL:https://api.groq.com/openai/v1}
+    timeout: 60s
+  mail:
+    enabled: ${MAIL_ENABLED:true}
+    from: ${MAIL_FROM:${SMTP_USER:no-reply@rhhub.local}}

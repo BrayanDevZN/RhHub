@@ -7,6 +7,10 @@ public abstract class DomainException extends RuntimeException {
         super(message);
     }
 
+    protected DomainException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
     /** 400 */
     public static final class Invalid extends DomainException {
         public Invalid(String message) {
@@ -18,6 +22,10 @@ public abstract class DomainException extends RuntimeException {
     public static final class Unauthorized extends DomainException {
         public Unauthorized(String message) {
             super(message);
+        }
+
+        public Unauthorized(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 
@@ -40,12 +48,20 @@ public abstract class DomainException extends RuntimeException {
         public Conflict(String message) {
             super(message);
         }
+
+        public Conflict(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 
     /** 422 */
     public static final class Unprocessable extends DomainException {
         public Unprocessable(String message) {
             super(message);
+        }
+
+        public Unprocessable(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 

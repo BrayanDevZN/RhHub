@@ -1,6 +1,6 @@
 package br.rhhub.domain.model;
 
-/** Os valores seguem o AgentRH (aproved, recuse, pending) para o front não mudar. */
+/** Os valores seguem o AgentRH (pending, aproved, recuse) para o front não mudar. */
 public enum ResumeStatus {
     PENDING("pending"),
     APROVED("aproved"),

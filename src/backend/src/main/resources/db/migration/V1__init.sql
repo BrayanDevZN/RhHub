@@ -32,6 +32,7 @@ CREATE TABLE vacancies (
     CONSTRAINT uq_vacancies_name UNIQUE (name)
 );
 
+-- Uma candidatura por usuário e vaga. Apagar a vaga ou o usuário apaga as candidaturas.
 CREATE TABLE resumes (
     id           BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id      BIGINT       NOT NULL REFERENCES users (id) ON DELETE CASCADE,

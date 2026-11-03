@@ -7,9 +7,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
+/** Listagens usam a projeção ResumeView, para não trazer o arquivo (bytea) junto. */
 @Entity
 @Table(name = "resumes")
 public class ResumeEntity {
@@ -24,14 +23,13 @@ public class ResumeEntity {
     @Column(name = "vacancy_id", nullable = false, updatable = false)
     private Long vacancyId;
 
-    @JdbcTypeCode(SqlTypes.VARBINARY)
     @Column(nullable = false, updatable = false)
     private byte[] file;
 
-    @Column(name = "file_name", nullable = false)
+    @Column(name = "file_name", nullable = false, updatable = false)
     private String fileName;
 
-    @Column(name = "content_type", nullable = false)
+    @Column(name = "content_type", nullable = false, updatable = false)
     private String contentType;
 
     @Column(nullable = false)

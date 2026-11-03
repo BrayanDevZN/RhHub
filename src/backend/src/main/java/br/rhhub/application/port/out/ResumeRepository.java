@@ -19,10 +19,11 @@ public interface ResumeRepository {
 
     boolean existsByUserIdAndVacancyId(Long userId, Long vacancyId);
 
-    /** Grava a candidatura nova com o arquivo, ou atualiza status e reason de uma existente. */
+    /** Grava a candidatura nova com o arquivo. Lança DomainException.Conflict se o usuário já se candidatou à vaga. */
     Resume create(Resume resume, byte[] file);
 
-    Resume update(Resume resume);
+    /** Atualiza só status e reason (resultado da análise). Lança DomainException.NotFound se não existir. */
+    Resume updateResult(Long id, ResumeStatus status, String reason);
 
     void deleteById(Long id);
 }

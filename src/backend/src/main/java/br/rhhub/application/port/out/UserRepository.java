@@ -19,7 +19,7 @@ public interface UserRepository {
 
     List<User> findAll();
 
-    /** Lança DomainException.Conflict se e-mail, CPF ou google_sub já existirem. */
+    /** Insere (id nulo) ou atualiza. Lança DomainException.Conflict se e-mail, CPF ou google_sub já existirem. */
     User save(User user);
 
     void deleteByPublicId(UUID publicId);
