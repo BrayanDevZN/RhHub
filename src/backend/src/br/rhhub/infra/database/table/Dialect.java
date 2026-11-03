@@ -49,6 +49,11 @@ public enum Dialect {
                 : "TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))";
     }
 
+    /** Data e hora em UTC que pode ficar vazia. */
+    public String timestampNullable() {
+        return this == POSTGRESQL ? "TIMESTAMPTZ" : "TEXT";
+    }
+
     public String blob() {
         return this == POSTGRESQL ? "BYTEA" : "BLOB";
     }

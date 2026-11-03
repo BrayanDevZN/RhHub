@@ -5,12 +5,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import br.rhhub.domain.exception.DomainException;
 import br.rhhub.domain.model.AuthProvider;
+import br.rhhub.domain.model.DeadLetter;
+import br.rhhub.domain.model.DeadLetterStatus;
 import br.rhhub.domain.model.Gender;
 import br.rhhub.domain.model.Resume;
 import br.rhhub.domain.model.ResumeStatus;
 import br.rhhub.domain.model.Role;
 import br.rhhub.domain.model.User;
 import br.rhhub.domain.model.Vacancy;
+import br.rhhub.infra.database.adapter.DeadLetterRepositoryAdapter;
 import br.rhhub.infra.database.adapter.ResumeRepositoryAdapter;
 import br.rhhub.infra.database.adapter.UserRepositoryAdapter;
 import br.rhhub.infra.database.adapter.VacancyRepositoryAdapter;
@@ -38,7 +41,7 @@ abstract class RepositoryContract {
 
     @AfterEach
     void clean() {
-        for (String table : new String[] {"resumes", "vacancies", "users"}) {
+        for (String table : new String[] {"dead_letters", "resumes", "vacancies", "users"}) {
             executor().update("DELETE FROM " + table, Params.of()).block();
         }
     }
@@ -196,5 +199,75 @@ abstract class RepositoryContract {
         assertThat(resumes.findById(r2.id()).block()).isNull();
         // vaga sobrevive ao admin que a criou, com created_by nulo
         assertThat(vacancies.findById(v2.id()).block().createdBy()).isNull();
+    }
+
+    private DeadLetterRepositoryAdapter deadLetters() {
+        return new DeadLetterRepositoryAdapter(executor(), Clock.systemUTC());
+    }
+
+    @Test
+    void deadLetterKeepsTheFailedJobAndItsOrigin() {
+        var repo = deadLetters();
+        var error = new IllegalStateException("LLM fora do ar");
+        var saved = repo.save(DeadLetter.failed("resume.analysis", "42", 1, 17L, "{\"resumeId\":42}", error, 3)).block();
+
+        assertThat(saved.id()).isNotNull();
+        assertThat(saved.status()).isEqualTo(DeadLetterStatus.FAILED);
+        assertThat(saved.topic()).isEqualTo("resume.analysis");
+        assertThat(saved.key()).isEqualTo("42");
+        assertThat(saved.partition()).isEqualTo(1);
+        assertThat(saved.offset()).isEqualTo(17L);
+        assertThat(saved.payload()).isEqualTo("{\"resumeId\":42}");
+        assertThat(saved.errorType()).isEqualTo("java.lang.IllegalStateException");
+        assertThat(saved.errorMessage()).isEqualTo("LLM fora do ar");
+        assertThat(saved.attempts()).isEqualTo(3);
+        assertThat(saved.createdAt()).isNotNull();
+        assertThat(saved.resolvedAt()).isNull();
+        assertThat(repo.findById(saved.id()).block()).isEqualTo(saved);
+    }
+
+    @Test
+    void sameKafkaOriginIsNeverSavedTwice() {
+        var repo = deadLetters();
+        var first = repo.save(DeadLetter.failed("email.send", "7", 0, 5L, "{}", new RuntimeException("a"), 3)).block();
+        var again = repo.save(DeadLetter.failed("email.send", "7", 0, 5L, "{}", new RuntimeException("b"), 3)).block();
+
+        assertThat(again.id()).isEqualTo(first.id());
+        assertThat(again.errorMessage()).isEqualTo("a"); // devolve o que já estava gravado
+        assertThat(repo.findAll(null).collectList().block()).hasSize(1);
+
+        var otherOffset = repo.save(DeadLetter.failed("email.send", "7", 0, 6L, "{}", new RuntimeException("c"), 3)).block();
+        assertThat(otherOffset.id()).isNotEqualTo(first.id());
+    }
+
+    @Test
+    void failureWithoutKafkaOriginAndWithoutMessageIsAccepted() {
+        var repo = deadLetters();
+        var saved = repo.save(DeadLetter.failed("resume.analysis", null, null, null, "x", new RuntimeException(), 1)).block();
+        assertThat(saved.key()).isNull();
+        assertThat(saved.partition()).isNull();
+        assertThat(saved.errorMessage()).isNull();
+    }
+
+    @Test
+    void findsByKeyAndStatusAndMarksResolved() {
+        var repo = deadLetters();
+        var a = repo.save(DeadLetter.failed("resume.analysis", "42", 0, 1L, "{}", new RuntimeException("x"), 3)).block();
+        var b = repo.save(DeadLetter.failed("resume.analysis", "42", 0, 2L, "{}", new RuntimeException("y"), 3)).block();
+        repo.save(DeadLetter.failed("resume.analysis", "99", 0, 3L, "{}", new RuntimeException("z"), 3)).block();
+        repo.save(DeadLetter.failed("email.send", "42", 0, 1L, "{}", new RuntimeException("w"), 3)).block();
+
+        assertThat(repo.findByKey("resume.analysis", "42").collectList().block()).extracting(DeadLetter::id)
+                .containsExactly(b.id(), a.id());
+        assertThat(repo.findByKey("resume.analysis", "nada").collectList().block()).isEmpty();
+
+        var resolved = repo.markResolved(a.id()).block();
+        assertThat(resolved.status()).isEqualTo(DeadLetterStatus.RESOLVED);
+        assertThat(resolved.resolvedAt()).isNotNull();
+        assertThat(repo.findAll(DeadLetterStatus.RESOLVED).collectList().block()).extracting(DeadLetter::id)
+                .containsExactly(a.id());
+        assertThat(repo.findAll(DeadLetterStatus.FAILED).collectList().block()).hasSize(3);
+        assertThat(repo.findAll(null).collectList().block()).hasSize(4);
+        assertThatThrownBy(() -> repo.markResolved(-1L).block()).isInstanceOf(DomainException.NotFound.class);
     }
 }

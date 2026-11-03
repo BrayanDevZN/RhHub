@@ -80,6 +80,7 @@ Criadas por classes Java na subida (`TableCreator`), uma por tabela, na ordem da
 | `users` | `UsersTable` | `email`, `cpf`, `public_id` e `google_sub` únicos. Conta Google não tem senha, CPF, idade nem gênero. |
 | `vacancies` | `VacanciesTable` | `name` único. `created_by` vira nulo se o admin for excluído. |
 | `resumes` | `ResumesTable` | Uma candidatura por usuário e vaga. Apagar a vaga ou o usuário apaga as candidaturas. O arquivo fica em `file` (`BYTEA`/`BLOB`). |
+| `dead_letters` | `DeadLettersTable` | **DLQ**: o job que esgotou as tentativas (ver abaixo). |
 
 `CREATE TABLE IF NOT EXISTS` só cria o que falta: **não altera tabelas já criadas**. Mudar uma coluna pede um comando novo (por exemplo `ALTER TABLE`) numa classe de tabela.
 
@@ -89,6 +90,15 @@ Cada repositório devolve `Mono`/`Flux`. Erros de negócio saem como `DomainExce
 
 - e-mail, CPF, `google_sub`, nome de vaga ou candidatura repetidos: `Conflict`;
 - candidatura de usuário ou vaga inexistente, ou resultado para candidatura inexistente: `NotFound`.
+
+### DLQ (`dead_letters`)
+
+Guarda o resultado do job que falhou de vez: `topic`, `message_key` (o id da candidatura), `kafka_partition` e `kafka_offset` (de onde veio), `payload` (a mensagem original), `error_type`, `error_message`, `attempts`, `status` (`failed` ou `resolved`), `created_at` e `resolved_at`.
+
+- **Sem chave estrangeira** de propósito: a candidatura pode ser apagada e o registro da falha continua.
+- **Nunca duplica:** `(topic, kafka_partition, kafka_offset)` é único. Salvar a mesma mensagem morta de novo devolve o registro que já estava gravado.
+- `DeadLetterRepository`: `save`, `findById`, `findByKey(topic, key)` (histórico de uma candidatura), `findAll(status)` e `markResolved(id)`.
+- `DeadLetter.failed(...)` monta o registro a partir da exceção do job.
 
 As consultas de metadados do currículo não selecionam a coluna `file`; o PDF só é lido por `findFile`.
 
@@ -167,6 +177,6 @@ DATABASE_URL=postgresql://rhhub:rhhub@localhost:5432/rhhub ./mvnw spring-boot:ru
 ./mvnw test
 ```
 
-- Os **mesmos 9 cenários** de repositório rodam contra o SQLite e contra o PostgreSQL, para os dois se comportarem igual.
+- Os **mesmos 13 cenários** de repositório rodam contra o SQLite e contra o PostgreSQL, para os dois se comportarem igual.
 - O teste do PostgreSQL usa o banco `rhhub_test` em `localhost:5432` (usuário e senha `rhhub`) e é **pulado** se ele não estiver de pé.
 - Há também testes de `DatabaseUrl`, de `TableCreator` (criação do zero, idempotência e constraints) da escolha do provedor de LLM, da conexão e das operações do Redis (contra um Redis local, inclusive um com senha) e do envio de e-mail (contrato do webhook, assinatura do JWT, validação e erros, contra um servidor HTTP local; nenhum e-mail real é enviado nos testes).
