@@ -69,6 +69,8 @@ abstract class RepositoryContract {
         assertThat(found).isEqualTo(saved);
         assertThat(found.gender()).isEqualTo(Gender.FEMALE);
         assertThat(users.findByPublicId(saved.publicId()).block()).isEqualTo(saved);
+        assertThat(users.findById(saved.id()).block()).isEqualTo(saved);
+        assertThat(users.findById(-1L).block()).isNull();
         assertThat(users.findByEmail("nao@existe.com").block()).isNull();
         assertThat(users.existsByEmail(email).block()).isTrue();
         assertThat(users.existsByEmail("nao@existe.com").block()).isFalse();

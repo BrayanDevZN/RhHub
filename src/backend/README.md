@@ -22,7 +22,7 @@ Fluxo de uma requisição: `application` (rota) → `service` → `domain` + `ad
 | `infra` | **Pronta**: `config`, `database` (tabelas e repositórios), `redis`, `messaging` (Kafka), `llm` e `email`. |
 | `domain` | Parcial: só os modelos (`User`, `Vacancy`, `Resume`...) e `DomainException`. Faltam as regras e o JWT. |
 | `adapter` | As **interfaces** estão hoje em `application/port/out` e as **implementações** do banco em `infra/database/adapter`. Falta reorganizar para o desenho acima. |
-| `service` | Começou: `DeliverEmailService` (consumer de e-mail → `EmailSender`). Falta o resto dos casos de uso, em especial `AnalyzeResume`. |
+| `service` | Começou: `AnalyzeResumeService` (a análise com a IA) e `DeliverEmailService`. Faltam os casos de uso de autenticação, usuários, vagas, candidaturas e administração. |
 | `application` | Não existe ainda (não há rotas). |
 
 Ficou de fora de propósito, para entrar depois: o JWT de sessão e BCrypt (o JWT do e-mail já existe em `infra/email`), leitura de PDF/DOCX e os templates HTML de e-mail.
@@ -153,7 +153,7 @@ email.send       {"resumeId": 42, "to": "...", "subject": "...", "content": "<ht
 **Publishers** (`ResumeAnalysisPublisher`, `EmailPublisher`) devolvem `Mono<Void>` e só terminam quando o broker confirma (`acks=all`, idempotente).
 
 **Consumers** (grupos `rhhub-analysis` e `rhhub-email`, 3 threads cada, uma por partição):
-- `AnalysisConsumer` chama o caso de uso `AnalyzeResume`. Enquanto ele não existir, cada mensagem falha e vai para a DLQ.
+- `AnalysisConsumer` chama o caso de uso `AnalyzeResume` (ver *Análise da candidatura*).
 - `EmailConsumer` chama `DeliverEmail`, que usa o `EmailSender` (n8n).
 
 **Falhas.** O consumer repete com espera crescente (2 s, 4 s, 8 s) e, esgotadas as tentativas:
@@ -165,6 +165,26 @@ email.send       {"resumeId": 42, "to": "...", "subject": "...", "content": "<ht
 | Mensagem malformada ou e-mail inválido | 1 (repetir não adianta) |
 
 Depois disso o `DeadLetterRecoverer` **grava o job na tabela `dead_letters`** (com tópico, chave, partição, offset, mensagem original, erro e tentativas) e **publica a mensagem no `.DLT`**. Se a gravação ou a publicação falhar, o Kafka entrega a mensagem de novo (gravar duas vezes não duplica), então o job não se perde.
+
+## Análise da candidatura
+
+`AnalyzeResumeService` (camada `service`) faz a análise quando o consumer recebe o id de uma candidatura:
+
+1. Busca a candidatura. Se não existe mais, ou **não está `pending`**, ignora (idempotente).
+2. Busca a vaga, o candidato e o arquivo, e **extrai o texto** do PDF (PDFBox) ou do DOCX (POI), reconhecendo o tipo pelo conteúdo. Limite de 20 000 caracteres.
+3. Chama a IA com o prompt de triagem (`resources/prompt/resume_analysis.md`, o mesmo do AgentRH) e esta entrada: `JOB_DESCRIPTION` (título e descrição da vaga), `CANDIDATE_NAME` e `CANDIDATE_RESUME`.
+4. Lê a resposta `DECISÃO | ASSUNTO | HTML` (`AnalysisResult.parse`): a decisão tem de ser exatamente `aproved` ou `recuse`, o assunto não pode estar vazio nem ter `|`, e o corpo tem de ser um documento HTML. Tolera espaços, maiúsculas e cercas de código (```). O HTML pode conter ` | `.
+5. **Grava `status` e `reason`** (o assunto e o corpo em texto, sem tags, para o front mostrar) e **enfileira o e-mail** para o candidato.
+
+Casos de borda:
+
+| Situação | O que acontece |
+| --- | --- |
+| Arquivo corrompido, de tipo desconhecido ou sem texto | O job **não falha**: a IA recebe um aviso no lugar do currículo e recusa, como o prompt manda. O candidato recebe a resposta. |
+| Resposta da IA fora do formato | `Unprocessable`: a candidatura continua `pending`, o job é repetido (4 tentativas) e depois vai para a DLQ. Nenhum e-mail sai. |
+| IA fora do ar, limite de taxa ou timeout | `AiException`: mesma repetição e DLQ. |
+| Não foi possível enfileirar o e-mail | O resultado volta para `pending` e o erro sobe, para a repetição analisar de novo em vez de dar a candidatura por concluída sem e-mail. |
+| A mesma candidatura publicada duas vezes | Analisada e avisada uma vez só. |
 
 ## E-mail
 
@@ -198,6 +218,7 @@ Veja o `.env.example`.
 | `gmail_secret` | vazio | Segredo da credencial JWT do webhook de e-mail do n8n |
 | `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` | `localhost`, `6379`, vazio | Redis (sem senha: só host e porta) |
 | `KAFKA_URL`, `KAFKA_API_USER`, `KAFKA_API_KEY` | `none` (local), `rhhub`, vazio | Kafka (com a chave, SASL/PLAIN) |
+| `GROQ_API_KEY` ou `groq_key`, `GROQ_MODEL` | vazio, `llama-3.3-70b-versatile` | Groq (também `OPENAI_API_KEY` ou `open_ai_key`) |
 | `N8N_EMAIL_WEBHOOK_URL` | URL de produção do workflow `gmail` | Webhook de envio de e-mail |
 | `PORT` | `8080` | Porta HTTP |
 
@@ -217,4 +238,6 @@ DATABASE_URL=postgresql://rhhub:rhhub@localhost:5432/rhhub ./mvnw spring-boot:ru
 
 - Os **mesmos 13 cenários** de repositório rodam contra o SQLite e contra o PostgreSQL, para os dois se comportarem igual.
 - O teste do PostgreSQL usa o banco `rhhub_test` em `localhost:5432` (usuário e senha `rhhub`) e é **pulado** se ele não estiver de pé.
+- **Fluxo completo** (`AnalysisFlowIntegrationTest`): banco SQLite, PDF e DOCX reais, Kafka embutido, consumers, serviço de análise, o cliente HTTP da LLM e DLQ. A LLM desse teste é um **servidor local** que fala `/chat/completions`: prova o nosso código ponta a ponta, mas **não é um modelo de verdade**. O e-mail também é um gravador.
+- **Groq de verdade** (`GroqLiveAnalysisTest`): analisa um perfil forte e um sem relação com a vaga e confere aprovado/recusado, assunto e HTML. Lê a chave de `groq_key` ou `GROQ_API_KEY` e **é pulado** se não houver chave ou se `api.groq.com` não estiver acessível (o motivo aparece como `GROQ-LIVE PULADO` na saída). Para rodar: `groq_key=gsk_... ./mvnw test -Dtest=GroqLiveAnalysisTest`.
 - Há também testes de `DatabaseUrl`, de `TableCreator` (criação do zero, idempotência e constraints) da escolha do provedor de LLM, da conexão e das operações do Redis (contra um Redis local, inclusive um com senha) do Kafka (broker embutido: tópicos, publicação, consumers, novas tentativas, DLT e DLQ) e do envio de e-mail (contrato do webhook, assinatura do JWT, validação e erros, contra um servidor HTTP local; nenhum e-mail real é enviado nos testes).

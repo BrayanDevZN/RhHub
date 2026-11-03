@@ -7,6 +7,8 @@ import reactor.core.publisher.Mono;
 
 public interface UserRepository {
 
+    Mono<User> findById(Long id);
+
     Mono<User> findByPublicId(UUID publicId);
 
     Mono<User> findByEmail(String email);

@@ -32,6 +32,11 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
+    public Mono<User> findById(Long id) {
+        return one("id = :v", Params.of().add("v", id));
+    }
+
+    @Override
     public Mono<User> findByPublicId(UUID publicId) {
         return one("public_id = :v", Params.of().add("v", publicId));
     }

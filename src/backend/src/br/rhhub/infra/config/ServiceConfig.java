@@ -1,8 +1,20 @@
 package br.rhhub.infra.config;
 
+import br.rhhub.application.port.in.AnalyzeResume;
 import br.rhhub.application.port.in.DeliverEmail;
+import br.rhhub.application.port.out.AiProvider;
+import br.rhhub.application.port.out.DocumentTextExtractor;
+import br.rhhub.application.port.out.EmailPublisher;
 import br.rhhub.application.port.out.EmailSender;
+import br.rhhub.application.port.out.ResumeRepository;
+import br.rhhub.application.port.out.UserRepository;
+import br.rhhub.application.port.out.VacancyRepository;
+import br.rhhub.service.AnalyzeResumeService;
 import br.rhhub.service.DeliverEmailService;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -13,5 +25,20 @@ public class ServiceConfig {
     @Bean
     DeliverEmail deliverEmail(EmailSender sender) {
         return new DeliverEmailService(sender);
+    }
+
+    /** O prompt de triagem (o mesmo do AgentRH) vem de resources/prompt/resume_analysis.md e é lido uma vez, na subida. */
+    @Bean
+    AnalyzeResume analyzeResume(ResumeRepository resumes, VacancyRepository vacancies, UserRepository users,
+            DocumentTextExtractor extractor, AiProvider ai, EmailPublisher emails) {
+        return new AnalyzeResumeService(resumes, vacancies, users, extractor, ai, emails, loadPrompt());
+    }
+
+    private static String loadPrompt() {
+        try (var in = new ClassPathResource("prompt/resume_analysis.md").getInputStream()) {
+            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Prompt de análise não encontrado: prompt/resume_analysis.md", e);
+        }
     }
 }
