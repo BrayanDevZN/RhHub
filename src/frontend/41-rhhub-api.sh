@@ -29,10 +29,14 @@ case "$dns" in
 esac
 [ -n "$dns" ] || dns="127.0.0.11"
 
+# A rede privada do Railway pode ter só IPv6 (AAAA): com ipv6=off o nome "não existe". Só desliga sem suporte no kernel.
+ipv6opt=""
+[ -f /proc/net/if_inet6 ] || ipv6opt=" ipv6=off"
+
 proxy() {
   cat <<CONF
 location $1 {
-  resolver $dns valid=10s ipv6=off;
+  resolver $dns valid=10s$ipv6opt;
   set \$rhhub_api $upstream;
   proxy_pass \$rhhub_api;
   proxy_set_header Host \$host;
