@@ -22,13 +22,7 @@ export default function Login() {
   const [password, setPassword] = useState("")
   const [code, setCode] = useState("")
   const [busy, setBusy] = useState(false)
-  const [googleEnabled, setGoogleEnabled] = useState(false)
   const [params] = useSearchParams()
-
-  // O botão do Google só aparece se o back end estiver com o login ligado.
-  useEffect(() => {
-    api.auth.providers().then((p) => setGoogleEnabled(p.google))
-  }, [])
 
   // O back end volta para /login?error=google quando o Google recusa o login.
   useEffect(() => {
@@ -72,7 +66,7 @@ export default function Login() {
   }
 
   function handleGoogle() {
-    api.auth.loginWithGoogle()
+    run(() => api.auth.startGoogleLogin())
   }
 
   if (step === "twoFactor") {
@@ -118,12 +112,8 @@ export default function Login() {
         <CardContent>
           <form onSubmit={handleCredentials}>
             <FieldGroup>
-              {googleEnabled && (
-                <>
-                  <GoogleButton onClick={handleGoogle}>Continuar com Google</GoogleButton>
-                  <FieldSeparator>ou</FieldSeparator>
-                </>
-              )}
+              <GoogleButton onClick={handleGoogle}>Continuar com Google</GoogleButton>
+              <FieldSeparator>ou</FieldSeparator>
               <Field>
                 <FieldLabel htmlFor="email">E-mail</FieldLabel>
                 <Input

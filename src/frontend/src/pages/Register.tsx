@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react"
+import { useState, type FormEvent } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { ArrowLeftIcon } from "lucide-react"
 import { AuthLayout } from "@/components/AuthLayout"
@@ -29,11 +29,6 @@ export default function Register() {
   const [password, setPassword] = useState("")
   const [code, setCode] = useState("")
   const [busy, setBusy] = useState(false)
-  const [googleEnabled, setGoogleEnabled] = useState(false)
-
-  useEffect(() => {
-    api.auth.providers().then((p) => setGoogleEnabled(p.google))
-  }, [])
 
   async function run(action: () => Promise<void>) {
     setBusy(true)
@@ -69,7 +64,7 @@ export default function Register() {
   }
 
   function handleGoogle() {
-    api.auth.loginWithGoogle()
+    run(() => api.auth.startGoogleLogin())
   }
 
   if (step === "code") {
@@ -115,12 +110,8 @@ export default function Register() {
         <CardContent>
           <form onSubmit={handleForm}>
             <FieldGroup>
-              {googleEnabled && (
-                <>
-                  <GoogleButton onClick={handleGoogle}>Cadastrar com Google</GoogleButton>
-                  <FieldSeparator>ou</FieldSeparator>
-                </>
-              )}
+              <GoogleButton onClick={handleGoogle}>Cadastrar com Google</GoogleButton>
+              <FieldSeparator>ou</FieldSeparator>
               <Field>
                 <FieldLabel htmlFor="name">Nome</FieldLabel>
                 <Input id="name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />

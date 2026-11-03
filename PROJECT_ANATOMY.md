@@ -1,5 +1,5 @@
 # Project Anatomy: RhHub
-Generated: 2026-11-03 | 229 files | ~215.8K tokens if all read
+Generated: 2026-11-03 | 229 files | ~215.7K tokens if all read
 
 ## Structure
 | Path | Lines | ~Tokens | Type |
@@ -148,7 +148,7 @@ Generated: 2026-11-03 | 229 files | ~215.8K tokens if all read
 | src/frontend/src/components/ui/toggle.tsx | 45 | 438 | source |
 | src/frontend/src/components/ui/tooltip.tsx | 66 | 709 | source |
 | src/frontend/src/hooks/use-mobile.ts | 20 | 142 | source |
-| src/frontend/src/lib/api.ts | 285 | 2.4K | source |
+| src/frontend/src/lib/api.ts | 290 | 2.5K | source |
 | src/frontend/src/lib/auth.tsx | 71 | 526 | source |
 | src/frontend/src/lib/format.ts | 13 | 80 | source |
 | src/frontend/src/lib/types.ts | 62 | 335 | source |
@@ -158,10 +158,10 @@ Generated: 2026-11-03 | 229 files | ~215.8K tokens if all read
 | src/frontend/src/pages/AdminResumes.tsx | 53 | 463 | source |
 | src/frontend/src/pages/AdminUsers.tsx | 172 | 1.7K | source |
 | src/frontend/src/pages/Dashboard.tsx | 150 | 2.5K | source |
-| src/frontend/src/pages/Login.tsx | 169 | 1.5K | source |
+| src/frontend/src/pages/Login.tsx | 159 | 1.5K | source |
 | src/frontend/src/pages/MyResumes.tsx | 39 | 316 | source |
 | src/frontend/src/pages/Profile.tsx | 409 | 3.7K | source |
-| src/frontend/src/pages/Register.tsx | 201 | 1.9K | source |
+| src/frontend/src/pages/Register.tsx | 192 | 1.9K | source |
 | src/frontend/src/pages/Vacancies.tsx | 344 | 3.1K | source |
 | src/frontend/vite.config.ts | 13 | 81 | source |
 | .github/workflows/ci.yml | 101 | 691 | config |

@@ -137,8 +137,13 @@ export const api = {
       return call<User>("/auth/2fa/verify", "POST", { code })
     },
 
-    // Login com Google: sai do app e volta logado pelo back end (/oauth2/authorization/google)
-    loginWithGoogle(): void {
+    // Login e cadastro com Google: o botão sempre aparece. Se o back end estiver com o Google desligado ou fora do ar,
+    // avisa em vez de mandar o navegador para uma página de erro. Ligado, sai do app e volta logado pelo back end.
+    async startGoogleLogin(): Promise<void> {
+      const { google } = await api.auth.providers()
+      if (!google) {
+        throw new ApiError("O login com Google não está disponível no momento. Use seu e-mail e senha.")
+      }
       window.location.assign("/oauth2/authorization/google")
     },
 
