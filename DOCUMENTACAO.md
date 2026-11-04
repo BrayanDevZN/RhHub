@@ -750,14 +750,35 @@ flowchart LR
 
 O `Dockerfile` da raiz é o do front: é o que o Railway usa por padrão. Os outros serviços apontam para o próprio arquivo (`Dockerfile.Api`, `Dockerfile.Consumer`, `Dockerfile.kafka`), pelo `railway.*.json` ou pela variável `RAILWAY_DOCKERFILE_PATH`. Não há `railway.json` na raiz: um arquivo assim valeria para todos os serviços e passaria por cima do que cada um escolhe no painel.
 
+### 7.0 Cache (Redis, cache-aside)
+
+Pacote `br.rhhub.infra.cache`. Os decoradores `CachedUserRepository`, `CachedVacancyRepository`, `CachedResumeRepository` e `CachedNotificationRepository` são `@Primary` e envolvem os adaptadores SQL; o `QueryCache` faz a leitura (cache → banco → grava com TTL) e a invalidação, sobre um `CacheStore` (`RedisCacheStore` em produção).
+
+| Leitura em cache | Chave | TTL | Invalidação |
+| --- | --- | --- | --- |
+| `UserRepository.findIdentityByPublicId` (papel, id, nome: usada por `WebSupport.actor` em toda requisição autenticada) | `cache:user:identity:{publicId}` | 5 min | `save` e `deleteByPublicId` |
+| `VacancyRepository.findAll` e `findById` | `cache:vacancy:all`, `cache:vacancy:id:{id}` | 5 min | `save`/`deleteById` da vaga; `create`/`deleteById` de candidatura (contador `applicants`); apagar usuário |
+| `NotificationRepository.findByUser` e `countUnread` | `cache:notif:{userId}:list:{n}`, `cache:notif:{userId}:unread` | 60 s | `create`, `markRead`, `markAllRead`, apagar usuário |
+
+Regras do desenho:
+
+- **Fora do cache:** candidaturas (status muda sempre; arquivo até 5 MB), fotos, e qualquer leitura que precise do hash da senha. `User.withoutCredentials()` garante que a identidade em cache não leva o hash nem o id do Google, e o método `findIdentityByPublicId` não deve ser usado para depois gravar o usuário.
+- **Resiliência:** operação do cache com mais de 300 ms ou com erro vira "não achei" e a leitura vai ao banco; após uma falha o cache fica pausado por 30 s. Invalidar não respeita a pausa (é o que evita dado velho).
+- **Resultado vazio** (não encontrado) não é guardado; lista vazia é.
+- **Invalidação por prefixo** usa `SCAN` (nunca `KEYS`), em lotes de 100.
+- **Janela de corrida:** como em todo cache-aside, uma leitura que começou antes de uma escrita pode regravar o valor velho logo depois da invalidação. O TTL curto limita isso a, no máximo, 5 min (60 s nos avisos).
+- **Chave de desligar:** `CACHE_ENABLED=false` remove os decoradores (`@ConditionalOnProperty cache.enabled`).
+
+Testes: `QueryCacheTest` e `CachedRepositoriesTest` (unit, com `MemoryCacheStore`), e `RedisCacheStoreIntegrationTest` (integration, Redis real, inclusive a remoção por prefixo com 250 chaves).
+
 ### 7.1 Testes e CI
 
 Os testes do back end ficam em `src/backend/test` e têm **quatro categorias**, marcadas por tags do JUnit 5 (anotações em `br.rhhub.testing`). Todos rodam com `ENVIRONMENT=test` (configurado no `maven-surefire-plugin`): `AppProperties.isTest()` faz os códigos de verificação voltarem na resposta, troca a IA por `FixedAiProvider` (sempre aprovado) e desliga o `Secure` dos cookies, então nenhum teste depende de e-mail nem de chave externa.
 
 | Categoria | Anotação | Escopo | Precisa de | Testes |
 | --- | --- | --- | --- | --- |
-| Unit | `@UnitTest` | Domínio, serviços com repositórios falsos (`Fakes`), validações, templates de e-mail, propriedades | Nada (memória) | 121 |
-| Integration | `@IntegrationTest` | Uma peça real por vez: repositórios SQLite e PostgreSQL (`RepositoryContract`), `TableCreator`, Redis, Kafka embarcado, clientes HTTP contra servidor local | PostgreSQL e Redis só se estiverem de pé (senão o teste é pulado) | 80 |
+| Unit | `@UnitTest` | Domínio, serviços com repositórios falsos (`Fakes`), validações, templates de e-mail, propriedades | Nada (memória) | 132 |
+| Integration | `@IntegrationTest` | Uma peça real por vez: repositórios SQLite e PostgreSQL (`RepositoryContract`), `TableCreator`, Redis, Kafka embarcado, clientes HTTP contra servidor local | PostgreSQL e Redis só se estiverem de pé (senão o teste é pulado) | 83 |
 | Functional | `@FunctionalTest` | A API HTTP inteira (`WebApiTest`, `GoogleCallbackTest`) e o fluxo candidatura → Kafka → IA → e-mail (`AnalysisFlowIntegrationTest`) | Nada externo | 33 |
 | Live | `@LiveTest` | Groq e n8n/Gmail **de verdade** (gasta cota, envia e-mail) | Chaves no ambiente | 3 |
 

@@ -44,6 +44,11 @@ public record User(
         return new User(id, publicId, name, email, cpf, age, gender, passwordHash, twoFactor, role, provider, sub, createdAt);
     }
 
+    /** A mesma conta sem o hash da senha e sem o id do Google: o que pode ir para o cache e para leituras só de consulta. */
+    public User withoutCredentials() {
+        return new User(id, publicId, name, email, cpf, age, gender, null, twoFactor, role, provider, null, createdAt);
+    }
+
     public boolean isGoogle() {
         return provider == AuthProvider.GOOGLE;
     }

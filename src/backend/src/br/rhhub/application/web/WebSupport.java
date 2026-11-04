@@ -81,7 +81,7 @@ public class WebSupport {
     public Mono<User> actor(ServerWebExchange exchange) {
         UUID id = exchange.getAttribute(USER_ATTRIBUTE);
         return id == null ? Mono.error(new DomainException.Unauthorized("Faça login para continuar."))
-                : users.me(id);
+                : users.identity(id);
     }
 
     // ---- upload ----

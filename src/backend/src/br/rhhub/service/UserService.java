@@ -34,6 +34,12 @@ public class UserService {
         return users.findByPublicId(publicId).switchIfEmpty(Mono.error(new DomainException.Unauthorized("Sessão inválida.")));
     }
 
+    /** Leitura rápida de quem está logado (sem credenciais, possivelmente do cache). Não serve para alterar o usuário. */
+    public Mono<User> identity(UUID publicId) {
+        return users.findIdentityByPublicId(publicId)
+                .switchIfEmpty(Mono.error(new DomainException.Unauthorized("Sessão inválida.")));
+    }
+
     public Mono<User> update(UUID publicId, Update change) {
         return Mono.defer(() -> me(publicId).flatMap(user -> {
             Integer age = change.age() == null ? user.age() : Integer.valueOf(Rules.age(change.age()));

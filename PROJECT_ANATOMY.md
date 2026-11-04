@@ -1,5 +1,5 @@
 # Project Anatomy: RhHub
-Generated: 2026-11-04 | 266 files | ~270.2K tokens if all read
+Generated: 2026-11-04 | 278 files | ~280.4K tokens if all read
 
 ## Structure
 | Path | Lines | ~Tokens | Type |
@@ -42,10 +42,18 @@ Generated: 2026-11-04 | 266 files | ~270.2K tokens if all read
 | src/backend/src/br/rhhub/domain/model/ResumeFile.java | 5 | 29 | source |
 | src/backend/src/br/rhhub/domain/model/ResumeStatus.java | 33 | 227 | source |
 | src/backend/src/br/rhhub/domain/model/Role.java | 15 | 78 | source |
-| src/backend/src/br/rhhub/domain/model/User.java | 51 | 414 | source |
+| src/backend/src/br/rhhub/domain/model/User.java | 56 | 488 | source |
 | src/backend/src/br/rhhub/domain/model/Vacancy.java | 54 | 569 | source |
 | src/backend/src/br/rhhub/domain/rule/Rules.java | 145 | 1.5K | source |
 | src/backend/src/br/rhhub/domain/rule/Stages.java | 65 | 633 | source |
+| src/backend/src/br/rhhub/infra/cache/CachedNotificationRepository.java | 66 | 648 | source |
+| src/backend/src/br/rhhub/infra/cache/CachedResumeRepository.java | 86 | 700 | source |
+| src/backend/src/br/rhhub/infra/cache/CachedUserRepository.java | 99 | 846 | source |
+| src/backend/src/br/rhhub/infra/cache/CachedVacancyRepository.java | 64 | 588 | source |
+| src/backend/src/br/rhhub/infra/cache/CacheKeys.java | 40 | 308 | source |
+| src/backend/src/br/rhhub/infra/cache/CacheStore.java | 18 | 123 | source |
+| src/backend/src/br/rhhub/infra/cache/QueryCache.java | 117 | 1.2K | source |
+| src/backend/src/br/rhhub/infra/cache/RedisCacheStore.java | 46 | 367 | source |
 | src/backend/src/br/rhhub/infra/config/AdminBootstrap.java | 30 | 307 | source |
 | src/backend/src/br/rhhub/infra/config/AppProperties.java | 80 | 782 | source |
 | src/backend/src/br/rhhub/infra/config/AuthProperties.java | 32 | 276 | source |
@@ -117,7 +125,7 @@ Generated: 2026-11-04 | 266 files | ~270.2K tokens if all read
 | src/backend/src/br/rhhub/service/ProfilePhotoService.java | 53 | 501 | source |
 | src/backend/src/br/rhhub/service/ResumeService.java | 148 | 1.8K | source |
 | src/backend/src/br/rhhub/service/ResumeStageService.java | 110 | 1.4K | source |
-| src/backend/src/br/rhhub/service/UserService.java | 96 | 1.2K | source |
+| src/backend/src/br/rhhub/service/UserService.java | 102 | 1.2K | source |
 | src/backend/src/br/rhhub/service/VacancyService.java | 193 | 2.3K | source |
 | src/frontend/40-rhhub-listen.sh | 23 | 172 | source |
 | src/frontend/41-rhhub-api.sh | 68 | 616 | source |
@@ -204,6 +212,10 @@ Generated: 2026-11-04 | 266 files | ~270.2K tokens if all read
 | src/backend/test/br/rhhub/flow/AnalysisFlowIntegrationTest.java | 374 | 4.7K | test |
 | src/backend/test/br/rhhub/flow/EmailEndToEndLiveTest.java | 196 | 2.3K | test |
 | src/backend/test/br/rhhub/flow/GroqLiveAnalysisTest.java | 193 | 2.5K | test |
+| src/backend/test/br/rhhub/infra/cache/CachedRepositoriesTest.java | 154 | 1.9K | test |
+| src/backend/test/br/rhhub/infra/cache/MemoryCacheStore.java | 57 | 453 | test |
+| src/backend/test/br/rhhub/infra/cache/QueryCacheTest.java | 113 | 1.1K | test |
+| src/backend/test/br/rhhub/infra/cache/RedisCacheStoreIntegrationTest.java | 79 | 748 | test |
 | src/backend/test/br/rhhub/infra/config/ApplicationYmlTest.java | 38 | 371 | test |
 | src/backend/test/br/rhhub/infra/config/WebPropertiesTest.java | 43 | 414 | test |
 | src/backend/test/br/rhhub/infra/database/DatabaseUrlTest.java | 57 | 593 | test |
@@ -242,8 +254,8 @@ Generated: 2026-11-04 | 266 files | ~270.2K tokens if all read
 | src/backend/test/br/rhhub/testing/UnitTest.java | 20 | 149 | test |
 | .github/CONTRIBUTING.md | 38 | 400 | docs |
 | .github/PULL_REQUEST_TEMPLATE.md | 24 | 218 | docs |
-| DOCUMENTACAO.md | 830 | 12.2K | docs |
-| README.md | 344 | 5.0K | docs |
+| DOCUMENTACAO.md | 851 | 12.7K | docs |
+| README.md | 362 | 5.4K | docs |
 | src/backend/HISTORICO.md | 145 | 3.3K | docs |
 | src/backend/README.md | 289 | 5.4K | docs |
 | src/backend/resources/prompt/resume_analysis.md | 342 | 6.7K | docs |
@@ -258,7 +270,7 @@ Generated: 2026-11-04 | 266 files | ~270.2K tokens if all read
 | Dockerfile.Consumer | 23 | 249 | other |
 | Dockerfile.front | 19 | 196 | other |
 | Dockerfile.kafka | 28 | 315 | other |
-| src/backend/.env.example | 47 | 468 | other |
+| src/backend/.env.example | 48 | 487 | other |
 | src/backend/.gitignore | 8 | 13 | other |
 | src/backend/.mvn/wrapper/maven-wrapper.properties | 4 | 42 | other |
 | src/backend/mvnw | 296 | 2.9K | other |
@@ -272,15 +284,15 @@ Generated: 2026-11-04 | 266 files | ~270.2K tokens if all read
 | src/frontend/nginx.conf | 23 | 150 | other |
 
 ## Summary
-- source: 176 files, ~137.6K tokens
+- source: 184 files, ~142.6K tokens
 - config: 16 files, ~4.4K tokens
-- test: 44 files, ~71.3K tokens
-- docs: 8 files, ~33.5K tokens
+- test: 48 files, ~75.5K tokens
+- docs: 8 files, ~34.5K tokens
 - style: 1 files, ~8.0K tokens
 - other: 21 files, ~15.4K tokens
 
 ## Heaviest files (read with offset/limit, not whole)
-1. DOCUMENTACAO.md — 830 lines (~12.2K tokens)
+1. DOCUMENTACAO.md — 851 lines (~12.7K tokens)
 2. src/frontend/src/components/ui/sidebar.tsx — 724 lines (~5.4K tokens)
 3. src/frontend/src/pages/Vacancies.tsx — 711 lines (~6.6K tokens)
 4. src/backend/test/br/rhhub/application/web/WebApiTest.java — 620 lines (~9.5K tokens)

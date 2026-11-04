@@ -7,9 +7,9 @@ Publique vagas, receba candidaturas, acompanhe cada etapa do processo seletivo e
 
 [![CI](https://img.shields.io/github/actions/workflow/status/BrayanDevZN/RhHub/ci.yml?branch=main&style=for-the-badge&label=CI&logo=githubactions&logoColor=white&labelColor=2088FF)](https://github.com/BrayanDevZN/RhHub/actions/workflows/ci.yml)
 ![Último commit](https://img.shields.io/github/last-commit/BrayanDevZN/RhHub?style=for-the-badge&logo=git&logoColor=white&labelColor=F05032&color=F05032)
-![Testes](https://img.shields.io/badge/TESTES-234-2EA44F?style=for-the-badge&labelColor=2EA44F&logo=junit5&logoColor=white)
-![Unit](https://img.shields.io/badge/UNIT-121-2EA44F?style=for-the-badge&labelColor=2EA44F&logo=junit5&logoColor=white)
-![Integration](https://img.shields.io/badge/INTEGRATION-80-1F6FEB?style=for-the-badge&labelColor=1F6FEB&logo=junit5&logoColor=white)
+![Testes](https://img.shields.io/badge/TESTES-248-2EA44F?style=for-the-badge&labelColor=2EA44F&logo=junit5&logoColor=white)
+![Unit](https://img.shields.io/badge/UNIT-132-2EA44F?style=for-the-badge&labelColor=2EA44F&logo=junit5&logoColor=white)
+![Integration](https://img.shields.io/badge/INTEGRATION-83-1F6FEB?style=for-the-badge&labelColor=1F6FEB&logo=junit5&logoColor=white)
 ![Functional](https://img.shields.io/badge/FUNCTIONAL-33-8957E5?style=for-the-badge&labelColor=8957E5&logo=junit5&logoColor=white)
 
 ![Java](https://img.shields.io/badge/JAVA-21-ED8B00?style=for-the-badge&labelColor=ED8B00&logo=openjdk&logoColor=white)
@@ -77,7 +77,7 @@ flowchart LR
     U([Navegador<br/>React + Vite]) -->|HTTPS · cookies HttpOnly| N[nginx<br/>front + proxy]
     N -->|/api · /oauth2| API[API<br/>Spring WebFlux]
     API --> PG[(PostgreSQL)]
-    API --> R[(Redis<br/>códigos · refresh · rate limit)]
+    API --> R[(Redis<br/>cache · códigos · refresh · rate limit)]
     API -->|resume.analysis · email.send| K{{Kafka}}
     K --> C[Consumers<br/>análise e e-mail]
     C --> PG
@@ -157,6 +157,23 @@ O fluxo de uma requisição é `application` → `service` → `domain` + portas
 - **Sem vazamento de segredos.** Erros do Google e do servidor chegam à tela só como código curto, nunca com a mensagem interna.
 - **Falha de aviso não derruba o fluxo.** Gravar uma notificação ou enfileirar um e-mail de etapa é "melhor esforço": o erro vai para o log e o processo segue.
 
+### Cache com Redis (cache-aside)
+
+As leituras mais repetidas passam por um cache no Redis. É o padrão **cache-aside**: lê do cache; se não achar, lê do banco e grava no cache com prazo (TTL); quem altera ou apaga um dado **invalida** a entrada. Cada repositório tem um decorador (`infra/cache`) que se põe na frente do adaptador SQL.
+
+| O que fica em cache | Chave | TTL | Quando é invalidado |
+|---|---|---|---|
+| Identidade de quem está logado (lida em **toda** requisição autenticada) | `cache:user:identity:{publicId}` | 5 min | Salvar ou apagar o usuário (mudar papel, perfil, excluir conta) |
+| Lista de vagas e cada vaga por id | `cache:vacancy:*` | 5 min | Salvar ou apagar vaga, **criar ou apagar candidatura** (muda o contador de candidatos) e apagar usuário (leva as candidaturas junto) |
+| Avisos do sino: lista e contador de não lidos | `cache:notif:{userId}:*` | 60 s | Criar aviso, marcar como lido, marcar todos, apagar usuário |
+
+**O que não entra no cache, de propósito:** candidaturas (o status muda a todo instante e o arquivo pode ter 5 MB), fotos (binários de até 2 MB), leituras com credenciais (login, 2FA, troca de senha) e verificações de existência.
+
+- **Sem credenciais no Redis.** A identidade guardada vem sem o hash da senha e sem o id do Google (`User.withoutCredentials()`).
+- **O cache nunca derruba a aplicação.** Toda falha do Redis (erro ou mais de 300 ms) vira "não achei" e a leitura segue pelo banco; depois de uma falha o cache fica desligado por 30 s, para não pagar o tempo limite a cada requisição. Apagar entradas continua sendo tentado.
+- **TTL curto como rede de segurança:** se uma invalidação falhar, o dado velho some sozinho em, no máximo, 5 min.
+- **Desligar:** `CACHE_ENABLED=false` remove os decoradores e tudo volta a ler direto do banco.
+
 ### Modelo de dados
 
 ```mermaid
@@ -203,7 +220,7 @@ Apagar um usuário ou uma vaga apaga, em cascata, as candidaturas, fotos e aviso
 | **Back end** | Java 21, Spring Boot 3.5, Spring WebFlux, Project Reactor, R2DBC (PostgreSQL e pool), SQLite (JDBC), Spring Kafka, Spring Data Redis Reactive |
 | **Documentos** | Apache PDFBox 3 (PDF) e Apache POI 5 (DOCX) para extrair o texto do currículo |
 | **Front end** | React 19, TypeScript, Vite 8, Tailwind CSS 4, React Router 7, Base UI + componentes no estilo shadcn/ui, lucide-react, Three.js (`@react-three/fiber` e `drei`) na cena 3D do login |
-| **Dados** | PostgreSQL 16, Redis 7 (códigos de verificação, refresh tokens e rate limit), Apache Kafka (tópicos `resume.analysis` e `email.send`) |
+| **Dados** | PostgreSQL 16, Redis 7 (códigos de verificação, refresh tokens, rate limit e **cache-aside** das leituras), Apache Kafka (tópicos `resume.analysis` e `email.send`) |
 | **IA** | Qualquer provedor compatível com a API da OpenAI: Groq (`openai/gpt-oss-120b`) por padrão ou OpenAI (`gpt-4o-mini`). O prompt de triagem fica em `src/backend/resources/prompt/resume_analysis.md` |
 | **E-mail** | Workflow no n8n (Gmail) chamado por webhook com JWT HS256; templates HTML em `src/backend/resources/templates` |
 | **Autenticação** | BCrypt, JWT, Google OAuth 2.0, 2FA por e-mail |
@@ -281,6 +298,7 @@ npm run dev
 | `FRONTEND_URL` | Origem liberada no CORS e destino do retorno do Google |
 | `BACKEND_URL` | Lida pelo **front** (nginx): para onde repassar `/api` |
 | `COOKIE_SECURE` · `COOKIE_SAMESITE` | Atributos dos cookies de sessão |
+| `CACHE_ENABLED` | `false` desliga o cache Redis das leituras (padrão: ligado) |
 
 A lista completa, com exemplos, está em [`src/backend/.env.example`](src/backend/.env.example) e na [`DOCUMENTACAO.md`](DOCUMENTACAO.md).
 
@@ -290,8 +308,8 @@ Os testes do back end ficam em `src/backend/test` e são divididos em **três ca
 
 | Categoria | Anotação | O que testa | Precisa de | Testes |
 |---|---|---|---|---|
-| **Unit** | `@UnitTest` | Regras de domínio, serviços (com repositórios em memória), validações, composição de e-mail, configuração | Nada: roda só na memória | 121 |
-| **Integration** | `@IntegrationTest` | Uma peça de infraestrutura de cada vez: repositórios em SQLite e PostgreSQL, criação e migração de tabelas, Redis, Kafka embarcado, clientes HTTP (Google, n8n, LLM) contra um servidor local | SQLite e Kafka embarcado já vêm; PostgreSQL e Redis são usados se estiverem de pé (senão o teste é pulado) | 80 |
+| **Unit** | `@UnitTest` | Regras de domínio, serviços (com repositórios em memória), validações, composição de e-mail, configuração | Nada: roda só na memória | 132 |
+| **Integration** | `@IntegrationTest` | Uma peça de infraestrutura de cada vez: repositórios em SQLite e PostgreSQL, criação e migração de tabelas, Redis, Kafka embarcado, clientes HTTP (Google, n8n, LLM) contra um servidor local | SQLite e Kafka embarcado já vêm; PostgreSQL e Redis são usados se estiverem de pé (senão o teste é pulado) | 83 |
 | **Functional** | `@FunctionalTest` | O sistema por fora: a API HTTP inteira (login, vagas, etapas, candidaturas, notificações, administração, retorno do Google) e o fluxo completo candidatura → fila → análise → e-mail | Nada externo | 33 |
 | **Live** | `@LiveTest` | Chama **Groq e n8n/Gmail de verdade** (gasta cota e envia e-mail). **Fora de todas as execuções, inclusive do CI** | As chaves no ambiente | 3 |
 

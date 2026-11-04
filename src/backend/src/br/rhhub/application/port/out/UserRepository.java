@@ -11,6 +11,14 @@ public interface UserRepository {
 
     Mono<User> findByPublicId(UUID publicId);
 
+    /**
+     * Quem é a pessoa logada, para consulta (papel, id, nome): <b>sem o hash da senha</b>, então nunca deve ser usada
+     * para depois gravar o usuário. É a leitura de toda requisição autenticada, por isso a versão com cache a guarda.
+     */
+    default Mono<User> findIdentityByPublicId(UUID publicId) {
+        return findByPublicId(publicId).map(User::withoutCredentials);
+    }
+
     Mono<User> findByEmail(String email);
 
     Mono<User> findByGoogleSub(String googleSub);
