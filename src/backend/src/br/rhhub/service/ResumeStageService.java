@@ -2,6 +2,7 @@ package br.rhhub.service;
 
 import br.rhhub.application.port.out.EmailComposer;
 import br.rhhub.application.port.out.EmailPublisher;
+import br.rhhub.application.port.out.Notifier;
 import br.rhhub.application.port.out.ResumeRepository;
 import br.rhhub.application.port.out.UserRepository;
 import br.rhhub.application.port.out.VacancyRepository;
@@ -29,8 +30,16 @@ public class ResumeStageService {
     private final EmailComposer composer;
     private final AccessPolicy policy;
 
+    private final Notifier notifier;
+
     public ResumeStageService(ResumeRepository resumes, VacancyRepository vacancies, UserRepository users,
             EmailPublisher emails, EmailComposer composer, AccessPolicy policy) {
+        this(resumes, vacancies, users, emails, composer, policy, Notifier.NONE);
+    }
+
+    public ResumeStageService(ResumeRepository resumes, VacancyRepository vacancies, UserRepository users,
+            EmailPublisher emails, EmailComposer composer, AccessPolicy policy, Notifier notifier) {
+        this.notifier = notifier;
         this.resumes = resumes;
         this.vacancies = vacancies;
         this.users = users;
@@ -67,7 +76,12 @@ public class ResumeStageService {
                                     }
                                     return resumes.updateStage(resume.id(), stage)
                                             .flatMap(updated -> notify(updated, vacancy.name(), stage, index + 1,
-                                                    stages.size()).thenReturn(updated));
+                                                    stages.size())
+                                                    .then(notifier.user(updated.userId(), "Sua candidatura avançou",
+                                                            vacancy.name() + ": agora você está na etapa " + stage
+                                                                    + " (" + (index + 1) + " de " + stages.size() + ").",
+                                                            "/candidaturas"))
+                                                    .thenReturn(updated));
                                 });
                     });
         });

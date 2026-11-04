@@ -5,6 +5,7 @@ import br.rhhub.application.port.out.AiProvider;
 import br.rhhub.application.port.out.DocumentTextExtractor;
 import br.rhhub.application.port.out.EmailMessage;
 import br.rhhub.application.port.out.EmailPublisher;
+import br.rhhub.application.port.out.Notifier;
 import br.rhhub.application.port.out.ResumeRepository;
 import br.rhhub.application.port.out.UserRepository;
 import br.rhhub.application.port.out.VacancyRepository;
@@ -47,8 +48,16 @@ public class AnalyzeResumeService implements AnalyzeResume {
     private final EmailPublisher emails;
     private final String prompt;
 
+    private final Notifier notifier;
+
     public AnalyzeResumeService(ResumeRepository resumes, VacancyRepository vacancies, UserRepository users,
             DocumentTextExtractor extractor, AiProvider ai, EmailPublisher emails, String prompt) {
+        this(resumes, vacancies, users, extractor, ai, emails, prompt, Notifier.NONE);
+    }
+
+    public AnalyzeResumeService(ResumeRepository resumes, VacancyRepository vacancies, UserRepository users,
+            DocumentTextExtractor extractor, AiProvider ai, EmailPublisher emails, String prompt, Notifier notifier) {
+        this.notifier = notifier;
         this.resumes = resumes;
         this.vacancies = vacancies;
         this.users = users;
@@ -90,11 +99,11 @@ public class AnalyzeResumeService implements AnalyzeResume {
                             .subscribeOn(Schedulers.boundedElastic())
                             .flatMap(text -> ai.complete(prompt, input(vacancy, user, text)))
                             .map(AnalysisResult::parse)
-                            .flatMap(result -> save(resume, user, result));
+                            .flatMap(result -> save(resume, user, vacancy, result));
                 });
     }
 
-    private Mono<Void> save(Resume resume, User user, AnalysisResult result) {
+    private Mono<Void> save(Resume resume, User user, Vacancy vacancy, AnalysisResult result) {
         log.info("Candidatura {} analisada: {}", resume.id(), result.decision().value());
         return resumes.updateResult(resume.id(), result.decision(), result.reason())
                 .then(emails.publish(resume.id(), EmailMessage.html(user.email(), result.subject(), result.html()))
@@ -106,7 +115,14 @@ public class AnalyzeResumeService implements AnalyzeResume {
                                         return Mono.empty();
                                     })
                                     .then(Mono.error(error));
-                        }));
+                        }))
+                .then(Mono.defer(() -> result.decision() == ResumeStatus.APROVED
+                        ? notifier.user(user.id(), "Aprovado na triagem",
+                                "Seu currículo para " + vacancy.name() + " foi aprovado. Acompanhe as próximas etapas.",
+                                "/candidaturas")
+                        : notifier.user(user.id(), "Resultado da triagem",
+                                "A análise do seu currículo para " + vacancy.name() + " foi concluída. Veja o resultado.",
+                                "/candidaturas")));
     }
 
     /** Texto do currículo, ou um aviso quando não dá para ler: a IA recebe o aviso e recusa, como o prompt manda. */

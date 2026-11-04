@@ -23,7 +23,7 @@ public class TableCreator {
 
     public TableCreator(SqlExecutor sql, Dialect dialect) {
         this(sql, dialect, List.of(new UsersTable(), new UserPhotosTable(), new VacanciesTable(), new VacancyPhotosTable(), new ResumesTable(),
-                new DeadLettersTable()));
+                new DeadLettersTable(), new NotificationsTable()));
     }
 
     TableCreator(SqlExecutor sql, Dialect dialect, List<TableDefinition> tables) {

@@ -59,7 +59,7 @@ class WebApiTest {
     @EnableWebFlux
     @Import({AuthFilter.class, RateLimitFilter.class, SecurityHeadersFilter.class, CorsConfig.class,
             ApiExceptionHandler.class, WebSupport.class, AuthController.class, UserController.class,
-            VacancyController.class, ResumeController.class, AdminController.class, GoogleController.class,
+            VacancyController.class, ResumeController.class, NotificationController.class, AdminController.class, GoogleController.class,
             HealthController.class})
     static class Context {
         @Bean ObjectMapper objectMapper() { return new ObjectMapper(); }
@@ -95,8 +95,12 @@ class WebApiTest {
             return new UserService(users, hasher, refresh, policy);
         }
         @Bean VacancyService vacancyService(Fakes.Vacancies v, AccessPolicy policy, Fakes.Resumes r) { return new VacancyService(v, v.photos, policy, r); }
-        @Bean ResumeService resumeService(Fakes.Resumes r, Fakes.Vacancies v) {
-            return new ResumeService(r, v, new PdfDocxTextExtractor(), analysis);
+        @Bean ResumeService resumeService(Fakes.Resumes r, Fakes.Vacancies v, br.rhhub.service.NotificationService notifier) {
+            return new ResumeService(r, v, new PdfDocxTextExtractor(), analysis, java.time.Clock.systemUTC(), notifier);
+        }
+        @Bean Fakes.Notifications notificationsRepo() { return new Fakes.Notifications(); }
+        @Bean br.rhhub.service.NotificationService notificationService(Fakes.Notifications n) {
+            return new br.rhhub.service.NotificationService(n, users);
         }
         @Bean br.rhhub.service.ResumeStageService resumeStageService(Fakes.Resumes r, Fakes.Vacancies v, AccessPolicy policy) {
             return new br.rhhub.service.ResumeStageService(r, v, users, (id, message) -> reactor.core.publisher.Mono.empty(),
@@ -419,6 +423,32 @@ class WebApiTest {
         client.delete().uri("/api/vacancies/" + id + "/photo").cookies(root::apply).exchange().expectStatus().isNoContent();
         get("/api/vacancies/" + id + "/photo", ana).expectStatus().isNotFound();
         assertThat(json(get("/api/vacancies/" + id, ana).expectStatus().isOk()).get("has_photo").asBoolean()).isFalse();
+    }
+
+    @Test
+    void theBellListsMarksAndIsolatesNotificationsPerUser() throws Exception {
+        var ana = signup("Ana", "ana@gmail.com", "12345678901");
+        var bia = signup("Bia", "bia@gmail.com", "10987654321");
+        var root = rootLogin();
+        long vacancy = json(post("/api/vacancies", Map.of("name", "Dev", "description", "Backend"), root).expectStatus().isCreated()).get("id").asLong();
+        get("/api/notifications", null).expectStatus().isUnauthorized();
+
+        upload("/api/resumes", "file", "cv.pdf", PDF, "" + vacancy, ana).expectStatus().isCreated();
+
+        var rootInbox = json(get("/api/notifications", root).expectStatus().isOk());
+        assertThat(rootInbox.get("unread").asInt()).isEqualTo(1); // só admin é avisado da candidatura
+        var item = rootInbox.get("items").get(0);
+        assertThat(item.get("title").asText()).isEqualTo("Nova candidatura");
+        assertThat(item.get("read").asBoolean()).isFalse();
+        assertThat(item.get("link").asText()).isEqualTo("/admin/candidaturas");
+        assertThat(json(get("/api/notifications", ana).expectStatus().isOk()).get("items")).isEmpty();
+
+        long id = item.get("id").asLong();
+        client.post().uri("/api/notifications/" + id + "/read").cookies(bia::apply).exchange().expectStatus().isNotFound();
+        client.post().uri("/api/notifications/abc/read").cookies(root::apply).exchange().expectStatus().isBadRequest();
+        client.post().uri("/api/notifications/" + id + "/read").cookies(root::apply).exchange().expectStatus().isOk();
+        assertThat(json(get("/api/notifications", root).expectStatus().isOk()).get("unread").asInt()).isZero();
+        client.post().uri("/api/notifications/read-all").cookies(root::apply).exchange().expectStatus().isNoContent();
     }
 
     @Test

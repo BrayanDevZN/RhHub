@@ -384,6 +384,9 @@ Prefixo `/api`. Respostas em JSON. Sessão por cookie, então o front usa `crede
 | `GET` | `/resumes` | Admin | Todas as candidaturas (filtro `status`, `vacancyId`) | `GET /resumes` com `get_all` |
 | `GET` | `/resumes/{id}` | Dono ou admin | Detalhe e resultado da IA | `GET /resumes` com `id` |
 | `GET` | `/resumes/{id}/file` | Dono ou admin | Baixa o arquivo (`application/pdf` ou DOCX, conforme `content_type`) | PDF em Base64 no JSON |
+| `GET` | `/notifications` | Logado | O sino: `{items, unread}` com os 30 avisos mais recentes do próprio usuário | novo |
+| `POST` | `/notifications/{id}/read` | Logado | Marca um aviso como lido. `404` se não existir ou for de outro usuário | novo |
+| `POST` | `/notifications/read-all` | Logado | Marca todos os avisos do usuário como lidos (`204`) | novo |
 | `PATCH` | `/resumes/{id}/stage` | Admin | Move o candidato **aprovado na triagem** para outra etapa da vaga (`{stage}`) e envia e-mail avisando o candidato | novo |
 | `DELETE` | `/resumes/{id}` | Dono ou admin | Exclui a candidatura | `DELETE /resumes` |
 
@@ -780,3 +783,15 @@ O `Dockerfile` da raiz é o do front: é o que o Railway usa por padrão. Os out
 5. **Vários admins raiz:** hoje só um (`ADMIN_EMAIL`). Vale permitir mais de um?
 6. **Reenvio de código:** limite de reenvios por e-mail e por IP.
 7. **Paginação** de vagas e de candidaturas no admin, quando houver volume.
+
+## Notificações (o sino)
+
+Avisos dentro do app, gravados na tabela `notifications` (por usuário, com `is_read` e um `link` para a tela do assunto). O front consulta `GET /notifications` ao abrir, a cada 30 s e quando a aba volta ao foco; o número do sino é `unread` e o clique marca como lido e leva ao `link`.
+
+| Evento | Quem recebe | Aviso |
+|---|---|---|
+| Candidato envia currículo | Todos os administradores | Nova candidatura |
+| Análise da IA termina (depois do e-mail ser enfileirado) | O candidato | Aprovado na triagem / Resultado da triagem |
+| Admin move o candidato de etapa | O candidato | Sua candidatura avançou |
+
+Gravar um aviso nunca derruba o fluxo que o originou: se falhar, o erro vai para o log e o resto segue.

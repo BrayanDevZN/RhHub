@@ -8,6 +8,7 @@ import br.rhhub.domain.model.AuthProvider;
 import br.rhhub.domain.model.DeadLetter;
 import br.rhhub.domain.model.DeadLetterStatus;
 import br.rhhub.domain.model.Gender;
+import br.rhhub.domain.model.Notification;
 import br.rhhub.domain.model.Resume;
 import br.rhhub.domain.model.ResumeStatus;
 import br.rhhub.domain.model.Role;
@@ -15,6 +16,7 @@ import br.rhhub.domain.model.User;
 import br.rhhub.domain.model.Vacancy;
 import br.rhhub.infra.database.adapter.DeadLetterRepositoryAdapter;
 import br.rhhub.domain.model.ProfilePhoto;
+import br.rhhub.infra.database.adapter.NotificationRepositoryAdapter;
 import br.rhhub.infra.database.adapter.ProfilePhotoRepositoryAdapter;
 import br.rhhub.infra.database.adapter.VacancyPhotoRepositoryAdapter;
 import br.rhhub.infra.database.adapter.ResumeRepositoryAdapter;
@@ -33,18 +35,20 @@ abstract class RepositoryContract {
     private UserRepositoryAdapter users;
     private VacancyRepositoryAdapter vacancies;
     private ResumeRepositoryAdapter resumes;
+    private NotificationRepositoryAdapter notifications;
 
     private void init() {
         if (users == null) {
             users = new UserRepositoryAdapter(executor(), Clock.systemUTC());
             vacancies = new VacancyRepositoryAdapter(executor(), Clock.systemUTC());
             resumes = new ResumeRepositoryAdapter(executor(), Clock.systemUTC());
+            notifications = new NotificationRepositoryAdapter(executor(), Clock.systemUTC());
         }
     }
 
     @AfterEach
     void clean() {
-        for (String table : new String[] {"dead_letters", "resumes", "vacancy_photos", "vacancies", "user_photos", "users"}) {
+        for (String table : new String[] {"dead_letters", "notifications", "resumes", "vacancy_photos", "vacancies", "user_photos", "users"}) {
             executor().update("DELETE FROM " + table, Params.of()).block();
         }
     }
@@ -350,6 +354,34 @@ abstract class RepositoryContract {
         var plain = vacancies.save(new Vacancy(null, "Padrão " + UUID.randomUUID(), "d", null, null)).block();
         assertThat(plain.stages()).containsExactly("Triagem", "Entrevista", "Contratado");
         assertThat(plain.expiresAt()).isNull();
+    }
+
+    @Test
+    void notificationsAreStoredPerUserReadAndDeletedWithTheUser() {
+        init();
+        User ana = newUser(email(), "77777777777");
+        User bia = newUser(email(), "88888888888");
+        var first = notifications.create(new Notification(null, ana.id(), "Um", "primeiro", null, false, null)).block();
+        var second = notifications.create(new Notification(null, ana.id(), "Dois", "segundo", "/vagas", false, null)).block();
+        notifications.create(new Notification(null, bia.id(), "Da Bia", "x", null, false, null)).block();
+
+        assertThat(first.read()).isFalse();
+        assertThat(second.link()).isEqualTo("/vagas");
+        assertThat(notifications.findByUser(ana.id(), 10).collectList().block()).extracting(Notification::title)
+                .containsExactly("Dois", "Um");
+        assertThat(notifications.findByUser(ana.id(), 1).collectList().block()).hasSize(1);
+        assertThat(notifications.countUnread(ana.id()).block()).isEqualTo(2);
+
+        assertThat(notifications.markRead(first.id(), bia.id()).block()).isFalse(); // de outro usuário
+        assertThat(notifications.markRead(first.id(), ana.id()).block()).isTrue();
+        assertThat(notifications.countUnread(ana.id()).block()).isEqualTo(1);
+        notifications.markAllRead(ana.id()).block();
+        assertThat(notifications.countUnread(ana.id()).block()).isZero();
+        assertThat(notifications.countUnread(bia.id()).block()).isEqualTo(1);
+        assertThat(notifications.findByUser(ana.id(), 10).collectList().block()).allMatch(Notification::read);
+
+        users.deleteByPublicId(ana.publicId()).block();
+        assertThat(notifications.findByUser(ana.id(), 10).collectList().block()).isEmpty(); // cascata
     }
 
     @Test

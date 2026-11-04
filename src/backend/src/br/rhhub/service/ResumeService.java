@@ -26,6 +26,7 @@ public class ResumeService {
     private final ResumeAnalysisPublisher analysis;
 
     private final java.time.Clock clock;
+    private final br.rhhub.application.port.out.Notifier notifier;
 
     public ResumeService(ResumeRepository resumes, VacancyRepository vacancies, DocumentTextExtractor extractor,
             ResumeAnalysisPublisher analysis) {
@@ -34,6 +35,12 @@ public class ResumeService {
 
     public ResumeService(ResumeRepository resumes, VacancyRepository vacancies, DocumentTextExtractor extractor,
             ResumeAnalysisPublisher analysis, java.time.Clock clock) {
+        this(resumes, vacancies, extractor, analysis, clock, br.rhhub.application.port.out.Notifier.NONE);
+    }
+
+    public ResumeService(ResumeRepository resumes, VacancyRepository vacancies, DocumentTextExtractor extractor,
+            ResumeAnalysisPublisher analysis, java.time.Clock clock, br.rhhub.application.port.out.Notifier notifier) {
+        this.notifier = notifier;
         this.clock = clock;
         this.resumes = resumes;
         this.vacancies = vacancies;
@@ -61,17 +68,19 @@ public class ResumeService {
             String name = cleanName(fileName, type.name().toLowerCase());
             return vacancies.findById(vacancyId)
                     .switchIfEmpty(Mono.error(new DomainException.NotFound("Vaga não encontrada.")))
-                    .flatMap(vacancy -> vacancy.isExpired(clock.instant())
+                    .flatMap(vacancy -> (vacancy.isExpired(clock.instant())
                             ? Mono.<Boolean>error(new DomainException.Unprocessable("Essa vaga já foi encerrada."))
                             : resumes.existsByUserIdAndVacancyId(actor.id(), vacancyId))
-                    .flatMap(exists -> exists
-                            ? Mono.<Resume>error(new DomainException.Conflict("Você já se candidatou a essa vaga."))
-                            : resumes.create(new Resume(null, actor.id(), vacancyId, name, type.contentType(),
-                                    ResumeStatus.PENDING, null, null), content))
-                    .map(saved -> {
-                        enqueueInBackground(saved.id());
-                        return saved;
-                    });
+                            .flatMap(exists -> exists
+                                    ? Mono.<Resume>error(new DomainException.Conflict("Você já se candidatou a essa vaga."))
+                                    : resumes.create(new Resume(null, actor.id(), vacancyId, name, type.contentType(),
+                                            ResumeStatus.PENDING, null, null), content))
+                            .flatMap(saved -> {
+                                enqueueInBackground(saved.id());
+                                return notifier.admins("Nova candidatura",
+                                        actor.name() + " se candidatou à vaga " + vacancy.name() + ".",
+                                        "/admin/candidaturas").thenReturn(saved);
+                            }));
         });
     }
 

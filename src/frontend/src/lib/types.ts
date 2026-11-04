@@ -77,3 +77,14 @@ export function isProfileIncomplete(user: Pick<User, "cpf" | "age" | "gender" | 
   // Contas locais já nascem completas (o cadastro exige os três); o admin raiz criado pelo servidor fica de fora.
   return user.provider === "google" && (!user.cpf || user.age == null || !user.gender)
 }
+
+export type AppNotification = {
+  id: number
+  title: string
+  message: string
+  link: string | null // rota do app para onde o clique leva
+  read: boolean
+  created_at: string
+}
+
+export type Inbox = { items: AppNotification[]; unread: number }

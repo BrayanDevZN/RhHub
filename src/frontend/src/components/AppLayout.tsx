@@ -1,11 +1,12 @@
 import { useState } from "react"
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import {
-  ArrowUpRightIcon, BellIcon, BriefcaseBusinessIcon, ChevronDownIcon,
+  ArrowUpRightIcon, BriefcaseBusinessIcon, ChevronDownIcon,
   CircleHelpIcon, FileTextIcon, LayoutDashboardIcon, LogOutIcon,
   MenuIcon, SearchIcon, Settings2Icon, ShieldCheckIcon,
   UserRoundIcon, UsersIcon, XIcon,
 } from "lucide-react"
+import { NotificationBell } from "@/components/NotificationBell"
 import { useAuth, useCurrentUser } from "@/lib/auth"
 import { api } from "@/lib/api"
 import { initials } from "@/lib/format"
@@ -120,7 +121,7 @@ export function AppLayout() {
           </div>
           <div className="rh-top-actions">
             <NavLink to="/vagas" className="rh-top-search"><SearchIcon className="size-4" /><span>Buscar oportunidades</span><kbd>⌕</kbd></NavLink>
-            <button className="rh-top-icon" title="Notificações" aria-label="Notificações"><BellIcon className="size-[18px]" /><i /></button>
+            <NotificationBell />
             <div className="rh-topbar-profile">
               <button className="rh-top-profile-btn" onClick={() => setProfileOpen((v) => !v)} aria-label="Opções da conta" aria-expanded={profileOpen}>
                 <span className="rh-top-avatar" style={{ overflow: "hidden" }}>{avatar}</span>

@@ -1,7 +1,7 @@
 // Cliente da API real. Todas as chamadas vão para /api no mesmo domínio do front (o nginx repassa para o back end,
 // por isso os cookies HttpOnly de sessão funcionam). Os tokens nunca passam pelo JavaScript.
 
-import type { Gender, Resume, ResumeStatus, Role, SignupData, User, Vacancy } from "@/lib/types"
+import type { Gender, Inbox, Resume, ResumeStatus, Role, SignupData, User, Vacancy } from "@/lib/types"
 
 const BASE = "/api"
 
@@ -215,6 +215,23 @@ export const api = {
     // GET /users/me/photo. O parâmetro v força o navegador a buscar de novo depois de uma troca.
     photoUrl(version: number | string = 0): string {
       return `${BASE}/users/me/photo?v=${version}`
+    },
+  },
+
+  notifications: {
+    // GET /notifications: os avisos mais recentes e quantos ainda não foram lidos
+    inbox(): Promise<Inbox> {
+      return call<Inbox>("/notifications")
+    },
+
+    // POST /notifications/{id}/read
+    async markRead(id: number): Promise<void> {
+      await call(`/notifications/${id}/read`, "POST")
+    },
+
+    // POST /notifications/read-all
+    markAllRead(): Promise<void> {
+      return call("/notifications/read-all", "POST")
     },
   },
 

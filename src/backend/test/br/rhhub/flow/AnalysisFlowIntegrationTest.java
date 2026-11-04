@@ -99,6 +99,7 @@ class AnalysisFlowIntegrationTest {
             AnalysisConsumer.class, EmailConsumer.class, ServiceConfig.class, LlmConfig.class, ClockConfig.class,
             PdfDocxTextExtractor.class, UserRepositoryAdapter.class, VacancyRepositoryAdapter.class,
             ResumeRepositoryAdapter.class, DeadLetterRepositoryAdapter.class, ProfilePhotoRepositoryAdapter.class,
+            br.rhhub.infra.database.adapter.NotificationRepositoryAdapter.class,
             br.rhhub.infra.database.adapter.VacancyPhotoRepositoryAdapter.class,
             br.rhhub.infra.security.AuthConfig.class, br.rhhub.infra.security.BcryptPasswordHasher.class,
             br.rhhub.infra.email.HtmlEmailComposer.class, br.rhhub.infra.google.GoogleConfig.class})

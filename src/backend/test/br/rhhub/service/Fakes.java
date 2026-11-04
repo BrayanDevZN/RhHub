@@ -189,6 +189,36 @@ public final class Fakes {
         @Override public Mono<Void> deleteById(Long id) { byId.remove(id); files.remove(id); return Mono.empty(); }
     }
 
+    public static class Notifications implements br.rhhub.application.port.out.NotificationRepository {
+        public final Map<Long, br.rhhub.domain.model.Notification> byId = new HashMap<>();
+        private final AtomicLong seq = new AtomicLong();
+        @Override public Mono<br.rhhub.domain.model.Notification> create(br.rhhub.domain.model.Notification n) {
+            Long id = seq.incrementAndGet();
+            var stored = new br.rhhub.domain.model.Notification(id, n.userId(), n.title(), n.message(), n.link(), false,
+                    Instant.parse("2026-11-04T12:00:00Z").plusSeconds(id));
+            byId.put(id, stored);
+            return Mono.just(stored);
+        }
+        @Override public Flux<br.rhhub.domain.model.Notification> findByUser(Long userId, int limit) {
+            return Flux.fromStream(byId.values().stream().filter(n -> n.userId().equals(userId))
+                    .sorted((a, b) -> b.id().compareTo(a.id())).limit(limit));
+        }
+        @Override public Mono<Long> countUnread(Long userId) {
+            return Mono.just(byId.values().stream().filter(n -> n.userId().equals(userId) && !n.read()).count());
+        }
+        @Override public Mono<Boolean> markRead(Long id, Long userId) {
+            var n = byId.get(id);
+            if (n == null || !n.userId().equals(userId)) return Mono.just(false);
+            byId.put(id, new br.rhhub.domain.model.Notification(n.id(), n.userId(), n.title(), n.message(), n.link(), true, n.createdAt()));
+            return Mono.just(true);
+        }
+        @Override public Mono<Void> markAllRead(Long userId) {
+            byId.replaceAll((id, n) -> n.userId().equals(userId)
+                    ? new br.rhhub.domain.model.Notification(n.id(), n.userId(), n.title(), n.message(), n.link(), true, n.createdAt()) : n);
+            return Mono.empty();
+        }
+    }
+
     public static class Analysis implements ResumeAnalysisPublisher {
         public final List<Long> queued = new ArrayList<>();
         public boolean failing;

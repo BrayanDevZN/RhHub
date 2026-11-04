@@ -59,6 +59,24 @@ public final class Views {
             @JsonProperty("created_at") Instant createdAt) {
     }
 
+    public record NotificationView(
+            Long id,
+            String title,
+            String message,
+            String link,
+            boolean read,
+            @JsonProperty("created_at") Instant createdAt) {
+    }
+
+    public record InboxView(List<NotificationView> items, long unread) {
+    }
+
+    public static InboxView inbox(br.rhhub.service.NotificationService.Inbox inbox) {
+        return new InboxView(inbox.items().stream()
+                .map(n -> new NotificationView(n.id(), n.title(), n.message(), n.link(), n.read(), n.createdAt()))
+                .toList(), inbox.unread());
+    }
+
     public static UserView user(User u, Boolean hasPhoto) {
         return new UserView(u.id(), u.publicId(), u.name(), u.email(), u.cpf(), u.age(),
                 u.gender() == null ? null : u.gender().value(), u.twoFactor(), u.role().value(), u.provider().value(),

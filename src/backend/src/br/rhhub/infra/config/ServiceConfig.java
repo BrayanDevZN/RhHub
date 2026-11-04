@@ -69,14 +69,21 @@ public class ServiceConfig {
 
     @Bean
     ResumeStageService resumeStageService(ResumeRepository resumes, VacancyRepository vacancies, UserRepository users,
-            EmailPublisher emails, br.rhhub.application.port.out.EmailComposer composer, AccessPolicy policy) {
-        return new ResumeStageService(resumes, vacancies, users, emails, composer, policy);
+            EmailPublisher emails, br.rhhub.application.port.out.EmailComposer composer, AccessPolicy policy,
+            br.rhhub.application.port.out.Notifier notifier) {
+        return new ResumeStageService(resumes, vacancies, users, emails, composer, policy, notifier);
     }
 
     @Bean
     ResumeService resumeService(ResumeRepository resumes, VacancyRepository vacancies, DocumentTextExtractor extractor,
-            ResumeAnalysisPublisher analysis) {
-        return new ResumeService(resumes, vacancies, extractor, analysis);
+            ResumeAnalysisPublisher analysis, Clock clock, br.rhhub.application.port.out.Notifier notifier) {
+        return new ResumeService(resumes, vacancies, extractor, analysis, clock, notifier);
+    }
+
+    @Bean
+    br.rhhub.service.NotificationService notificationService(br.rhhub.application.port.out.NotificationRepository notifications,
+            UserRepository users) {
+        return new br.rhhub.service.NotificationService(notifications, users);
     }
 
     @Bean
@@ -87,8 +94,9 @@ public class ServiceConfig {
     /** O prompt de triagem (o mesmo do AgentRH) vem de resources/prompt/resume_analysis.md e é lido uma vez, na subida. */
     @Bean
     AnalyzeResume analyzeResume(ResumeRepository resumes, VacancyRepository vacancies, UserRepository users,
-            DocumentTextExtractor extractor, AiProvider ai, EmailPublisher emails) {
-        return new AnalyzeResumeService(resumes, vacancies, users, extractor, ai, emails, loadPrompt());
+            DocumentTextExtractor extractor, AiProvider ai, EmailPublisher emails,
+            br.rhhub.application.port.out.Notifier notifier) {
+        return new AnalyzeResumeService(resumes, vacancies, users, extractor, ai, emails, loadPrompt(), notifier);
     }
 
     private static String loadPrompt() {
