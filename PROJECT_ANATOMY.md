@@ -1,5 +1,5 @@
 # Project Anatomy: RhHub
-Generated: 2026-11-04 | 266 files | ~269.3K tokens if all read
+Generated: 2026-11-04 | 266 files | ~270.2K tokens if all read
 
 ## Structure
 | Path | Lines | ~Tokens | Type |
@@ -163,8 +163,8 @@ Generated: 2026-11-04 | 266 files | ~269.3K tokens if all read
 | src/frontend/src/components/ui/toggle.tsx | 45 | 438 | source |
 | src/frontend/src/components/ui/tooltip.tsx | 66 | 709 | source |
 | src/frontend/src/hooks/use-mobile.ts | 20 | 142 | source |
-| src/frontend/src/lib/api.ts | 346 | 3.1K | source |
-| src/frontend/src/lib/auth.tsx | 71 | 526 | source |
+| src/frontend/src/lib/api.ts | 380 | 3.5K | source |
+| src/frontend/src/lib/auth.tsx | 83 | 666 | source |
 | src/frontend/src/lib/format.ts | 41 | 392 | source |
 | src/frontend/src/lib/types.ts | 91 | 664 | source |
 | src/frontend/src/lib/use-query.ts | 35 | 292 | source |
@@ -243,7 +243,7 @@ Generated: 2026-11-04 | 266 files | ~269.3K tokens if all read
 | .github/CONTRIBUTING.md | 38 | 400 | docs |
 | .github/PULL_REQUEST_TEMPLATE.md | 24 | 218 | docs |
 | DOCUMENTACAO.md | 830 | 12.2K | docs |
-| README.md | 338 | 4.7K | docs |
+| README.md | 344 | 5.0K | docs |
 | src/backend/HISTORICO.md | 145 | 3.3K | docs |
 | src/backend/README.md | 289 | 5.4K | docs |
 | src/backend/resources/prompt/resume_analysis.md | 342 | 6.7K | docs |
@@ -272,10 +272,10 @@ Generated: 2026-11-04 | 266 files | ~269.3K tokens if all read
 | src/frontend/nginx.conf | 23 | 150 | other |
 
 ## Summary
-- source: 176 files, ~137.1K tokens
+- source: 176 files, ~137.6K tokens
 - config: 16 files, ~4.4K tokens
 - test: 44 files, ~71.3K tokens
-- docs: 8 files, ~33.2K tokens
+- docs: 8 files, ~33.5K tokens
 - style: 1 files, ~8.0K tokens
 - other: 21 files, ~15.4K tokens
 

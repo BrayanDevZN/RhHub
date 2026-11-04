@@ -40,20 +40,49 @@ async function toError(response: Response): Promise<ApiError> {
   return new ApiError(message || FALLBACK[response.status] || "Algo deu errado. Tente de novo.", response.status)
 }
 
-let refreshing: Promise<boolean> | null = null
+/**
+ * ok: o token de acesso foi renovado. expired: o servidor respondeu que a sessão acabou (401/403): só aí a pessoa volta
+ * para o login. unavailable: rede, 5xx ou limite de requisições, que não dizem nada sobre a sessão e nunca desligam.
+ */
+type RefreshResult = "ok" | "expired" | "unavailable"
+
+let refreshing: Promise<RefreshResult> | null = null
+let lastOk = Date.now() // última resposta boa da API: serve para saber há quanto tempo a aba ficou parada
+
+async function attemptRefresh(): Promise<RefreshResult> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const response = await fetch(`${BASE}/auth/refresh`, { method: "POST", credentials: "include" })
+      if (response.ok) {
+        lastOk = Date.now()
+        return "ok"
+      }
+      if (response.status === 401 || response.status === 403) return "expired"
+    } catch {
+      // sem rede agora (ex.: a aba acabou de acordar): tenta mais uma vez
+    }
+    if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 800))
+  }
+  return "unavailable"
+}
 
 /** Renova o token de acesso uma vez, mesmo que várias chamadas falhem juntas. */
-function refreshSession(): Promise<boolean> {
-  refreshing ??= fetch(`${BASE}/auth/refresh`, { method: "POST", credentials: "include" })
-    .then((response) => response.ok)
-    .catch(() => false)
-    .finally(() => {
-      refreshing = null
-    })
+function refreshSession(): Promise<RefreshResult> {
+  refreshing ??= attemptRefresh().finally(() => {
+    refreshing = null
+  })
   return refreshing
 }
 
-async function request(path: string, init: RequestInit = {}, retry = true): Promise<Response> {
+/** O token de acesso vale 15 min. Ao voltar para a aba depois de um tempo, renova antes de a primeira chamada falhar. */
+export async function keepSessionAlive(maxIdleMs = 10 * 60 * 1000): Promise<RefreshResult> {
+  if (Date.now() - lastOk < maxIdleMs) return "ok"
+  return refreshSession()
+}
+
+type CallOptions = { silent?: boolean } // silent: chamada de fundo (ex.: o sino) nunca derruba a sessão sozinha
+
+async function request(path: string, init: RequestInit = {}, retry = true, options: CallOptions = {}): Promise<Response> {
   let response: Response
   try {
     response = await fetch(`${BASE}${path}`, { credentials: "include", ...init })
@@ -61,20 +90,25 @@ async function request(path: string, init: RequestInit = {}, retry = true): Prom
     throw new ApiError("Sem conexão com o servidor. Verifique sua internet.")
   }
   if (response.status === 401 && retry && !path.startsWith("/auth/")) {
-    if (await refreshSession()) return request(path, init, false)
-    if (path !== "/users/me") window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
+    const renewed = await refreshSession()
+    if (renewed === "ok") return request(path, init, false, options)
+    if (renewed === "unavailable") {
+      throw new ApiError("Não foi possível confirmar sua sessão agora. Tente de novo em instantes.", 503)
+    }
+    if (path !== "/users/me" && !options.silent) window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
   }
   if (!response.ok) throw await toError(response)
+  lastOk = Date.now()
   return response
 }
 
-async function call<T = void>(path: string, method = "GET", body?: unknown): Promise<T> {
+async function call<T = void>(path: string, method = "GET", body?: unknown, options: CallOptions = {}): Promise<T> {
   const init: RequestInit = { method }
   if (body !== undefined) {
     init.headers = { "Content-Type": "application/json" }
     init.body = JSON.stringify(body)
   }
-  const response = await request(path, init)
+  const response = await request(path, init, true, options)
   if (response.status === 204) return undefined as T
   const text = await response.text()
   return (text ? JSON.parse(text) : undefined) as T
@@ -221,7 +255,7 @@ export const api = {
   notifications: {
     // GET /notifications: os avisos mais recentes e quantos ainda não foram lidos
     inbox(): Promise<Inbox> {
-      return call<Inbox>("/notifications")
+      return call<Inbox>("/notifications", "GET", undefined, { silent: true })
     },
 
     // POST /notifications/{id}/read

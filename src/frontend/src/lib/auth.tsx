@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
-import { api, UNAUTHORIZED_EVENT } from "@/lib/api"
+import { api, keepSessionAlive, UNAUTHORIZED_EVENT } from "@/lib/api"
 import type { User } from "@/lib/types"
 
 type AuthContextValue = {
@@ -34,8 +34,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // A API avisa quando a sessão acabou de vez (token e refresh vencidos): volta para o login.
   useEffect(() => {
     const onUnauthorized = () => setUser(null)
+    // Ao voltar para a aba, renova a sessão antes de a primeira chamada falhar. Só "expired" (o servidor disse que a
+    // sessão acabou) leva ao login; rede ruim ou erro do servidor nunca desloga.
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return
+      void keepSessionAlive().then((result) => {
+        if (result === "expired") setUser(null)
+      })
+    }
     window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized)
-    return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized)
+    document.addEventListener("visibilitychange", onVisible)
+    return () => {
+      window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized)
+      document.removeEventListener("visibilitychange", onVisible)
+    }
   }, [])
 
   const value = useMemo<AuthContextValue>(
