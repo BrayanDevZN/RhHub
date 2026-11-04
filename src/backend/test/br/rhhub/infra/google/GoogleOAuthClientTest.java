@@ -1,5 +1,6 @@
 package br.rhhub.infra.google;
 
+import br.rhhub.testing.IntegrationTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+@IntegrationTest
 class GoogleOAuthClientTest {
 
     private HttpServer server;

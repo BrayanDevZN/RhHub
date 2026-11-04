@@ -18,6 +18,8 @@
 
     <properties>
         <java.version>21</java.version>
+        <test.groups></test.groups>
+        <test.excluded>live</test.excluded>
         <pdfbox.version>3.0.3</pdfbox.version>
         <poi.version>5.3.0</poi.version>
     </properties>
@@ -105,10 +107,49 @@
         </resources>
         <testSourceDirectory>test</testSourceDirectory>
         <plugins>
+            <!--
+              Testes em ambiente de teste (ENVIRONMENT=test: códigos de verificação na resposta, IA fixa, cookies sem
+              Secure). A categoria vem das tags unit, integration e functional (pacote br.rhhub.testing); test.groups
+              vazio roda todas, menos a tag live (chama Groq e n8n de verdade, só com
+              -Pcategory-live). Use os perfis -Pcategory-unit, -Pcategory-integration ou -Pcategory-functional.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <groups>${test.groups}</groups>
+                    <excludedGroups>${test.excluded}</excludedGroups>
+                    <environmentVariables>
+                        <ENVIRONMENT>test</ENVIRONMENT>
+                    </environmentVariables>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>category-unit</id>
+            <properties><test.groups>unit</test.groups></properties>
+        </profile>
+        <profile>
+            <id>category-integration</id>
+            <properties><test.groups>integration</test.groups></properties>
+        </profile>
+        <profile>
+            <id>category-functional</id>
+            <properties><test.groups>functional</test.groups></properties>
+        </profile>
+        <profile>
+            <id>category-live</id>
+            <properties>
+                <test.groups>live</test.groups>
+                <test.excluded></test.excluded>
+            </properties>
+        </profile>
+    </profiles>
+
 </project>

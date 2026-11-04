@@ -1,5 +1,6 @@
 package br.rhhub.service;
 
+import br.rhhub.testing.UnitTest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import br.rhhub.domain.auth.AccessPolicy;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 
+@UnitTest
 class NotificationServiceTest {
 
     private static final byte[] PDF = "%PDF-1.7 conteudo".getBytes(StandardCharsets.UTF_8);

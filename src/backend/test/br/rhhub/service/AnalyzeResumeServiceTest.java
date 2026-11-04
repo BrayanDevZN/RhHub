@@ -1,5 +1,6 @@
 package br.rhhub.service;
 
+import br.rhhub.testing.UnitTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,6 +37,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import reactor.core.publisher.Mono;
 
+@UnitTest
 class AnalyzeResumeServiceTest {
 
     private static final String HTML = "<html><body><p>Resultado</p></body></html>";

@@ -1,5 +1,6 @@
 package br.rhhub.infra.messaging;
 
+import br.rhhub.testing.IntegrationTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
@@ -38,6 +39,7 @@ import reactor.core.publisher.Mono;
  * Sobe um broker Kafka de verdade (embutido, KRaft, sem Docker) e roda o fluxo inteiro: tópicos, publicação,
  * consumers, novas tentativas, DLT e a tabela dead_letters. O banco é um fake em memória.
  */
+@IntegrationTest
 class KafkaMessagingIntegrationTest {
 
     private static EmbeddedKafkaKraftBroker broker;

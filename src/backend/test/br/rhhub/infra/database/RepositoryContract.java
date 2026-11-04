@@ -1,5 +1,6 @@
 package br.rhhub.infra.database;
 
+import br.rhhub.testing.IntegrationTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 /** Os mesmos testes rodam no PostgreSQL (R2DBC) e no SQLite: o comportamento dos adapters tem de ser igual. */
+@IntegrationTest
 abstract class RepositoryContract {
 
     abstract SqlExecutor executor();

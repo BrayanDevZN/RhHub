@@ -1,5 +1,6 @@
 package br.rhhub.application.web;
 
+import br.rhhub.testing.FunctionalTest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import br.rhhub.application.port.out.GoogleIdentityProvider;
@@ -27,6 +28,7 @@ import org.springframework.web.reactive.config.EnableWebFlux;
 import reactor.core.publisher.Mono;
 
 /** O vai e volta do login com Google: o que o navegador recebe em cada resultado (sucesso e cada motivo de recusa). */
+@FunctionalTest
 class GoogleCallbackTest {
 
     static final Fakes.Users users = new Fakes.Users();

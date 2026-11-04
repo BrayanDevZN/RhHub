@@ -1,11 +1,13 @@
 package br.rhhub.infra.redis;
 
+import br.rhhub.testing.UnitTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import br.rhhub.infra.config.AppProperties;
 import org.junit.jupiter.api.Test;
 
+@UnitTest
 class RedisConfigTest {
 
     @Test

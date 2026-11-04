@@ -1,9 +1,11 @@
 package br.rhhub.infra.config;
 
+import br.rhhub.testing.UnitTest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
+@UnitTest
 class WebPropertiesTest {
 
     private static WebProperties of(String origin) {

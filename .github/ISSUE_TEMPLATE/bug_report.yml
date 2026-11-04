@@ -1,0 +1,38 @@
+name: Reportar um bug
+description: Algo não funciona como deveria
+labels: [bug]
+body:
+  - type: textarea
+    id: o-que-aconteceu
+    attributes:
+      label: O que aconteceu
+      description: Descreva o problema e o que você esperava que acontecesse.
+    validations:
+      required: true
+  - type: textarea
+    id: como-reproduzir
+    attributes:
+      label: Como reproduzir
+      placeholder: |
+        1. Entrei em ...
+        2. Cliquei em ...
+        3. Apareceu ...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      options: [Login e cadastro, Vagas, Candidaturas e etapas, Notificações, Administração, Análise com IA, E-mail, Deploy e infra, Outra]
+    validations:
+      required: true
+  - type: input
+    id: ambiente
+    attributes:
+      label: Ambiente
+      description: Produção (Railway), local com Docker ou outro. Inclua o navegador, se for do front.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs ou prints
+      description: Cole a mensagem de erro ou anexe uma imagem. Não inclua senhas, tokens nem chaves.

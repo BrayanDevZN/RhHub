@@ -1,5 +1,6 @@
 package br.rhhub.flow;
 
+import br.rhhub.testing.LiveTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -57,6 +58,7 @@ import reactor.core.publisher.Mono;
  *
  * <p>Para rodar: {@code groq_key=gsk_... mvn test -Dtest=GroqLiveAnalysisTest}. Gasta algumas chamadas da cota.
  */
+@LiveTest
 class GroqLiveAnalysisTest {
 
     private static final String BASE_URL = "https://api.groq.com/openai/v1";

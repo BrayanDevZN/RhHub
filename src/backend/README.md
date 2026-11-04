@@ -273,3 +273,16 @@ DATABASE_URL=postgresql://rhhub:rhhub@localhost:5432/rhhub ./mvnw spring-boot:ru
 - **Fluxo completo** (`AnalysisFlowIntegrationTest`): banco SQLite, PDF e DOCX reais, Kafka embutido, consumers, serviço de análise, o cliente HTTP da LLM e DLQ. A LLM desse teste é um **servidor local** que fala `/chat/completions`: prova o nosso código ponta a ponta, mas **não é um modelo de verdade**. O e-mail também é um gravador.
 - **Groq de verdade** (`GroqLiveAnalysisTest`): analisa um perfil forte e um sem relação com a vaga e confere aprovado/recusado, assunto e HTML. Lê a chave de `groq_key` ou `GROQ_API_KEY` e **é pulado** se não houver chave ou se `api.groq.com` não estiver acessível (o motivo aparece como `GROQ-LIVE PULADO` na saída). Para rodar: `groq_key=gsk_... ./mvnw test -Dtest=GroqLiveAnalysisTest`.
 - Há também testes de `DatabaseUrl`, de `TableCreator` (criação do zero, idempotência e constraints) da escolha do provedor de LLM, da conexão e das operações do Redis (contra um Redis local, inclusive um com senha) do Kafka (broker embutido: tópicos, publicação, consumers, novas tentativas, DLT e DLQ) e do envio de e-mail (contrato do webhook, assinatura do JWT, validação e erros, contra um servidor HTTP local; nenhum e-mail real é enviado nos testes).
+
+## Testes
+
+Quatro categorias, por tag do JUnit 5 (pacote `br.rhhub.testing`), sempre com `ENVIRONMENT=test`:
+
+| Categoria | Comando | O que é |
+| --- | --- | --- |
+| `@UnitTest` | `mvn test -Pcategory-unit` | Memória: domínio, serviços com `Fakes`, validações |
+| `@IntegrationTest` | `mvn test -Pcategory-integration` | Uma peça real: SQLite, PostgreSQL, Redis, Kafka embarcado, HTTP local |
+| `@FunctionalTest` | `mvn test -Pcategory-functional` | API HTTP inteira e o fluxo completo de análise |
+| `@LiveTest` | `mvn test -Pcategory-live` | Groq e n8n reais (gasta cota). Fica fora de `mvn test` e do CI |
+
+`mvn test` sem perfil roda as três primeiras. Ao criar um teste, anote a classe com a categoria. Detalhes na seção 7.1 da [`DOCUMENTACAO.md`](../../DOCUMENTACAO.md).

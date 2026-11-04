@@ -1,5 +1,6 @@
 package br.rhhub.infra.email;
 
+import br.rhhub.testing.IntegrationTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+@IntegrationTest
 class N8nEmailSenderTest {
 
     private static final String SECRET = "segredo-do-gmail-para-teste-1234567890";

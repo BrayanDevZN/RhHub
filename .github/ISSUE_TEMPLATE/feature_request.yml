@@ -1,0 +1,21 @@
+name: Sugerir uma funcionalidade
+description: Uma ideia para melhorar o RhHub
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Qual problema isso resolve
+    validations:
+      required: true
+  - type: textarea
+    id: proposta
+    attributes:
+      label: Como você imagina a solução
+    validations:
+      required: true
+  - type: dropdown
+    id: quem
+    attributes:
+      label: Para quem
+      options: [Candidato, Administrador, Os dois]

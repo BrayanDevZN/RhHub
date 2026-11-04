@@ -1,11 +1,13 @@
 package br.rhhub.infra.database;
 
+import br.rhhub.testing.UnitTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import br.rhhub.infra.database.DatabaseUrl.Kind;
 import org.junit.jupiter.api.Test;
 
+@UnitTest
 class DatabaseUrlTest {
 
     @Test

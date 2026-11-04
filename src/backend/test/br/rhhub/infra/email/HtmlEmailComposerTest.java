@@ -1,11 +1,13 @@
 package br.rhhub.infra.email;
 
+import br.rhhub.testing.UnitTest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import br.rhhub.application.port.out.EmailMessage;
 import br.rhhub.domain.auth.CodePurpose;
 import org.junit.jupiter.api.Test;
 
+@UnitTest
 class HtmlEmailComposerTest {
 
     private final HtmlEmailComposer composer = new HtmlEmailComposer();

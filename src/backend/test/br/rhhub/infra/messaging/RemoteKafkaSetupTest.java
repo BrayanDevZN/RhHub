@@ -1,5 +1,6 @@
 package br.rhhub.infra.messaging;
 
+import br.rhhub.testing.IntegrationTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.Test;
  *
  * <p>Uso: {@code KAFKA_URL=host:porta mvn test -Dtest=RemoteKafkaSetupTest -Drhhub.kafka.setup=true}
  */
+@IntegrationTest
 class RemoteKafkaSetupTest {
 
     @Test

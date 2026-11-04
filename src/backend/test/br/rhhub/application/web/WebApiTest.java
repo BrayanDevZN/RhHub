@@ -1,5 +1,6 @@
 package br.rhhub.application.web;
 
+import br.rhhub.testing.FunctionalTest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import br.rhhub.application.port.out.RateLimiter;
@@ -43,6 +44,7 @@ import org.springframework.web.reactive.function.BodyInserters;
 import reactor.core.publisher.Mono;
 
 /** As rotas de ponta a ponta (filtros, cookies, erros, CORS), com os adapters trocados por versões em memória. */
+@FunctionalTest
 class WebApiTest {
 
     private static final byte[] PDF = "%PDF-1.7 meu curriculo".getBytes();

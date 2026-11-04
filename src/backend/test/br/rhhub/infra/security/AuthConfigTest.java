@@ -1,5 +1,6 @@
 package br.rhhub.infra.security;
 
+import br.rhhub.testing.UnitTest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import br.rhhub.domain.auth.JwtService;
@@ -10,6 +11,7 @@ import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
+@UnitTest
 class AuthConfigTest {
 
     @Test

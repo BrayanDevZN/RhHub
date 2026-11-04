@@ -1,5 +1,6 @@
 package br.rhhub.infra.messaging;
 
+import br.rhhub.testing.IntegrationTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
@@ -18,6 +19,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.kafka.test.EmbeddedKafkaKraftBroker;
 
 /** Kafka que reinicia sem volume perde os tópicos: o app tem de recriá-los sozinho, sem precisar reiniciar. */
+@IntegrationTest
 class TopicEnsurerIntegrationTest {
 
     private static final List<String> TOPICS = List.of("email.send", "email.send.DLT", "resume.analysis", "resume.analysis.DLT");

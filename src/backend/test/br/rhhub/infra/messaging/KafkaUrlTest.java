@@ -1,10 +1,12 @@
 package br.rhhub.infra.messaging;
 
+import br.rhhub.testing.UnitTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 
+@UnitTest
 class KafkaUrlTest {
 
     @Test

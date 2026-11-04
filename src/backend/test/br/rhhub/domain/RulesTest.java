@@ -1,5 +1,6 @@
 package br.rhhub.domain;
 
+import br.rhhub.testing.UnitTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -8,6 +9,7 @@ import br.rhhub.domain.model.Gender;
 import br.rhhub.domain.rule.Rules;
 import org.junit.jupiter.api.Test;
 
+@UnitTest
 class RulesTest {
 
     @Test

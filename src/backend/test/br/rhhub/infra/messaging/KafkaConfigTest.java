@@ -1,5 +1,6 @@
 package br.rhhub.infra.messaging;
 
+import br.rhhub.testing.UnitTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -11,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
+@UnitTest
 class KafkaConfigTest {
 
     private static AppProperties.Kafka kafka(String url, String user, String key) {

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentação
+    url: https://github.com/BrayanDevZN/RhHub/blob/main/DOCUMENTACAO.md
+    about: Rotas, regras de validação, variáveis de ambiente e fluxos.

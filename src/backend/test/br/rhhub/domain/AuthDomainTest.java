@@ -1,5 +1,6 @@
 package br.rhhub.domain;
 
+import br.rhhub.testing.UnitTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -18,6 +19,7 @@ import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
+@UnitTest
 class AuthDomainTest {
 
     private static final String SECRET = "um-segredo-de-teste-com-mais-de-32-caracteres";

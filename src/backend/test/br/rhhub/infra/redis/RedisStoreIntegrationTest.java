@@ -1,5 +1,6 @@
 package br.rhhub.infra.redis;
 
+import br.rhhub.testing.IntegrationTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -16,6 +17,7 @@ import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 
 /** Roda contra um Redis em localhost:6379 (chaves com UUID, apagadas no fim); é pulado se ele não estiver de pé. */
 @EnabledIf("br.rhhub.infra.TestSupport#redisUp")
+@IntegrationTest
 class RedisStoreIntegrationTest {
 
     private static RedisConfig config;

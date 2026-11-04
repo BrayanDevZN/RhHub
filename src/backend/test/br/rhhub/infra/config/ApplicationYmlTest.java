@@ -1,5 +1,6 @@
 package br.rhhub.infra.config;
 
+import br.rhhub.testing.UnitTest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Properties;
@@ -10,6 +11,7 @@ import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.ClassPathResource;
 
 /** Os padrões do application.yml (o que roda no Railway quando a variável não é definida). */
+@UnitTest
 class ApplicationYmlTest {
 
     private static StandardEnvironment env() {

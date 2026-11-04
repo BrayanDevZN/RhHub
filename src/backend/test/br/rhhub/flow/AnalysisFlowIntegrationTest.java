@@ -1,5 +1,6 @@
 package br.rhhub.flow;
 
+import br.rhhub.testing.FunctionalTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
@@ -77,6 +78,7 @@ import reactor.core.publisher.Mono;
  * nosso cliente, o prompt e o parser funcionam ponta a ponta, mas NÃO é uma resposta de modelo real. O teste com o
  * Groq de verdade é o GroqLiveAnalysisTest. O envio de e-mail também é um gravador: nada sai para ninguém.
  */
+@FunctionalTest
 class AnalysisFlowIntegrationTest {
 
     private static final String HTML = "<!DOCTYPE html><html><head><meta charset=\"UTF-8\"><title>t</title></head>"

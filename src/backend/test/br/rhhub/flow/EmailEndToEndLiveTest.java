@@ -1,5 +1,6 @@
 package br.rhhub.flow;
 
+import br.rhhub.testing.LiveTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -56,6 +57,7 @@ import reactor.core.publisher.Mono;
  * <p>O n8n responde 200 assim que recebe, antes de enviar: este teste prova que o n8n ACEITOU o pedido. Que o Gmail
  * entregou se confere na execução do workflow no n8n e na caixa de entrada.
  */
+@LiveTest
 class EmailEndToEndLiveTest {
 
     private static final String WEBHOOK = "https://n8n.nexoaicompany.com/webhook/a043ad9f-9a0c-4bbd-a142-f64a1cd524c0";

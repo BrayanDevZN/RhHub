@@ -1,5 +1,6 @@
 package br.rhhub.infra.messaging;
 
+import br.rhhub.testing.UnitTest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import br.rhhub.domain.model.Resume;
@@ -13,6 +14,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 
+@UnitTest
 class PendingResumeRepublisherTest {
 
     private static final Instant CREATED = Instant.parse("2026-11-03T12:00:00Z"); // o createdAt que o Fakes.Resumes grava

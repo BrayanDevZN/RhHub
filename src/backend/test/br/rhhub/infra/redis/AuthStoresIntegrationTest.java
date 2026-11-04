@@ -1,5 +1,6 @@
 package br.rhhub.infra.redis;
 
+import br.rhhub.testing.IntegrationTest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import br.rhhub.domain.auth.CodePurpose;
@@ -15,6 +16,7 @@ import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 
 /** Roda contra um Redis em localhost:6379 (e-mails e chaves únicos por teste); é pulado se ele não estiver de pé. */
 @EnabledIf("br.rhhub.infra.TestSupport#redisUp")
+@IntegrationTest
 class AuthStoresIntegrationTest {
 
     private static LettuceConnectionFactory factory;

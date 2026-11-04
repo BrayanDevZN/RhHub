@@ -1,5 +1,6 @@
 package br.rhhub.infra.llm;
 
+import br.rhhub.testing.UnitTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -8,6 +9,7 @@ import br.rhhub.infra.config.AppProperties;
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
 
+@UnitTest
 class LlmConfigTest {
 
     private final LlmConfig config = new LlmConfig();

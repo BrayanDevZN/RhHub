@@ -1,5 +1,6 @@
 package br.rhhub.infra.database;
 
+import br.rhhub.testing.IntegrationTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -15,6 +16,7 @@ import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
+@IntegrationTest
 class TableCreatorTest {
 
     @Test

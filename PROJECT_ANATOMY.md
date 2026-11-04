@@ -1,5 +1,5 @@
 # Project Anatomy: RhHub
-Generated: 2026-11-04 | 255 files | ~264.7K tokens if all read
+Generated: 2026-11-04 | 266 files | ~269.3K tokens if all read
 
 ## Structure
 | Path | Lines | ~Tokens | Type |
@@ -180,7 +180,11 @@ Generated: 2026-11-04 | 255 files | ~264.7K tokens if all read
 | src/frontend/src/pages/Register.tsx | 197 | 1.9K | source |
 | src/frontend/src/pages/Vacancies.tsx | 711 | 6.6K | source |
 | src/frontend/vite.config.ts | 13 | 81 | source |
-| .github/workflows/ci.yml | 104 | 725 | config |
+| .github/dependabot.yml | 24 | 130 | config |
+| .github/ISSUE_TEMPLATE/bug_report.yml | 39 | 280 | config |
+| .github/ISSUE_TEMPLATE/config.yml | 6 | 54 | config |
+| .github/ISSUE_TEMPLATE/feature_request.yml | 22 | 123 | config |
+| .github/workflows/ci.yml | 162 | 1.2K | config |
 | docker-compose.yml | 114 | 848 | config |
 | railway.api.json | 14 | 77 | config |
 | railway.consumer.json | 8 | 38 | config |
@@ -192,55 +196,62 @@ Generated: 2026-11-04 | 255 files | ~264.7K tokens if all read
 | src/frontend/tsconfig.app.json | 28 | 173 | config |
 | src/frontend/tsconfig.json | 9 | 45 | config |
 | src/frontend/tsconfig.node.json | 24 | 140 | config |
-| src/backend/test/br/rhhub/application/web/GoogleCallbackTest.java | 187 | 2.5K | test |
-| src/backend/test/br/rhhub/application/web/WebApiTest.java | 618 | 9.5K | test |
-| src/backend/test/br/rhhub/domain/AnalysisResultTest.java | 74 | 863 | test |
-| src/backend/test/br/rhhub/domain/AuthDomainTest.java | 121 | 1.5K | test |
-| src/backend/test/br/rhhub/domain/RulesTest.java | 66 | 789 | test |
-| src/backend/test/br/rhhub/flow/AnalysisFlowIntegrationTest.java | 372 | 4.7K | test |
-| src/backend/test/br/rhhub/flow/EmailEndToEndLiveTest.java | 194 | 2.3K | test |
-| src/backend/test/br/rhhub/flow/GroqLiveAnalysisTest.java | 191 | 2.5K | test |
-| src/backend/test/br/rhhub/infra/config/ApplicationYmlTest.java | 36 | 360 | test |
-| src/backend/test/br/rhhub/infra/config/WebPropertiesTest.java | 41 | 403 | test |
-| src/backend/test/br/rhhub/infra/database/DatabaseUrlTest.java | 55 | 582 | test |
+| src/backend/test/br/rhhub/application/web/GoogleCallbackTest.java | 189 | 2.5K | test |
+| src/backend/test/br/rhhub/application/web/WebApiTest.java | 620 | 9.5K | test |
+| src/backend/test/br/rhhub/domain/AnalysisResultTest.java | 76 | 874 | test |
+| src/backend/test/br/rhhub/domain/AuthDomainTest.java | 123 | 1.5K | test |
+| src/backend/test/br/rhhub/domain/RulesTest.java | 68 | 800 | test |
+| src/backend/test/br/rhhub/flow/AnalysisFlowIntegrationTest.java | 374 | 4.7K | test |
+| src/backend/test/br/rhhub/flow/EmailEndToEndLiveTest.java | 196 | 2.3K | test |
+| src/backend/test/br/rhhub/flow/GroqLiveAnalysisTest.java | 193 | 2.5K | test |
+| src/backend/test/br/rhhub/infra/config/ApplicationYmlTest.java | 38 | 371 | test |
+| src/backend/test/br/rhhub/infra/config/WebPropertiesTest.java | 43 | 414 | test |
+| src/backend/test/br/rhhub/infra/database/DatabaseUrlTest.java | 57 | 593 | test |
 | src/backend/test/br/rhhub/infra/database/PostgresRepositoryTest.java | 34 | 248 | test |
-| src/backend/test/br/rhhub/infra/database/RepositoryContract.java | 440 | 5.9K | test |
+| src/backend/test/br/rhhub/infra/database/RepositoryContract.java | 442 | 5.9K | test |
 | src/backend/test/br/rhhub/infra/database/SqliteRepositoryTest.java | 37 | 274 | test |
-| src/backend/test/br/rhhub/infra/database/TableCreatorTest.java | 67 | 769 | test |
-| src/backend/test/br/rhhub/infra/document/PdfDocxTextExtractorTest.java | 77 | 768 | test |
-| src/backend/test/br/rhhub/infra/email/HtmlEmailComposerTest.java | 30 | 291 | test |
-| src/backend/test/br/rhhub/infra/email/N8nEmailSenderTest.java | 154 | 1.8K | test |
-| src/backend/test/br/rhhub/infra/google/GoogleOAuthClientTest.java | 117 | 1.5K | test |
-| src/backend/test/br/rhhub/infra/llm/LlmConfigTest.java | 49 | 513 | test |
-| src/backend/test/br/rhhub/infra/llm/OpenAiCompatibleProviderTest.java | 120 | 1.2K | test |
-| src/backend/test/br/rhhub/infra/messaging/KafkaConfigTest.java | 120 | 1.6K | test |
-| src/backend/test/br/rhhub/infra/messaging/KafkaMessagingIntegrationTest.java | 292 | 3.3K | test |
-| src/backend/test/br/rhhub/infra/messaging/KafkaUrlTest.java | 35 | 418 | test |
-| src/backend/test/br/rhhub/infra/messaging/PendingResumeRepublisherTest.java | 94 | 954 | test |
-| src/backend/test/br/rhhub/infra/messaging/RemoteKafkaSetupTest.java | 77 | 1.0K | test |
-| src/backend/test/br/rhhub/infra/messaging/TopicEnsurerIntegrationTest.java | 88 | 889 | test |
-| src/backend/test/br/rhhub/infra/redis/AuthStoresIntegrationTest.java | 117 | 1.3K | test |
-| src/backend/test/br/rhhub/infra/redis/RedisConfigTest.java | 42 | 418 | test |
-| src/backend/test/br/rhhub/infra/redis/RedisStoreIntegrationTest.java | 157 | 1.5K | test |
-| src/backend/test/br/rhhub/infra/security/AuthConfigTest.java | 39 | 352 | test |
+| src/backend/test/br/rhhub/infra/database/TableCreatorTest.java | 69 | 783 | test |
+| src/backend/test/br/rhhub/infra/document/PdfDocxTextExtractorTest.java | 79 | 779 | test |
+| src/backend/test/br/rhhub/infra/email/HtmlEmailComposerTest.java | 32 | 302 | test |
+| src/backend/test/br/rhhub/infra/email/N8nEmailSenderTest.java | 156 | 1.8K | test |
+| src/backend/test/br/rhhub/infra/google/GoogleOAuthClientTest.java | 119 | 1.6K | test |
+| src/backend/test/br/rhhub/infra/llm/LlmConfigTest.java | 51 | 524 | test |
+| src/backend/test/br/rhhub/infra/llm/OpenAiCompatibleProviderTest.java | 122 | 1.3K | test |
+| src/backend/test/br/rhhub/infra/messaging/KafkaConfigTest.java | 122 | 1.6K | test |
+| src/backend/test/br/rhhub/infra/messaging/KafkaMessagingIntegrationTest.java | 294 | 3.3K | test |
+| src/backend/test/br/rhhub/infra/messaging/KafkaUrlTest.java | 37 | 429 | test |
+| src/backend/test/br/rhhub/infra/messaging/PendingResumeRepublisherTest.java | 96 | 965 | test |
+| src/backend/test/br/rhhub/infra/messaging/RemoteKafkaSetupTest.java | 79 | 1.0K | test |
+| src/backend/test/br/rhhub/infra/messaging/TopicEnsurerIntegrationTest.java | 90 | 903 | test |
+| src/backend/test/br/rhhub/infra/redis/AuthStoresIntegrationTest.java | 119 | 1.3K | test |
+| src/backend/test/br/rhhub/infra/redis/RedisConfigTest.java | 44 | 429 | test |
+| src/backend/test/br/rhhub/infra/redis/RedisStoreIntegrationTest.java | 159 | 1.5K | test |
+| src/backend/test/br/rhhub/infra/security/AuthConfigTest.java | 41 | 363 | test |
 | src/backend/test/br/rhhub/infra/TestSupport.java | 57 | 627 | test |
-| src/backend/test/br/rhhub/service/AnalyzeResumeServiceTest.java | 192 | 2.4K | test |
-| src/backend/test/br/rhhub/service/AuthServiceTest.java | 260 | 3.4K | test |
+| src/backend/test/br/rhhub/service/AnalyzeResumeServiceTest.java | 194 | 2.4K | test |
+| src/backend/test/br/rhhub/service/AuthServiceTest.java | 262 | 3.4K | test |
 | src/backend/test/br/rhhub/service/Fakes.java | 243 | 3.3K | test |
-| src/backend/test/br/rhhub/service/ManagementServicesTest.java | 332 | 5.0K | test |
-| src/backend/test/br/rhhub/service/NotificationServiceTest.java | 124 | 1.4K | test |
-| src/backend/test/br/rhhub/service/ProfileCompletionTest.java | 57 | 621 | test |
-| src/backend/test/br/rhhub/service/ResumeStageServiceTest.java | 146 | 1.6K | test |
-| src/backend/test/br/rhhub/service/VacancyExpirationTest.java | 85 | 991 | test |
-| DOCUMENTACAO.md | 798 | 11.5K | docs |
-| README.md | 321 | 4.1K | docs |
+| src/backend/test/br/rhhub/service/ManagementServicesTest.java | 334 | 5.0K | test |
+| src/backend/test/br/rhhub/service/NotificationServiceTest.java | 126 | 1.4K | test |
+| src/backend/test/br/rhhub/service/ProfileCompletionTest.java | 59 | 632 | test |
+| src/backend/test/br/rhhub/service/ResumeStageServiceTest.java | 148 | 1.6K | test |
+| src/backend/test/br/rhhub/service/VacancyExpirationTest.java | 87 | 1.0K | test |
+| src/backend/test/br/rhhub/testing/FunctionalTest.java | 20 | 162 | test |
+| src/backend/test/br/rhhub/testing/IntegrationTest.java | 20 | 163 | test |
+| src/backend/test/br/rhhub/testing/LiveTest.java | 21 | 166 | test |
+| src/backend/test/br/rhhub/testing/UnitTest.java | 20 | 149 | test |
+| .github/CONTRIBUTING.md | 38 | 400 | docs |
+| .github/PULL_REQUEST_TEMPLATE.md | 24 | 218 | docs |
+| DOCUMENTACAO.md | 830 | 12.2K | docs |
+| README.md | 338 | 4.7K | docs |
 | src/backend/HISTORICO.md | 145 | 3.3K | docs |
-| src/backend/README.md | 276 | 5.2K | docs |
+| src/backend/README.md | 289 | 5.4K | docs |
 | src/backend/resources/prompt/resume_analysis.md | 342 | 6.7K | docs |
 | src/frontend/README.md | 33 | 320 | docs |
 | src/frontend/src/index.css | 512 | 8.0K | style |
 | .dockerignore | 4 | 10 | other |
 | .env.compose.example | 18 | 152 | other |
+| .github/CODEOWNERS | 6 | 49 | other |
 | .gitignore | 4 | 9 | other |
 | Dockerfile | 19 | 196 | other |
 | Dockerfile.Api | 29 | 332 | other |
@@ -252,7 +263,7 @@ Generated: 2026-11-04 | 255 files | ~264.7K tokens if all read
 | src/backend/.mvn/wrapper/maven-wrapper.properties | 4 | 42 | other |
 | src/backend/mvnw | 296 | 2.9K | other |
 | src/backend/mvnw.cmd | 190 | 2.1K | other |
-| src/backend/pom.xml | 115 | 999 | other |
+| src/backend/pom.xml | 156 | 1.4K | other |
 | src/backend/resources/templates/create_account.html | 125 | 2.1K | other |
 | src/backend/resources/templates/two_factor_authentication.html | 141 | 2.3K | other |
 | src/backend/resources/templates/update_password.html | 133 | 2.1K | other |
@@ -262,15 +273,15 @@ Generated: 2026-11-04 | 255 files | ~264.7K tokens if all read
 
 ## Summary
 - source: 176 files, ~137.1K tokens
-- config: 12 files, ~3.3K tokens
-- test: 40 files, ~70.2K tokens
-- docs: 6 files, ~31.2K tokens
+- config: 16 files, ~4.4K tokens
+- test: 44 files, ~71.3K tokens
+- docs: 8 files, ~33.2K tokens
 - style: 1 files, ~8.0K tokens
-- other: 20 files, ~14.9K tokens
+- other: 21 files, ~15.4K tokens
 
 ## Heaviest files (read with offset/limit, not whole)
-1. DOCUMENTACAO.md — 798 lines (~11.5K tokens)
+1. DOCUMENTACAO.md — 830 lines (~12.2K tokens)
 2. src/frontend/src/components/ui/sidebar.tsx — 724 lines (~5.4K tokens)
 3. src/frontend/src/pages/Vacancies.tsx — 711 lines (~6.6K tokens)
-4. src/backend/test/br/rhhub/application/web/WebApiTest.java — 618 lines (~9.5K tokens)
+4. src/backend/test/br/rhhub/application/web/WebApiTest.java — 620 lines (~9.5K tokens)
 5. src/frontend/src/index.css — 512 lines (~8.0K tokens)

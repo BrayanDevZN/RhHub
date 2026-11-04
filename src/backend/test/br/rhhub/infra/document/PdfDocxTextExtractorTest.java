@@ -1,5 +1,6 @@
 package br.rhhub.infra.document;
 
+import br.rhhub.testing.UnitTest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -15,6 +16,7 @@ import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.junit.jupiter.api.Test;
 
+@UnitTest
 class PdfDocxTextExtractorTest {
 
     private final PdfDocxTextExtractor extractor = new PdfDocxTextExtractor();

@@ -750,6 +750,38 @@ flowchart LR
 
 O `Dockerfile` da raiz é o do front: é o que o Railway usa por padrão. Os outros serviços apontam para o próprio arquivo (`Dockerfile.Api`, `Dockerfile.Consumer`, `Dockerfile.kafka`), pelo `railway.*.json` ou pela variável `RAILWAY_DOCKERFILE_PATH`. Não há `railway.json` na raiz: um arquivo assim valeria para todos os serviços e passaria por cima do que cada um escolhe no painel.
 
+### 7.1 Testes e CI
+
+Os testes do back end ficam em `src/backend/test` e têm **quatro categorias**, marcadas por tags do JUnit 5 (anotações em `br.rhhub.testing`). Todos rodam com `ENVIRONMENT=test` (configurado no `maven-surefire-plugin`): `AppProperties.isTest()` faz os códigos de verificação voltarem na resposta, troca a IA por `FixedAiProvider` (sempre aprovado) e desliga o `Secure` dos cookies, então nenhum teste depende de e-mail nem de chave externa.
+
+| Categoria | Anotação | Escopo | Precisa de | Testes |
+| --- | --- | --- | --- | --- |
+| Unit | `@UnitTest` | Domínio, serviços com repositórios falsos (`Fakes`), validações, templates de e-mail, propriedades | Nada (memória) | 121 |
+| Integration | `@IntegrationTest` | Uma peça real por vez: repositórios SQLite e PostgreSQL (`RepositoryContract`), `TableCreator`, Redis, Kafka embarcado, clientes HTTP contra servidor local | PostgreSQL e Redis só se estiverem de pé (senão o teste é pulado) | 80 |
+| Functional | `@FunctionalTest` | A API HTTP inteira (`WebApiTest`, `GoogleCallbackTest`) e o fluxo candidatura → Kafka → IA → e-mail (`AnalysisFlowIntegrationTest`) | Nada externo | 33 |
+| Live | `@LiveTest` | Groq e n8n/Gmail **de verdade** (gasta cota, envia e-mail) | Chaves no ambiente | 3 |
+
+```bash
+mvn test                          # unit + integration + functional (live fica de fora)
+mvn test -Pcategory-unit
+mvn test -Pcategory-integration
+mvn test -Pcategory-functional
+mvn test -Pcategory-live          # opt-in
+```
+
+O `pom.xml` define a propriedade `test.groups` (vazia: tudo) e `test.excluded` (padrão `live`); cada perfil `category-*` seleciona uma tag. O `RepositoryContract` é abstrato: a tag da classe-base vale para `SqliteRepositoryTest` e `PostgresRepositoryTest`.
+
+**Pasta `.github`**
+
+| Arquivo | Função |
+| --- | --- |
+| `workflows/ci.yml` | Um job por categoria no back end (`unit`, `integration` com PostgreSQL 16 e `redis-server`, `functional`), todos com `ENVIRONMENT=test`; mais lint e build do front, conferência `Dockerfile` = `Dockerfile.front` e build das quatro imagens. Os relatórios do surefire sobem como artefato quando algo falha |
+| `PULL_REQUEST_TEMPLATE.md` | Checklist de PR: categoria do teste, lint, Dockerfiles idênticos, documentação |
+| `ISSUE_TEMPLATE/` | Formulários de bug e de sugestão; issues em branco desligadas |
+| `dependabot.yml` | Atualizações semanais de Maven e npm, mensais de Actions e Docker |
+| `CODEOWNERS` | Revisor padrão de cada pasta |
+| `CONTRIBUTING.md` | Como rodar, onde pôr um teste novo e o padrão de commits |
+
 ---
 
 ## 8. Roadmap

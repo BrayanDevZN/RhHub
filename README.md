@@ -7,7 +7,10 @@ Publique vagas, receba candidaturas, acompanhe cada etapa do processo seletivo e
 
 [![CI](https://img.shields.io/github/actions/workflow/status/BrayanDevZN/RhHub/ci.yml?branch=main&style=for-the-badge&label=CI&logo=githubactions&logoColor=white)](https://github.com/BrayanDevZN/RhHub/actions/workflows/ci.yml)
 ![Último commit](https://img.shields.io/github/last-commit/BrayanDevZN/RhHub?style=for-the-badge&logo=git&logoColor=white)
-![Testes](https://img.shields.io/badge/TESTES-200%2B-brightgreen?style=for-the-badge&logo=junit5&logoColor=white)
+![Testes](https://img.shields.io/badge/TESTES-234-brightgreen?style=for-the-badge&logo=junit5&logoColor=white)
+![Unit](https://img.shields.io/badge/UNIT-121-success?style=flat-square)
+![Integration](https://img.shields.io/badge/INTEGRATION-80-blue?style=flat-square)
+![Functional](https://img.shields.io/badge/FUNCTIONAL-33-blueviolet?style=flat-square)
 
 ![Java](https://img.shields.io/badge/JAVA-21-ED8B00?style=flat-square&logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/SPRING_BOOT-3.5-6DB33F?style=flat-square&logo=springboot&logoColor=white)
@@ -199,7 +202,7 @@ Apagar um usuário ou uma vaga apaga, em cascata, as candidaturas, fotos e aviso
 | **E-mail** | Workflow no n8n (Gmail) chamado por webhook com JWT HS256; templates HTML em `src/backend/resources/templates` |
 | **Autenticação** | BCrypt, JWT, Google OAuth 2.0, 2FA por e-mail |
 | **Infra** | Docker e Docker Compose, nginx, Railway, GitHub Actions |
-| **Testes** | JUnit 5, AssertJ, Mockito, Reactor Test, Spring Kafka Test |
+| **Testes** | JUnit 5 (tags `unit`, `integration`, `functional` e `live`), AssertJ, Mockito, Reactor Test, Spring Kafka Test |
 
 ## 📁 Estrutura do repositório
 
@@ -223,7 +226,7 @@ RhHub/
 ├── Dockerfile · Dockerfile.Api · Dockerfile.Consumer · Dockerfile.kafka · Dockerfile.front
 ├── docker-compose.yml              # Postgres, Redis, Kafka, API, consumer e front
 ├── railway.*.json                  # configuração de cada serviço no Railway
-├── .github/workflows/ci.yml        # testes do back end, build do front e das imagens
+├── .github/                        # CI (um job por categoria de teste), templates de PR e issue, dependabot, CODEOWNERS
 ├── DOCUMENTACAO.md                 # documentação completa (rotas, regras, variáveis)
 └── PROJECT_ANATOMY.md              # mapa de arquivos do projeto
 ```
@@ -277,12 +280,26 @@ A lista completa, com exemplos, está em [`src/backend/.env.example`](src/backen
 
 ## 🧪 Testes
 
-O back end tem mais de **200 testes** automatizados: regras de domínio, serviços com repositórios em memória, API web ponta a ponta, contrato dos repositórios (SQLite e PostgreSQL) e o fluxo completo de análise com Kafka embarcado.
+Os testes do back end ficam em `src/backend/test` e são divididos em **três categorias**, marcadas com tags do JUnit 5 (anotações em `br.rhhub.testing`). Todos rodam no **ambiente de teste** (`ENVIRONMENT=test`): os códigos de verificação voltam na resposta, a IA é substituída por uma resposta fixa e os cookies não exigem HTTPS, então nada depende de e-mail nem de chave externa.
+
+| Categoria | Anotação | O que testa | Precisa de | Testes |
+|---|---|---|---|---|
+| **Unit** | `@UnitTest` | Regras de domínio, serviços (com repositórios em memória), validações, composição de e-mail, configuração | Nada: roda só na memória | 121 |
+| **Integration** | `@IntegrationTest` | Uma peça de infraestrutura de cada vez: repositórios em SQLite e PostgreSQL, criação e migração de tabelas, Redis, Kafka embarcado, clientes HTTP (Google, n8n, LLM) contra um servidor local | SQLite e Kafka embarcado já vêm; PostgreSQL e Redis são usados se estiverem de pé (senão o teste é pulado) | 80 |
+| **Functional** | `@FunctionalTest` | O sistema por fora: a API HTTP inteira (login, vagas, etapas, candidaturas, notificações, administração, retorno do Google) e o fluxo completo candidatura → fila → análise → e-mail | Nada externo | 33 |
+| **Live** | `@LiveTest` | Chama **Groq e n8n/Gmail de verdade** (gasta cota e envia e-mail). **Fora de todas as execuções, inclusive do CI** | As chaves no ambiente | 3 |
 
 ```bash
 cd src/backend
-./mvnw test
+
+mvn test                          # unit + integration + functional (não roda os live)
+mvn test -Pcategory-unit          # só unit
+mvn test -Pcategory-integration   # só integration
+mvn test -Pcategory-functional    # só functional
+mvn test -Pcategory-live          # só live (opt-in: usa as chaves reais do ambiente)
 ```
+
+Ao escrever um teste novo, anote a classe com a categoria certa (`@UnitTest`, `@IntegrationTest` ou `@FunctionalTest`); sem anotação o teste roda só na execução completa e fica fora das categorias do CI.
 
 No front, o CI roda lint e build:
 
@@ -291,7 +308,7 @@ cd src/frontend
 npm run lint && npm run build
 ```
 
-O workflow [`ci.yml`](.github/workflows/ci.yml) roda os testes do back end contra um PostgreSQL real, compila o front e confere que `Dockerfile` e `Dockerfile.front` são idênticos e constrói as imagens Docker a cada push e pull request.
+O workflow [`ci.yml`](.github/workflows/ci.yml) tem **um job por categoria** (`unit`, `integration` com PostgreSQL e Redis de verdade, `functional`), mais o front, a conferência de que `Dockerfile` e `Dockerfile.front` são idênticos e o build das imagens Docker. Roda a cada push na `main` e em todo pull request.
 
 ## ☁️ Deploy
 
