@@ -36,12 +36,18 @@ public class PendingResumeRepublisher {
     private final Clock clock;
     private final Map<Long, Instant> lastAttempt = new ConcurrentHashMap<>();
 
+    /**
+     * Cria o reenviador de candidaturas pendentes.
+     */
     public PendingResumeRepublisher(ResumeRepository resumes, ResumeAnalysisPublisher publisher, Clock clock) {
         this.resumes = resumes;
         this.publisher = publisher;
         this.clock = clock;
     }
 
+    /**
+     * Roda a cada minuto (a primeira vez após 1 minuto) e recoloca na fila as candidaturas esquecidas. Registra no log quantas foram reenfileiradas.
+     */
     @Scheduled(initialDelayString = "PT1M", fixedDelayString = "PT1M")
     void run() {
         republishDue().subscribe(

@@ -9,14 +9,25 @@ final class AsyncPasswordHasher {
 
     private final PasswordHasher hasher;
 
+    /**
+     * Envolve um {@link PasswordHasher} para usá-lo sem bloquear o servidor.
+     */
     AsyncPasswordHasher(PasswordHasher hasher) {
         this.hasher = hasher;
     }
 
+    /**
+     * Gera o hash da senha em uma thread própria (boundedElastic). O BCrypt leva cerca de 250 ms de CPU e travaria as outras requisições se rodasse na thread do servidor.
+     */
     Mono<String> hash(String password) {
         return Mono.fromCallable(() -> hasher.hash(password)).subscribeOn(Schedulers.boundedElastic());
     }
 
+    /**
+     * Confere se a senha corresponde ao hash, também em thread própria.
+     *
+     * @return true se confere.
+     */
     Mono<Boolean> matches(String password, String hash) {
         return Mono.fromCallable(() -> hasher.matches(password, hash)).subscribeOn(Schedulers.boundedElastic());
     }

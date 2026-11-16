@@ -10,11 +10,17 @@ public interface Notifier {
 
     /** Não avisa ninguém (para quem monta os serviços sem o sino). */
     Notifier NONE = new Notifier() {
+        /**
+         * Versão que não faz nada, para quando não há avisos do sino.
+         */
         @Override
         public Mono<Void> user(Long userId, String title, String message, String link) {
             return Mono.empty();
         }
 
+        /**
+         * Versão que não faz nada, para quando não há avisos do sino.
+         */
         @Override
         public Mono<Void> admins(String title, String message, String link) {
             return Mono.empty();

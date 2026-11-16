@@ -22,6 +22,9 @@ public class RedisConfig {
 
     private static final Logger log = LoggerFactory.getLogger(RedisConfig.class);
 
+    /**
+     * Cria a conexão com o Redis (cliente Lettuce, assíncrono) com limite de 5 segundos por comando. Não valida a conexão na subida, para a aplicação subir mesmo com o Redis fora.
+     */
     @Bean
     LettuceConnectionFactory redisConnectionFactory(AppProperties props) {
         var factory = new LettuceConnectionFactory(standalone(props.redis()),
@@ -30,6 +33,9 @@ public class RedisConfig {
         return factory;
     }
 
+    /**
+     * Cria o objeto de acesso ao Redis que trabalha com texto e devolve Mono/Flux (sem bloquear).
+     */
     @Bean
     ReactiveStringRedisTemplate reactiveStringRedisTemplate(LettuceConnectionFactory factory) {
         return new ReactiveStringRedisTemplate(factory);

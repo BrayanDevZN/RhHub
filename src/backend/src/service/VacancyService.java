@@ -29,11 +29,17 @@ public class VacancyService {
 
     private final Clock clock;
 
+    /**
+     * Cria o serviço com o relógio do sistema.
+     */
     public VacancyService(VacancyRepository vacancies, VacancyPhotoRepository photos, AccessPolicy policy,
             ResumeRepository resumes) {
         this(vacancies, photos, policy, resumes, Clock.systemUTC());
     }
 
+    /**
+     * Cria o serviço com um relógio informado (nos testes, um relógio fixo para conferir a data de expiração).
+     */
     public VacancyService(VacancyRepository vacancies, VacancyPhotoRepository photos, AccessPolicy policy,
             ResumeRepository resumes, Clock clock) {
         this.clock = clock;
@@ -43,14 +49,25 @@ public class VacancyService {
         this.resumes = resumes;
     }
 
+    /**
+     * Lista todas as vagas, as mais novas primeiro.
+     */
     public Flux<Vacancy> list() {
         return vacancies.findAll();
     }
 
+    /**
+     * Busca uma vaga.
+     *
+     * @throws DomainException.NotFound se não existe.
+     */
     public Mono<Vacancy> get(Long id) {
         return vacancies.findById(id).switchIfEmpty(Mono.error(notFound()));
     }
 
+    /**
+     * Cria uma vaga com as etapas padrão e sem prazo. Atalho para a versão completa.
+     */
     public Mono<Vacancy> create(User actor, String rawName, String rawDescription, String rawRequirements,
             String rawResponsibilities) {
         return create(actor, rawName, rawDescription, rawRequirements, rawResponsibilities, null);
@@ -171,6 +188,9 @@ public class VacancyService {
         });
     }
 
+    /**
+     * Remove a foto da vaga. Só administradores.
+     */
     public Mono<Void> removePhoto(User actor, Long id) {
         return Mono.defer(() -> {
             policy.requireAdmin(actor);
@@ -178,14 +198,25 @@ public class VacancyService {
         });
     }
 
+    /**
+     * Devolve a foto da vaga.
+     *
+     * @throws DomainException.NotFound se a vaga não tem foto.
+     */
     public Mono<ProfilePhoto> photo(Long id) {
         return photos.find(id).switchIfEmpty(Mono.error(new DomainException.NotFound("Essa vaga não tem foto.")));
     }
 
+    /**
+     * Cria o erro 404 "Vaga não encontrada".
+     */
     private static DomainException.NotFound notFound() {
         return new DomainException.NotFound("Vaga não encontrada.");
     }
 
+    /**
+     * Cria o erro 409 "Já existe uma vaga com esse nome".
+     */
     private static DomainException.Conflict nameTaken() {
         return new DomainException.Conflict("Já existe uma vaga com esse nome.");
     }

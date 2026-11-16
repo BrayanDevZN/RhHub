@@ -5,6 +5,9 @@ import java.util.List;
 /** Definição da tabela vacancy_photos (foto da vaga). */
 public class VacancyPhotosTable implements TableDefinition {
 
+    /**
+     * Nome da tabela: vacancy_photos (foto da vaga).
+     */
     @Override
     public String name() {
         return "vacancy_photos";

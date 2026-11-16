@@ -11,6 +11,11 @@ import reactor.core.publisher.Mono;
 @Configuration
 public class GoogleConfig {
 
+    /**
+     * Escolhe o login com Google. Desligado (padrão), devolve uma versão que responde 404. Ligado, exige GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET e GOOGLE_REDIRECT_URI e cria o cliente real.
+     *
+     * @throws IllegalStateException se estiver ligado e faltar alguma das três variáveis (a aplicação não sobe, para o erro aparecer logo).
+     */
     @Bean
     GoogleIdentityProvider googleIdentityProvider(AuthProperties props) {
         var google = props.google();
@@ -33,6 +38,9 @@ public class GoogleConfig {
         return new GoogleOAuthClient(google.clientId().strip(), google.clientSecret().strip(), google.redirectUri().strip());
     }
 
+    /**
+     * Versão desligada: {@code enabled()} é falso e qualquer outra chamada falha com 404 "Login com Google desativado".
+     */
     static GoogleIdentityProvider disabled() {
         return new GoogleIdentityProvider() {
             @Override
@@ -52,6 +60,9 @@ public class GoogleConfig {
         };
     }
 
+    /**
+     * Diz se o texto é nulo ou só tem espaços.
+     */
     private static boolean blank(String value) {
         return value == null || value.isBlank();
     }

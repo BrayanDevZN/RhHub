@@ -15,6 +15,9 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @ConfigurationPropertiesScan
 public class RhHubApplication {
 
+    /**
+     * Inicia a aplicação. O mesmo jar roda a API e o serviço consumer: o que muda é a variável KAFKA_CONSUMERS_ENABLED (desligada na API, que só publica nas filas, e ligada no consumer, que lê as filas).
+     */
     public static void main(String[] args) {
         SpringApplication.run(RhHubApplication.class, args);
     }

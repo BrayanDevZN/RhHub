@@ -22,22 +22,34 @@ public class NotificationController {
     private final NotificationService notifications;
     private final WebSupport web;
 
+    /**
+     * Recebe os serviços de que as rotas precisam; o Spring os injeta.
+     */
     public NotificationController(NotificationService notifications, WebSupport web) {
         this.notifications = notifications;
         this.web = web;
     }
 
+    /**
+     * GET /api/notifications. Devolve os avisos mais recentes de quem está logado e quantos não foram lidos (o sino).
+     */
     @GetMapping
     Mono<Views.InboxView> inbox(ServerWebExchange exchange) {
         return web.actor(exchange).flatMap(notifications::inbox).map(Views::inbox);
     }
 
+    /**
+     * POST /api/notifications/read-all. Marca todos os avisos como lidos (204).
+     */
     @PostMapping("/read-all")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     Mono<Void> readAll(ServerWebExchange exchange) {
         return web.actor(exchange).flatMap(notifications::markAllRead);
     }
 
+    /**
+     * POST /api/notifications/{id}/read. Marca um aviso como lido. Responde 404 se não existe ou é de outro usuário.
+     */
     @PostMapping("/{id}/read")
     Mono<Map<String, Object>> read(@PathVariable String id, ServerWebExchange exchange) {
         return web.actor(exchange).flatMap(actor -> notifications.markRead(actor, WebSupport.parseId(id, "Id")))

@@ -18,6 +18,12 @@ public record ProfilePhoto(byte[] content, String contentType) {
         return new ProfilePhoto(content, detect(content));
     }
 
+    /**
+     * Descobre o tipo da imagem pelos primeiros bytes (a "assinatura" do arquivo), sem confiar no nome nem no cabeçalho enviados: JPEG começa com FF D8 FF, PNG com 89 50 4E 47 0D 0A 1A 0A e WebP com "RIFF....WEBP".
+     *
+     * @return "image/jpeg", "image/png" ou "image/webp".
+     * @throws DomainException.Invalid se não for nenhum dos três.
+     */
     private static String detect(byte[] b) {
         if (b.length >= 3 && (b[0] & 0xFF) == 0xFF && (b[1] & 0xFF) == 0xD8 && (b[2] & 0xFF) == 0xFF) {
             return "image/jpeg";

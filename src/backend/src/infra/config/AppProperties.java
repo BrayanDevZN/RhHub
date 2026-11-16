@@ -29,6 +29,9 @@ public record AppProperties(@DefaultValue("production") String environment, Data
             }
         }
 
+        /**
+         * Diz se há senha do Redis configurada. Vazio, "none" e "null" contam como sem senha.
+         */
         public boolean hasPassword() {
             return password != null && !password.isBlank()
                     && !"none".equalsIgnoreCase(password.strip()) && !"null".equalsIgnoreCase(password.strip());
@@ -49,6 +52,9 @@ public record AppProperties(@DefaultValue("production") String environment, Data
             @DefaultValue("email.send") String emailTopic,
             @DefaultValue("resume.analysis") String analysisTopic) {
 
+        /**
+         * Diz se há chave do Kafka configurada (KAFKA_API_KEY). Vazio, "none" e "null" contam como sem chave, e então a conexão é sem login.
+         */
         public boolean hasApiKey() {
             return apiKey != null && !apiKey.isBlank()
                     && !"none".equalsIgnoreCase(apiKey.strip()) && !"null".equalsIgnoreCase(apiKey.strip());
@@ -73,6 +79,9 @@ public record AppProperties(@DefaultValue("production") String environment, Data
     public record Email(String webhookUrl, String jwtSecret, Duration timeout) {
     }
 
+    /**
+     * Diz se o ambiente é de teste (ENVIRONMENT=test). Nesse modo a IA devolve resposta fixa, o e-mail só vai para o log e os códigos de verificação voltam na resposta.
+     */
     public boolean isTest() {
         return "test".equalsIgnoreCase(environment);
     }

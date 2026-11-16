@@ -60,6 +60,9 @@ public class KafkaConfig {
     static final int ANALYSIS_RETRIES = 3;
     static final int EMAIL_RETRIES = 2;
 
+    /**
+     * Reúne os nomes dos tópicos e o número de partições, lidos das variáveis de ambiente.
+     */
     @Bean
     KafkaTopics kafkaTopics(AppProperties props) {
         var kafka = props.kafka();
@@ -86,6 +89,9 @@ public class KafkaConfig {
         return props;
     }
 
+    /**
+     * Cria o administrador que cria os tópicos que faltam. Com limites curtos e sem falhar se o broker estiver fora: a aplicação sobe mesmo sem Kafka, e o {@link TopicEnsurer} tenta de novo depois.
+     */
     @Bean
     KafkaAdmin kafkaAdmin(AppProperties props) {
         Map<String, Object> config = connectionProperties(props.kafka());
@@ -99,6 +105,9 @@ public class KafkaConfig {
         return admin;
     }
 
+    /**
+     * Cria a fábrica de produtores (quem publica). Usa acks=all e idempotência (a mensagem chega uma vez só, mesmo com reenvio). Os limites de espera são curtos de propósito: o padrão esperaria 60 s por um Kafka parado e travaria quem envia o currículo. Fecha conexões ociosas depois de 30 s, porque atrás de um proxy elas podem ser derrubadas sem aviso.
+     */
     @Bean
     ProducerFactory<String, String> kafkaProducerFactory(AppProperties props) {
         Map<String, Object> config = connectionProperties(props.kafka());
@@ -117,11 +126,17 @@ public class KafkaConfig {
         return new DefaultKafkaProducerFactory<>(config);
     }
 
+    /**
+     * Cria o objeto que envia as mensagens (texto com chave e valor) ao Kafka.
+     */
     @Bean
     KafkaTemplate<String, String> kafkaTemplate(ProducerFactory<String, String> producerFactory) {
         return new KafkaTemplate<>(producerFactory);
     }
 
+    /**
+     * Cria a fábrica de consumidores (quem lê). Começa do início do tópico quando não há posição salva, confirma o offset só depois de processar (sem auto-commit) e aceita até 10 minutos entre leituras, porque a análise chama a IA e as tentativas esperam entre si.
+     */
     @Bean
     ConsumerFactory<String, String> kafkaConsumerFactory(AppProperties props) {
         Map<String, Object> config = connectionProperties(props.kafka());
@@ -134,6 +149,9 @@ public class KafkaConfig {
         return new DefaultKafkaConsumerFactory<>(config);
     }
 
+    /**
+     * Cria a fábrica dos listeners (@KafkaListener). Só começa a ler se KAFKA_CONSUMERS_ENABLED estiver ligado: na API fica desligado (ela só publica) e quem consome é o serviço consumer. Confirma o offset por mensagem e usa o tratador de erros com tentativas e dead letter.
+     */
     @Bean
     ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory(
             ConsumerFactory<String, String> consumerFactory, CommonErrorHandler kafkaErrorHandler,
@@ -148,10 +166,16 @@ public class KafkaConfig {
         return factory;
     }
 
+    /**
+     * Lê a configuração app.kafka.consumers-enabled (padrão: ligado).
+     */
     static boolean consumersEnabled(org.springframework.core.env.Environment env) {
         return env.getProperty("app.kafka.consumers-enabled", Boolean.class, true);
     }
 
+    /**
+     * Cria o tratador de erros dos consumidores. Quando o processamento falha, tenta de novo com espera crescente (dobra a cada tentativa). Esgotadas as tentativas, o {@link DeadLetterRecoverer} guarda a falha na tabela dead_letters e publica a mensagem em <tópico>.DLT, na mesma partição. Erros sem conserto (JSON inválido, argumento inválido, dado inválido) não são repetidos.
+     */
     @Bean
     CommonErrorHandler kafkaErrorHandler(KafkaTemplate<String, String> template, DeadLetterRepository deadLetters,
             AppProperties props, KafkaTopics topics) {
@@ -169,30 +193,48 @@ public class KafkaConfig {
         return handler;
     }
 
+    /**
+     * Declara o tópico de e-mails, para ser criado se faltar.
+     */
     @Bean
     NewTopic emailTopic(KafkaTopics topics) {
         return topic(topics.email(), topics.partitions());
     }
 
+    /**
+     * Declara o tópico das mensagens de e-mail que falharam de vez (.DLT).
+     */
     @Bean
     NewTopic emailDeadLetterTopic(KafkaTopics topics) {
         return topic(topics.deadLetterOf(topics.email()), topics.partitions());
     }
 
+    /**
+     * Declara o tópico de análise de currículos.
+     */
     @Bean
     NewTopic resumeAnalysisTopic(KafkaTopics topics) {
         return topic(topics.resumeAnalysis(), topics.partitions());
     }
 
+    /**
+     * Declara o tópico das análises que falharam de vez (.DLT).
+     */
     @Bean
     NewTopic resumeAnalysisDeadLetterTopic(KafkaTopics topics) {
         return topic(topics.deadLetterOf(topics.resumeAnalysis()), topics.partitions());
     }
 
+    /**
+     * Cria a definição de um tópico com o número de partições e uma réplica (o Kafka é de nó único).
+     */
     private static NewTopic topic(String name, int partitions) {
         return TopicBuilder.name(name).partitions(partitions).replicas(1).build();
     }
 
+    /**
+     * Quantas repetições cada tópico faz: 2 para e-mail e 3 para análise.
+     */
     static int retriesFor(String topic, KafkaTopics topics) {
         return topic.equals(topics.email()) ? EMAIL_RETRIES : ANALYSIS_RETRIES;
     }
@@ -205,6 +247,9 @@ public class KafkaConfig {
         return noRetry ? 1 : retriesFor(topic, topics) + 1;
     }
 
+    /**
+     * Cria a espera entre tentativas: começa no intervalo configurado e dobra a cada nova tentativa, com o máximo de repetições dado.
+     */
     private static BackOff backOff(int retries, Duration interval) {
         var backOff = new org.springframework.kafka.support.ExponentialBackOffWithMaxRetries(retries);
         backOff.setInitialInterval(Math.max(1, interval.toMillis()));

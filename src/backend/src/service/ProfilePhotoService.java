@@ -14,6 +14,9 @@ public class ProfilePhotoService {
     private final ProfilePhotoRepository photos;
     private final UserRepository users;
 
+    /**
+     * Cria o serviço da foto de perfil.
+     */
     public ProfilePhotoService(ProfilePhotoRepository photos, UserRepository users) {
         this.photos = photos;
         this.users = users;
@@ -24,10 +27,16 @@ public class ProfilePhotoService {
         return Mono.defer(() -> photos.save(actor.id(), ProfilePhoto.of(content)));
     }
 
+    /**
+     * Apaga a foto de perfil de quem está logado.
+     */
     public Mono<Void> remove(User actor) {
         return photos.delete(actor.id());
     }
 
+    /**
+     * Diz se o usuário tem foto de perfil (usado no campo has_photo da resposta).
+     */
     public Mono<Boolean> has(User user) {
         return photos.exists(user.id());
     }
@@ -46,6 +55,9 @@ public class ProfilePhotoService {
                 .switchIfEmpty(Mono.error(noPhoto()));
     }
 
+    /**
+     * Cria o erro 404 "Sem foto de perfil".
+     */
     private static DomainException.NotFound noPhoto() {
         return new DomainException.NotFound("Sem foto de perfil.");
     }

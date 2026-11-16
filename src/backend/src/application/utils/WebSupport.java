@@ -28,6 +28,11 @@ public class WebSupport {
     private final boolean secure;
     private final UserService users;
 
+    /**
+     * Cria o apoio das rotas.
+     *
+     * O cookie é Secure quando COOKIE_SECURE está definido; se vazio, é Secure em tudo, menos no ambiente de teste (que roda em http).
+     */
     public WebSupport(WebProperties web, AppProperties app, UserService users) {
         this.web = web;
         this.secure = web.cookieSecure() != null ? web.cookieSecure() : !app.isTest();
@@ -50,10 +55,16 @@ public class WebSupport {
         return base(type, token).sameSite("Lax").maxAge(type.lifetime()).build();
     }
 
+    /**
+     * Cria um cookie vazio que expira na hora, para o navegador apagar o cookie de sessão daquele tipo.
+     */
     public ResponseCookie expired(TokenType type) {
         return base(type, "").maxAge(Duration.ZERO).build();
     }
 
+    /**
+     * Parte comum dos cookies de sessão: HttpOnly (o JavaScript não lê), Secure conforme a configuração, SameSite da configuração. O cookie de acesso vale para todo o site; o de refresh só para /api/auth, para não viajar em toda requisição.
+     */
     private ResponseCookie.ResponseCookieBuilder base(TokenType type, String value) {
         return ResponseCookie.from(type.cookie(), value).httpOnly(true).secure(secure)
                 .sameSite(web.cookieSameSite()).path(type == TokenType.ACCESS ? "/" : "/api/auth");
@@ -65,11 +76,19 @@ public class WebSupport {
                 .path("/login/oauth2").maxAge(clear ? Duration.ZERO : Duration.ofMinutes(10)).build();
     }
 
+    /**
+     * Lê o valor de um cookie da requisição.
+     *
+     * @return o valor, ou nulo se o cookie não veio.
+     */
     public String cookieValue(ServerWebExchange exchange, String name) {
         HttpCookie cookie = exchange.getRequest().getCookies().getFirst(name);
         return cookie == null ? null : cookie.getValue();
     }
 
+    /**
+     * Apaga todos os cookies de sessão (acesso, refresh e 2FA) na resposta. Usado no logout, na troca de senha e na exclusão da conta.
+     */
     public void clearSession(ServerWebExchange exchange) {
         for (TokenType type : TokenType.values()) {
             exchange.getResponse().addCookie(expired(type));
@@ -78,6 +97,11 @@ public class WebSupport {
 
     // ---- usuário logado ----
 
+    /**
+     * Descobre quem está logado. O AuthFilter já validou o JWT e guardou o identificador na requisição; aqui busca o usuário (a versão de leitura, que pode vir do cache).
+     *
+     * @throws DomainException.Unauthorized se a rota não passou pelo login.
+     */
     public Mono<User> actor(ServerWebExchange exchange) {
         UUID id = exchange.getAttribute(USER_ATTRIBUTE);
         return id == null ? Mono.error(new DomainException.Unauthorized("Faça login para continuar."))
@@ -102,6 +126,12 @@ public class WebSupport {
                 .defaultIfEmpty(new byte[0]);
     }
 
+    /**
+     * Converte um id numérico recebido na URL.
+     *
+     * @param what nome do campo, usado na mensagem ("Vaga inválido").
+     * @throws DomainException.Invalid se não for um número.
+     */
     public static Long parseId(String raw, String what) {
         try {
             return Long.valueOf(raw.strip());
@@ -110,6 +140,11 @@ public class WebSupport {
         }
     }
 
+    /**
+     * Converte um identificador público (UUID) recebido na URL.
+     *
+     * @throws DomainException.Invalid se não tiver o formato de UUID.
+     */
     public static UUID parseUuid(String raw) {
         try {
             return UUID.fromString(raw);

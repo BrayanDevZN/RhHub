@@ -21,10 +21,16 @@ public class TopicEnsurer {
 
     private final KafkaAdmin admin;
 
+    /**
+     * Cria o verificador de tópicos.
+     */
     public TopicEnsurer(KafkaAdmin admin) {
         this.admin = admin;
     }
 
+    /**
+     * Roda a cada minuto e cria os tópicos que faltarem. Serve para o caso de o Kafka reiniciar e perder os dados: sem isso, os tópicos só seriam recriados quando a aplicação reiniciasse. Falha só vira aviso no log.
+     */
     @Scheduled(initialDelayString = "PT1M", fixedDelayString = "PT1M")
     void ensure() {
         try {

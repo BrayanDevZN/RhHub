@@ -22,11 +22,17 @@ public interface SqlExecutor {
     class ConstraintViolation extends RuntimeException {
         private final String detail;
 
+        /**
+         * Cria o erro de violação de restrição guardando o texto do banco, que diz qual restrição falhou.
+         */
         public ConstraintViolation(String detail, Throwable cause) {
             super(detail, cause);
             this.detail = detail;
         }
 
+        /**
+         * Texto original do banco (nome da restrição no PostgreSQL, tabela.coluna no SQLite), usado para saber se foi e-mail, CPF ou nome repetido.
+         */
         public String detail() {
             return detail;
         }

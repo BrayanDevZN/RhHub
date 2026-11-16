@@ -24,6 +24,9 @@ public final class Rules {
     private static final Pattern CPF = Pattern.compile("\\d{11}");
     private static final Pattern CODE = Pattern.compile("\\d{6}");
 
+    /**
+     * Classe utilitária: não é criada.
+     */
     private Rules() {
     }
 
@@ -60,6 +63,12 @@ public final class Rules {
         return raw;
     }
 
+    /**
+     * Valida o nome da pessoa: obrigatório, até 120 caracteres. Espaços do começo e do fim saem e espaços repetidos viram um só.
+     *
+     * @return o nome normalizado.
+     * @throws DomainException.Invalid se vazio ou longo demais.
+     */
     public static String name(String raw) {
         if (raw == null || raw.isBlank()) {
             throw new DomainException.Invalid("Informe o nome.");
@@ -80,6 +89,12 @@ public final class Rules {
         return value;
     }
 
+    /**
+     * Valida a idade: obrigatória, de 18 a 120 anos.
+     *
+     * @return a idade.
+     * @throws DomainException.Invalid se menor de 18, maior que 120 ou ausente.
+     */
     public static int age(Integer raw) {
         if (raw == null || raw < AGE_MIN) {
             throw new DomainException.Invalid("É preciso ter " + AGE_MIN + " anos ou mais.");
@@ -90,6 +105,11 @@ public final class Rules {
         return raw;
     }
 
+    /**
+     * Converte o texto (male, female ou other, sem diferenciar maiúsculas) para o enum {@link Gender}.
+     *
+     * @throws DomainException.Invalid se o valor não for um dos três.
+     */
     public static Gender gender(String raw) {
         try {
             return Gender.from(raw);
@@ -107,6 +127,12 @@ public final class Rules {
         return value;
     }
 
+    /**
+     * Valida o nome da vaga: obrigatório, até 120 caracteres, com espaços normalizados.
+     *
+     * @return o nome normalizado.
+     * @throws DomainException.Invalid se vazio ou longo demais.
+     */
     public static String vacancyName(String raw) {
         if (raw == null || raw.isBlank()) {
             throw new DomainException.Invalid("Informe o nome da vaga.");
@@ -130,6 +156,11 @@ public final class Rules {
         return value;
     }
 
+    /**
+     * Valida a descrição da vaga: obrigatória e com até 5000 caracteres. Só as pontas são limpas; o texto interno não muda.
+     *
+     * @throws DomainException.Invalid se vazia ou longa demais.
+     */
     public static String vacancyDescription(String raw) {
         if (raw == null || raw.isBlank()) {
             throw new DomainException.Invalid("Informe a descrição da vaga.");

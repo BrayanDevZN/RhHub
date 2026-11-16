@@ -30,10 +30,18 @@ public class ApiExceptionHandler implements WebExceptionHandler {
 
     private final ObjectMapper mapper;
 
+    /**
+     * Cria o tratador de erros com o conversor de JSON.
+     */
     public ApiExceptionHandler(ObjectMapper mapper) {
         this.mapper = mapper;
     }
 
+    /**
+     * Transforma qualquer erro em uma resposta JSON padronizada {status, error, message, path}.
+     *
+     * Traduções: erro de negócio (DomainException) vira o código do seu tipo; falha de e-mail vira 502; erro de rota do Spring vira 4xx amigável; corpo inválido vira 400; qualquer outro vira 500 com mensagem genérica, e o detalhe vai só para o log (nunca para o cliente). Se a resposta já começou a ser enviada, repassa o erro.
+     */
     @Override
     public Mono<Void> handle(ServerWebExchange exchange, Throwable error) {
         var response = exchange.getResponse();
@@ -76,6 +84,9 @@ public class ApiExceptionHandler implements WebExceptionHandler {
         }
     }
 
+    /**
+     * Associa o tipo do erro de negócio ao código HTTP: Invalid 400, Unauthorized 401, Forbidden 403, NotFound 404, Conflict 409, Unprocessable 422, TooManyRequests 429. Tipo desconhecido vira 500.
+     */
     static HttpStatus statusOf(DomainException e) {
         if (e instanceof DomainException.Invalid) {
             return HttpStatus.BAD_REQUEST;
@@ -95,6 +106,9 @@ public class ApiExceptionHandler implements WebExceptionHandler {
         return HttpStatus.INTERNAL_SERVER_ERROR;
     }
 
+    /**
+     * Mensagem em português para erros comuns do Spring: 404 rota não encontrada, 405 método não permitido, 413 arquivo grande demais, 415 tipo não suportado; os demais viram "Requisição inválida".
+     */
     private static String friendly(HttpStatusCode status) {
         return switch (status.value()) {
             case 404 -> "Rota não encontrada.";

@@ -63,6 +63,9 @@ public record AnalysisResult(ResumeStatus decision, String subject, String html)
         return abbreviate(subject + "\n\n" + body, MAX_REASON);
     }
 
+    /**
+     * Tira a cerca de código Markdown (``` no começo e no fim) que alguns modelos colocam em volta da resposta.
+     */
     private static String withoutCodeFence(String text) {
         String result = text;
         if (result.startsWith("```")) {
@@ -75,6 +78,9 @@ public record AnalysisResult(ResumeStatus decision, String subject, String html)
         return result.strip();
     }
 
+    /**
+     * Corta o texto em no máximo {@code max} caracteres, trocando o último por "…" quando precisa cortar.
+     */
     private static String abbreviate(String text, int max) {
         return text.length() <= max ? text : text.substring(0, max - 1) + "…";
     }

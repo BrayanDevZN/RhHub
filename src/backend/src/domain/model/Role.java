@@ -9,6 +9,11 @@ public enum Role {
         return name().toLowerCase();
     }
 
+    /**
+     * Converte o texto lido do banco ou da requisição para o enum, sem diferenciar maiúsculas nem espaços nas pontas.
+     *
+     * @throws IllegalArgumentException se o texto não for um valor de Role.
+     */
     public static Role from(String value) {
         return valueOf(value.trim().toUpperCase());
     }

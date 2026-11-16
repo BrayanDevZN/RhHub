@@ -15,12 +15,18 @@ public class KafkaResumeAnalysisPublisher implements ResumeAnalysisPublisher {
     private final ObjectMapper mapper;
     private final String topic;
 
+    /**
+     * Cria o publicador de pedidos de análise, com o nome do tópico vindo da configuração.
+     */
     public KafkaResumeAnalysisPublisher(KafkaPublisher kafka, ObjectMapper mapper, AppProperties props) {
         this.kafka = kafka;
         this.mapper = mapper;
         this.topic = props.kafka().analysisTopic();
     }
 
+    /**
+     * Coloca o pedido de análise de uma candidatura na fila resume.analysis. A mensagem leva só o id; o consumer busca o resto no banco, então ela é pequena e nunca fica velha.
+     */
     @Override
     public Mono<Void> publish(Long resumeId) {
         try {

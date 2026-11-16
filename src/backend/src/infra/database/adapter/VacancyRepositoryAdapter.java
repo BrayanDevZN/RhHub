@@ -27,29 +27,49 @@ public class VacancyRepositoryAdapter implements VacancyRepository {
     private final SqlExecutor sql;
     private final Clock clock;
 
+    /**
+     * Cria o adapter com o executor de SQL e o relógio.
+     */
     public VacancyRepositoryAdapter(SqlExecutor sql, Clock clock) {
         this.sql = sql;
         this.clock = clock;
     }
 
+    /**
+     * Busca a vaga pelo id. A própria consulta já calcula se ela tem foto (has_photo) e quantos candidatos tem (applicants).
+     *
+     * @return a vaga, ou vazio.
+     */
     @Override
     public Mono<Vacancy> findById(Long id) {
         return sql.query("SELECT " + COLUMNS + " FROM vacancies WHERE id = :id", Params.of().add("id", id)).next()
                 .map(VacancyRepositoryAdapter::toDomain);
     }
 
+    /**
+     * Lista todas as vagas, as mais novas primeiro, já com has_photo e applicants.
+     */
     @Override
     public Flux<Vacancy> findAll() {
         return sql.query("SELECT " + COLUMNS + " FROM vacancies ORDER BY created_at DESC, id DESC", Params.of())
                 .map(VacancyRepositoryAdapter::toDomain);
     }
 
+    /**
+     * Diz se já existe uma vaga com esse nome (o nome é único).
+     */
     @Override
     public Mono<Boolean> existsByName(String name) {
         return sql.query("SELECT 1 AS found FROM vacancies WHERE name = :name LIMIT 1", Params.of().add("name", name))
                 .hasElements();
     }
 
+    /**
+     * Grava a vaga. Sem id faz INSERT; com id faz UPDATE. As etapas vão guardadas em um só texto, um nome por linha. O RETURNING traz só o id e a vaga completa é lida em seguida, igual nos dois bancos.
+     *
+     * @throws DomainException.Conflict se o nome já existe.
+     * @throws DomainException.NotFound se o UPDATE não achou o id.
+     */
     @Override
     public Mono<Vacancy> save(Vacancy v) {
         var params = Params.of()
@@ -84,11 +104,17 @@ public class VacancyRepositoryAdapter implements VacancyRepository {
                         e -> new DomainException.Conflict("Já existe uma vaga com esse nome", e));
     }
 
+    /**
+     * Apaga a vaga. As candidaturas e a foto dela saem junto, por cascata no banco.
+     */
     @Override
     public Mono<Void> deleteById(Long id) {
         return sql.update("DELETE FROM vacancies WHERE id = :id", Params.of().add("id", id)).then();
     }
 
+    /**
+     * Converte uma linha em {@link Vacancy}, lendo as etapas do texto guardado (coluna vazia vira o padrão) e os campos calculados has_photo e applicants.
+     */
     static Vacancy toDomain(Row r) {
         return new Vacancy(r.longValue("id"), r.string("name"), r.string("description"), r.string("requirements"),
                 r.string("responsibilities"), r.longValue("created_by"), r.instant("created_at"), r.bool("has_photo"),

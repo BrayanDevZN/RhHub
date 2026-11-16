@@ -39,11 +39,17 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ServiceConfig {
 
+    /**
+     * Monta o caso de uso de entregar e-mails, que o consumer da fila chama.
+     */
     @Bean
     DeliverEmail deliverEmail(EmailSender sender) {
         return new DeliverEmailService(sender);
     }
 
+    /**
+     * Monta o serviço de autenticação. Com ENVIRONMENT=test o código de verificação também volta na resposta.
+     */
     @Bean
     AuthService authService(UserRepository users, PasswordHasher hasher, JwtService jwt, RefreshTokenStore refresh,
             VerificationCodeStore codes, EmailComposer composer, EmailSender sender, GoogleIdentityProvider google,
@@ -51,22 +57,34 @@ public class ServiceConfig {
         return new AuthService(users, hasher, jwt, refresh, codes, composer, sender, google, clock, props.isTest());
     }
 
+    /**
+     * Monta o serviço de usuários.
+     */
     @Bean
     UserService userService(UserRepository users, PasswordHasher hasher, RefreshTokenStore refresh, AccessPolicy policy) {
         return new UserService(users, hasher, refresh, policy);
     }
 
+    /**
+     * Monta o serviço da foto de perfil.
+     */
     @Bean
     ProfilePhotoService profilePhotoService(ProfilePhotoRepository photos, UserRepository users) {
         return new ProfilePhotoService(photos, users);
     }
 
+    /**
+     * Monta o serviço de vagas.
+     */
     @Bean
     VacancyService vacancyService(VacancyRepository vacancies, br.rhhub.application.port.out.VacancyPhotoRepository photos,
             AccessPolicy policy, ResumeRepository resumes) {
         return new VacancyService(vacancies, photos, policy, resumes);
     }
 
+    /**
+     * Monta o serviço de mudança de etapa, com e-mail e aviso do sino.
+     */
     @Bean
     ResumeStageService resumeStageService(ResumeRepository resumes, VacancyRepository vacancies, UserRepository users,
             EmailPublisher emails, br.rhhub.application.port.out.EmailComposer composer, AccessPolicy policy,
@@ -74,18 +92,27 @@ public class ServiceConfig {
         return new ResumeStageService(resumes, vacancies, users, emails, composer, policy, notifier);
     }
 
+    /**
+     * Monta o serviço de candidaturas, com o relógio do sistema e os avisos aos administradores.
+     */
     @Bean
     ResumeService resumeService(ResumeRepository resumes, VacancyRepository vacancies, DocumentTextExtractor extractor,
             ResumeAnalysisPublisher analysis, Clock clock, br.rhhub.application.port.out.Notifier notifier) {
         return new ResumeService(resumes, vacancies, extractor, analysis, clock, notifier);
     }
 
+    /**
+     * Monta o serviço de avisos do sino. Ele também é o {@code Notifier} que os outros serviços usam para criar avisos.
+     */
     @Bean
     br.rhhub.service.NotificationService notificationService(br.rhhub.application.port.out.NotificationRepository notifications,
             UserRepository users) {
         return new br.rhhub.service.NotificationService(notifications, users);
     }
 
+    /**
+     * Monta o serviço de administração de usuários.
+     */
     @Bean
     AdminService adminService(UserRepository users, RefreshTokenStore refresh, AccessPolicy policy) {
         return new AdminService(users, refresh, policy);
@@ -99,6 +126,11 @@ public class ServiceConfig {
         return new AnalyzeResumeService(resumes, vacancies, users, extractor, ai, emails, loadPrompt(), notifier);
     }
 
+    /**
+     * Lê o prompt de triagem (prompt/resume_analysis.md, dentro do jar) uma única vez na subida.
+     *
+     * @throws UncheckedIOException se o arquivo não for encontrado, e a aplicação não sobe.
+     */
     private static String loadPrompt() {
         try (var in = new ClassPathResource("prompt/resume_analysis.md").getInputStream()) {
             return new String(in.readAllBytes(), StandardCharsets.UTF_8);

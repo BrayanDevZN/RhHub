@@ -25,6 +25,9 @@ public class CachedVacancyRepository implements VacancyRepository {
     private final VacancyRepository db;
     private final QueryCache cache;
 
+    /**
+     * Construtor usado pelo Spring: envolve o adapter do banco.
+     */
     @Autowired
     public CachedVacancyRepository(VacancyRepositoryAdapter db, QueryCache cache) {
         this((VacancyRepository) db, cache);
@@ -36,26 +39,41 @@ public class CachedVacancyRepository implements VacancyRepository {
         this.cache = cache;
     }
 
+    /**
+     * Busca a vaga pelo cache (5 min); se não estiver, lê do banco e guarda.
+     */
     @Override
     public Mono<Vacancy> findById(Long id) {
         return cache.one(CacheKeys.vacancy(id), CacheKeys.LONG, Vacancy.class, () -> db.findById(id));
     }
 
+    /**
+     * Lista as vagas pelo cache (5 min); se não estiver, lê do banco e guarda a lista.
+     */
     @Override
     public Flux<Vacancy> findAll() {
         return cache.list(CacheKeys.VACANCY_ALL, CacheKeys.LONG, Vacancy.class, db::findAll);
     }
 
+    /**
+     * Sem cache: lê direto do banco.
+     */
     @Override
     public Mono<Boolean> existsByName(String name) {
         return db.existsByName(name);
     }
 
+    /**
+     * Grava a vaga e apaga todo o cache de vagas (a lista e cada vaga), para ninguém ver dado velho.
+     */
     @Override
     public Mono<Vacancy> save(Vacancy vacancy) {
         return db.save(vacancy).flatMap(saved -> cache.evictPrefix(CacheKeys.VACANCY_PREFIX).thenReturn(saved));
     }
 
+    /**
+     * Apaga a vaga e todo o cache de vagas.
+     */
     @Override
     public Mono<Void> deleteById(Long id) {
         return db.deleteById(id).then(cache.evictPrefix(CacheKeys.VACANCY_PREFIX));

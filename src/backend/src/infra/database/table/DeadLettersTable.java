@@ -9,6 +9,9 @@ import java.util.List;
  */
 public class DeadLettersTable implements TableDefinition {
 
+    /**
+     * Nome da tabela: dead_letters (mensagens do Kafka que falharam de vez).
+     */
     @Override
     public String name() {
         return "dead_letters";

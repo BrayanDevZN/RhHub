@@ -20,6 +20,9 @@ public record Resume(
         stage = stage == null || stage.isBlank() ? Stages.SCREENING : stage;
     }
 
+    /**
+     * Cria a candidatura sem informar a etapa, que fica na Triagem. Usado ao receber um currículo novo.
+     */
     public Resume(Long id, Long userId, Long vacancyId, String fileName, String contentType, ResumeStatus status,
             String reason, Instant createdAt) {
         this(id, userId, vacancyId, fileName, contentType, status, reason, createdAt, null);

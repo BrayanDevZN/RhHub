@@ -7,10 +7,20 @@ public enum DeadLetterStatus {
     /** Foi reprocessado ou tratado. */
     RESOLVED;
 
+    /**
+     * Valor em minúsculas gravado no banco e devolvido pela API.
+     *
+     * @return o nome do enum em minúsculas.
+     */
     public String value() {
         return name().toLowerCase();
     }
 
+    /**
+     * Converte o texto lido do banco ou da requisição para o enum, sem diferenciar maiúsculas nem espaços nas pontas.
+     *
+     * @throws IllegalArgumentException se o texto não for um valor de DeadLetterStatus.
+     */
     public static DeadLetterStatus from(String value) {
         return valueOf(value.trim().toUpperCase());
     }

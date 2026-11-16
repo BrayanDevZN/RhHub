@@ -32,6 +32,13 @@ public class N8nEmailSender implements EmailSender {
     private final Clock clock;
     private final Duration timeout;
 
+    /**
+     * Cria o enviador que chama o webhook do n8n.
+     *
+     * @param webhookUrl endereço do webhook (N8N_EMAIL_WEBHOOK_URL).
+     * @param jwtSecret segredo usado para assinar o JWT (gmail_secret).
+     * @param timeout tempo máximo de espera da resposta.
+     */
     public N8nEmailSender(String webhookUrl, String jwtSecret, Duration timeout, Clock clock, ObjectMapper mapper) {
         this.jwt = new N8nJwtSigner(jwtSecret, mapper);
         this.clock = clock;
@@ -43,6 +50,12 @@ public class N8nEmailSender implements EmailSender {
                 .build();
     }
 
+    /**
+     * Envia o e-mail: valida a mensagem, faz POST no webhook com o JSON {type, to, subject, content} e o cabeçalho Authorization: Bearer <JWT de 1 minuto>. O n8n responde "recebido" na hora, e o envio pelo Gmail acontece depois dele.
+     *
+     * @throws DomainException.Invalid se faltar algum campo (nada é enviado).
+     * @throws EmailSender.EmailException se a chamada ao n8n falhar ou passar do tempo limite.
+     */
     @Override
     public Mono<Void> send(EmailMessage message) {
         String problem = validate(message);
@@ -65,6 +78,9 @@ public class N8nEmailSender implements EmailSender {
                 .then();
     }
 
+    /**
+     * Nome do envio ativo, usado no log: "n8n".
+     */
     @Override
     public String name() {
         return "n8n";

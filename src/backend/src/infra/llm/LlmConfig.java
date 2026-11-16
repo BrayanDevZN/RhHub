@@ -10,6 +10,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class LlmConfig {
 
+    /**
+     * Escolhe o provedor de IA, nesta ordem: ENVIRONMENT=test usa a resposta fixa; com chave da OpenAI, usa a OpenAI; com chave do Groq, usa o Groq; sem nenhuma chave, a aplicação sobe, mas cada análise falha com um erro que diz qual chave falta.
+     */
     @Bean
     AiProvider aiProvider(AppProperties props) {
         var ai = props.ai();
@@ -37,6 +40,9 @@ public class LlmConfig {
         };
     }
 
+    /**
+     * Diz se o texto não é nulo nem vazio.
+     */
     private static boolean hasText(String value) {
         return value != null && !value.isBlank();
     }

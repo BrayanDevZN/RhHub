@@ -16,12 +16,18 @@ public class KafkaEmailPublisher implements EmailPublisher {
     private final ObjectMapper mapper;
     private final String topic;
 
+    /**
+     * Cria o publicador de e-mails, com o nome do tópico vindo da configuração.
+     */
     public KafkaEmailPublisher(KafkaPublisher kafka, ObjectMapper mapper, AppProperties props) {
         this.kafka = kafka;
         this.mapper = mapper;
         this.topic = props.kafka().emailTopic();
     }
 
+    /**
+     * Coloca um e-mail na fila email.send, em JSON. A chave é o id da candidatura. Falha ao montar o JSON ou ao publicar sobe como erro para quem chamou.
+     */
     @Override
     public Mono<Void> publish(Long resumeId, EmailMessage message) {
         try {

@@ -25,6 +25,9 @@ public record AuthProperties(
             String redirectUri) {
     }
 
+    /**
+     * Configuração do login com Google. Se nada foi configurado, devolve uma versão desligada em vez de nulo.
+     */
     public Google google() {
         return google == null ? new Google(false, null, null, null) : google;
     }

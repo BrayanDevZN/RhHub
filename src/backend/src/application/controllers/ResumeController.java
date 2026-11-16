@@ -32,6 +32,9 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/api/resumes")
 public class ResumeController {
 
+    /**
+     * Corpo da mudança de etapa: {"stage": "Entrevista"}.
+     */
     public record StageRequest(String stage) {
     }
 
@@ -39,6 +42,9 @@ public class ResumeController {
     private final ResumeStageService stages;
     private final WebSupport web;
 
+    /**
+     * Recebe os serviços de que as rotas precisam; o Spring os injeta.
+     */
     public ResumeController(ResumeService resumes, ResumeStageService stages, WebSupport web) {
         this.resumes = resumes;
         this.stages = stages;
@@ -56,6 +62,9 @@ public class ResumeController {
                 .map(Views::resume);
     }
 
+    /**
+     * GET /api/resumes/me. Lista as candidaturas de quem está logado.
+     */
     @GetMapping("/me")
     Mono<List<Views.ResumeView>> mine(ServerWebExchange exchange) {
         return web.actor(exchange).flatMap(actor -> resumes.listMine(actor).map(Views::resume).collectList());
@@ -70,12 +79,18 @@ public class ResumeController {
                 .map(Views::resume).collectList());
     }
 
+    /**
+     * GET /api/resumes/{id}. Mostra uma candidatura (o dono ou um administrador).
+     */
     @GetMapping("/{id}")
     Mono<Views.ResumeView> get(@PathVariable String id, ServerWebExchange exchange) {
         return web.actor(exchange).flatMap(actor -> resumes.get(actor, WebSupport.parseId(id, "Id")))
                 .map(Views::resume);
     }
 
+    /**
+     * GET /api/resumes/{id}/file. Baixa o arquivo original do currículo como anexo, com o nome e o tipo originais.
+     */
     @GetMapping("/{id}/file")
     Mono<ResponseEntity<byte[]>> file(@PathVariable String id, ServerWebExchange exchange) {
         return web.actor(exchange).flatMap(actor -> resumes.file(actor, WebSupport.parseId(id, "Id")))
@@ -93,12 +108,21 @@ public class ResumeController {
                 .map(Views::resume);
     }
 
+    /**
+     * DELETE /api/resumes/{id}. Apaga uma candidatura (204).
+     */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     Mono<Void> delete(@PathVariable String id, ServerWebExchange exchange) {
         return web.actor(exchange).flatMap(actor -> resumes.delete(actor, WebSupport.parseId(id, "Id")));
     }
 
+    /**
+     * Converte o filtro ?status= em enum.
+     *
+     * @return o status, ou nulo se não veio filtro.
+     * @throws DomainException.Invalid se não for pending, aproved ou recuse.
+     */
     private static ResumeStatus parseStatus(String raw) {
         if (raw == null || raw.isBlank()) {
             return null;

@@ -15,6 +15,9 @@ public final class Stages {
     public static final int MAX_STAGES = 10;
     public static final int MAX_NAME = 40;
 
+    /**
+     * Classe utilitária: não é criada.
+     */
     private Stages() {
     }
 

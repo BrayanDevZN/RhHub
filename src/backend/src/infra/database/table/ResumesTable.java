@@ -5,6 +5,9 @@ import java.util.List;
 /** Definição da tabela resumes (candidaturas e o arquivo do currículo). */
 public class ResumesTable implements TableDefinition {
 
+    /**
+     * Nome da tabela: resumes (candidaturas e o arquivo do currículo).
+     */
     @Override
     public String name() {
         return "resumes";

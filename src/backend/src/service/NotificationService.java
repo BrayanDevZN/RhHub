@@ -19,17 +19,26 @@ public class NotificationService implements Notifier {
     /** Quantos avisos a lista devolve. */
     public static final int LIST_LIMIT = 30;
 
+    /**
+     * Caixa de avisos do sino: os avisos mais recentes e quantos ainda não foram lidos.
+     */
     public record Inbox(List<Notification> items, long unread) {
     }
 
     private final NotificationRepository notifications;
     private final UserRepository users;
 
+    /**
+     * Cria o serviço de avisos (sino).
+     */
     public NotificationService(NotificationRepository notifications, UserRepository users) {
         this.notifications = notifications;
         this.users = users;
     }
 
+    /**
+     * Devolve a caixa de avisos de quem está logado: os {@value #LIST_LIMIT} mais recentes e o total de não lidos, buscados ao mesmo tempo.
+     */
     public Mono<Inbox> inbox(User actor) {
         return Mono.zip(notifications.findByUser(actor.id(), LIST_LIMIT).collectList(),
                 notifications.countUnread(actor.id()), Inbox::new);
@@ -40,10 +49,18 @@ public class NotificationService implements Notifier {
         return notifications.markRead(id, actor.id());
     }
 
+    /**
+     * Marca todos os avisos do usuário como lidos.
+     */
     public Mono<Void> markAllRead(User actor) {
         return notifications.markAllRead(actor.id());
     }
 
+    /**
+     * Cria um aviso para um usuário. Falha ao gravar o aviso nunca atrapalha a ação principal: o erro é só registrado no log e ignorado.
+     *
+     * @param link rota do app para onde o clique leva (pode ser nulo).
+     */
     @Override
     public Mono<Void> user(Long userId, String title, String message, String link) {
         return Mono.defer(() -> notifications.create(new Notification(null, userId, title, message, link, false, null)))
@@ -54,6 +71,9 @@ public class NotificationService implements Notifier {
                 });
     }
 
+    /**
+     * Cria o mesmo aviso para todos os administradores (por exemplo, "Nova candidatura"). Também ignora falhas, só registrando no log.
+     */
     @Override
     public Mono<Void> admins(String title, String message, String link) {
         return Flux.defer(users::findAll)

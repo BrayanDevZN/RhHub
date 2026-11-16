@@ -26,6 +26,7 @@ public record Vacancy(
         stages = stages == null || stages.isEmpty() ? Stages.DEFAULT : List.copyOf(stages);
     }
 
+    /** Cria a vaga com as etapas padrão, sem prazo de expiração e sem candidatos contados. */
     public Vacancy(Long id, String name, String description, String requirements, String responsibilities,
             Long createdBy, Instant createdAt, boolean hasPhoto) {
         this(id, name, description, requirements, responsibilities, createdBy, createdAt, hasPhoto, null, null, 0);
@@ -47,6 +48,9 @@ public record Vacancy(
         this(id, name, description, null, null, createdBy, createdAt, false, null, null, 0);
     }
 
+    /**
+     * Devolve uma cópia da vaga indicando se ela tem foto ou não (a imagem em si fica em outra tabela).
+     */
     public Vacancy withHasPhoto(boolean value) {
         return new Vacancy(id, name, description, requirements, responsibilities, createdBy, createdAt, value, stages, expiresAt, applicants);
     }

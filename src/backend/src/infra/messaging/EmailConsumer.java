@@ -13,6 +13,9 @@ public class EmailConsumer {
     private final DeliverEmail deliverEmail;
     private final ObjectMapper mapper;
 
+    /**
+     * Cria o consumidor da fila de e-mails.
+     */
     public EmailConsumer(DeliverEmail deliverEmail, ObjectMapper mapper) {
         this.deliverEmail = deliverEmail;
         this.mapper = mapper;
@@ -22,6 +25,9 @@ public class EmailConsumer {
             topics = "#{@kafkaTopics.email()}",
             groupId = "#{@kafkaTopics.emailGroup()}",
             concurrency = "#{@kafkaTopics.partitions()}")
+    /**
+     * Recebe uma mensagem do tópico email.send, converte o JSON em e-mail e entrega ao envio (n8n), esperando terminar. Se falhar, o Kafka tenta de novo e, esgotadas as tentativas, vai para a dead letter.
+     */
     public void onMessage(String payload) throws JsonProcessingException {
         deliverEmail.execute(mapper.readValue(payload, EmailKafkaMessage.class).toEmail()).block();
     }

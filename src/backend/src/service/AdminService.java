@@ -17,12 +17,25 @@ public class AdminService {
     private final RefreshTokenStore refreshTokens;
     private final AccessPolicy policy;
 
+    /**
+     * Cria o serviço de administração.
+     *
+     * @param users repositório de usuários.
+     * @param refreshTokens guarda dos refresh tokens (para encerrar a sessão de quem for apagado).
+     * @param policy regras de quem pode o quê.
+     */
     public AdminService(UserRepository users, RefreshTokenStore refreshTokens, AccessPolicy policy) {
         this.users = users;
         this.refreshTokens = refreshTokens;
         this.policy = policy;
     }
 
+    /**
+     * Lista todos os usuários. Só administradores podem.
+     *
+     * @param actor quem está pedindo.
+     * @throws DomainException.Forbidden se não for admin.
+     */
     public Flux<User> listUsers(User actor) {
         return Flux.defer(() -> {
             policy.requireAdmin(actor);
@@ -30,6 +43,11 @@ public class AdminService {
         });
     }
 
+    /**
+     * Busca um usuário pelo identificador público. Só administradores podem.
+     *
+     * @throws DomainException.NotFound se o usuário não existir.
+     */
     public Mono<User> getUser(User actor, UUID publicId) {
         return Mono.defer(() -> {
             policy.requireAdmin(actor);
@@ -69,6 +87,9 @@ public class AdminService {
         }));
     }
 
+    /**
+     * Busca o usuário pelo identificador público ou falha com 404 "Usuário não encontrado".
+     */
     private Mono<User> find(UUID publicId) {
         return users.findByPublicId(publicId).switchIfEmpty(Mono.error(new DomainException.NotFound("Usuário não encontrado.")));
     }

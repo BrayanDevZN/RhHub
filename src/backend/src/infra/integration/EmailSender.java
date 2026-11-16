@@ -15,10 +15,16 @@ public interface EmailSender {
     String name();
 
     class EmailException extends RuntimeException {
+        /**
+         * Falha ao enviar o e-mail, com a mensagem.
+         */
         public EmailException(String message) {
             super(message);
         }
 
+        /**
+         * Falha ao enviar o e-mail, guardando a causa original.
+         */
         public EmailException(String message, Throwable cause) {
             super(message, cause);
         }

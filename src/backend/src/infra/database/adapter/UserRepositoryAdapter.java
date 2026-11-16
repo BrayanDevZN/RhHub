@@ -27,46 +27,87 @@ public class UserRepositoryAdapter implements UserRepository {
     private final SqlExecutor sql;
     private final Clock clock;
 
+    /**
+     * Cria o adapter.
+     *
+     * @param sql executor de SQL (PostgreSQL ou SQLite).
+     * @param clock relógio usado para a data de criação.
+     */
     public UserRepositoryAdapter(SqlExecutor sql, Clock clock) {
         this.sql = sql;
         this.clock = clock;
     }
 
+    /**
+     * Busca o usuário pelo id numérico interno.
+     *
+     * @return o usuário, ou vazio se não existe.
+     */
     @Override
     public Mono<User> findById(Long id) {
         return one("id = :v", Params.of().add("v", id));
     }
 
+    /**
+     * Busca o usuário pelo identificador público (o que vai no JWT).
+     *
+     * @return o usuário completo (com hash de senha), ou vazio se não existe.
+     */
     @Override
     public Mono<User> findByPublicId(UUID publicId) {
         return one("public_id = :v", Params.of().add("v", publicId));
     }
 
+    /**
+     * Busca o usuário pelo e-mail (já normalizado em minúsculas).
+     *
+     * @return o usuário, ou vazio se não existe.
+     */
     @Override
     public Mono<User> findByEmail(String email) {
         return one("email = :v", Params.of().add("v", email));
     }
 
+    /**
+     * Busca o usuário pelo identificador estável da conta Google (sub).
+     *
+     * @return o usuário, ou vazio se não há conta ligada a esse Google.
+     */
     @Override
     public Mono<User> findByGoogleSub(String googleSub) {
         return one("google_sub = :v", Params.of().add("v", googleSub));
     }
 
+    /**
+     * Diz se já existe um usuário com esse e-mail. Consulta leve, sem trazer a linha.
+     */
     @Override
     public Mono<Boolean> existsByEmail(String email) {
         return exists("email = :v", Params.of().add("v", email));
     }
 
+    /**
+     * Diz se já existe um usuário com esse CPF.
+     */
     @Override
     public Mono<Boolean> existsByCpf(String cpf) {
         return exists("cpf = :v", Params.of().add("v", cpf));
     }
 
+    /**
+     * Lista todos os usuários, do mais antigo para o mais novo.
+     */
     @Override
     public Flux<User> findAll() {
         return sql.query("SELECT " + COLUMNS + " FROM users ORDER BY id", Params.of()).map(UserRepositoryAdapter::toDomain);
     }
 
+    /**
+     * Grava o usuário. Sem id faz INSERT (gera o identificador público e a data de criação); com id faz UPDATE de todos os campos. Os dois usam RETURNING, então devolvem a linha como ficou no banco.
+     *
+     * @throws DomainException.Conflict se e-mail, CPF ou conta Google já existem (traduzido de {@link SqlExecutor.ConstraintViolation}).
+     * @throws DomainException.NotFound se o UPDATE não achou o id.
+     */
     @Override
     public Mono<User> save(User user) {
         var params = Params.of()
@@ -105,20 +146,34 @@ public class UserRepositoryAdapter implements UserRepository {
                         e -> new DomainException.Conflict(conflictMessage(e.detail()), e));
     }
 
+    /**
+     * Apaga o usuário. As candidaturas, os avisos e a foto dele saem junto, por cascata no banco.
+     */
     @Override
     public Mono<Void> deleteByPublicId(UUID publicId) {
         return sql.update("DELETE FROM users WHERE public_id = :v", Params.of().add("v", publicId)).then();
     }
 
+    /**
+     * Busca um usuário com a condição dada (a condição é fixa no código, nunca vem do usuário).
+     *
+     * @return o primeiro, ou vazio.
+     */
     private Mono<User> one(String where, Params params) {
         return sql.query("SELECT " + COLUMNS + " FROM users WHERE " + where, params).next()
                 .map(UserRepositoryAdapter::toDomain);
     }
 
+    /**
+     * Diz se há pelo menos uma linha que satisfaz a condição, com LIMIT 1 para parar no primeiro.
+     */
     private Mono<Boolean> exists(String where, Params params) {
         return sql.query("SELECT 1 AS found FROM users WHERE " + where + " LIMIT 1", params).hasElements();
     }
 
+    /**
+     * Converte uma linha da tabela users no objeto {@link User}. Colunas opcionais (gênero) nulas viram nulo.
+     */
     static User toDomain(Row r) {
         return new User(
                 r.longValue("id"),

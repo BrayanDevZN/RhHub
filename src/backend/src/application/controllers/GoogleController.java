@@ -32,6 +32,9 @@ public class GoogleController {
     private final WebSupport web;
     private final WebProperties props;
 
+    /**
+     * Recebe os serviços de que as rotas precisam; o Spring os injeta.
+     */
     public GoogleController(AuthService auth, WebSupport web, WebProperties props) {
         this.auth = auth;
         this.web = web;
@@ -53,6 +56,11 @@ public class GoogleController {
         return redirect(exchange, url);
     }
 
+    /**
+     * GET /login/oauth2/code/google. Para onde o Google devolve o usuário.
+     *
+     * Ordem das checagens: login com Google ligado; o state do parâmetro é igual ao do cookie (proteção contra falsificação); o Google não devolveu erro; veio um code. Se tudo certo, troca o code pelo perfil, abre a sessão e redireciona para a página inicial do front. Qualquer falha redireciona para /login com o motivo na URL (?error=google&reason=...).
+     */
     @GetMapping("/login/oauth2/code/google")
     Mono<Void> callback(@RequestParam(required = false) String code, @RequestParam(required = false) String state,
             @RequestParam(required = false) String error, ServerWebExchange exchange) {
@@ -107,11 +115,17 @@ public class GoogleController {
         return "server_error:" + failure.getClass().getSimpleName();
     }
 
+    /**
+     * Redireciona o navegador para a tela de login do front levando o código curto do motivo, que a tela traduz em uma mensagem.
+     */
     private Mono<Void> failed(ServerWebExchange exchange, String reason) {
         return redirect(exchange, props.homeUrl() + "login?error=google&reason="
                 + java.net.URLEncoder.encode(reason, StandardCharsets.UTF_8));
     }
 
+    /**
+     * Responde com redirecionamento 302 para a URL, sem corpo.
+     */
     private static Mono<Void> redirect(ServerWebExchange exchange, String url) {
         exchange.getResponse().setStatusCode(HttpStatus.FOUND);
         exchange.getResponse().getHeaders().setLocation(URI.create(url));

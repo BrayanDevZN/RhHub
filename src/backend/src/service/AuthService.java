@@ -29,6 +29,9 @@ public class AuthService {
 
     /** Resultado do login: ou a sessão aberta, ou o token temporário que leva ao passo do 2FA. */
     public record LoginResult(Session session, String twoFactorToken) {
+        /**
+         * Diz se o login parou na segunda etapa: sem sessão aberta, falta o código de 2FA.
+         */
         public boolean twoFactorRequired() {
             return session == null;
         }
@@ -53,6 +56,11 @@ public class AuthService {
     private final Clock clock;
     private final boolean exposeCode;
 
+    /**
+     * Cria o serviço de autenticação.
+     *
+     * @param exposeCode se true, o código de verificação também volta na resposta (só no ambiente de teste); em produção ele chega apenas por e-mail.
+     */
     public AuthService(UserRepository users, PasswordHasher hasher, JwtService jwt, RefreshTokenStore refreshTokens,
             VerificationCodeStore codes, EmailComposer composer, EmailSender email, GoogleIdentityProvider google,
             Clock clock, boolean exposeCode) {
@@ -70,6 +78,11 @@ public class AuthService {
 
     // ---- cadastro ----
 
+    /**
+     * Primeiro passo do cadastro: valida nome e e-mail, confirma que o e-mail ainda não existe e envia um código de 6 dígitos para ele (vale 15 minutos).
+     *
+     * @throws DomainException.Conflict se o e-mail já está cadastrado.
+     */
     public Mono<CodeSent> requestSignupCode(String rawName, String rawEmail) {
         return Mono.defer(() -> {
             String name = Rules.name(rawName);
@@ -80,6 +93,14 @@ public class AuthService {
         });
     }
 
+    /**
+     * Segundo passo do cadastro: cria a conta.
+     *
+     * Valida todos os campos, confere e-mail e CPF repetidos, confere o código recebido por e-mail (vale uma vez), gera o hash da senha, grava o usuário com papel USER e já abre a sessão (devolve os tokens).
+     *
+     * @throws DomainException.Conflict se e-mail ou CPF já existem.
+     * @throws DomainException.Unauthorized se o código está errado ou expirou.
+     */
     public Mono<Session> register(String rawName, String rawEmail, String rawCpf, Integer rawAge, String rawGender,
             String rawPassword, String rawCode) {
         return Mono.defer(() -> {
@@ -106,6 +127,11 @@ public class AuthService {
 
     // ---- login ----
 
+    /**
+     * Login com e-mail e senha.
+     *
+     * Se não existe conta, responde 404 (para o front oferecer criar uma). Contas do Google não têm senha e são recusadas. Senha errada dá 401 com a mensagem genérica "E-mail ou senha incorretos". Se o usuário ligou o 2FA, devolve só um token temporário de 2FA e a sessão só abre depois do código; senão abre a sessão direto.
+     */
     public Mono<LoginResult> login(String rawEmail, String password) {
         return Mono.defer(() -> {
             String address = Rules.email(rawEmail);
@@ -131,6 +157,11 @@ public class AuthService {
         });
     }
 
+    /**
+     * Envia por e-mail o código da segunda etapa. Exige o token temporário de 2FA devolvido pelo login.
+     *
+     * @throws DomainException.Unauthorized se o token for inválido ou vencido.
+     */
     public Mono<CodeSent> sendTwoFactorCode(String twoFactorToken) {
         return Mono.defer(() -> {
             TokenClaims claims = jwt.verify(twoFactorToken, TokenType.TWO_FACTOR, clock.instant());
@@ -139,6 +170,9 @@ public class AuthService {
         });
     }
 
+    /**
+     * Termina o login com 2FA: confere o token temporário e o código recebido por e-mail e, se ambos estão certos, abre a sessão.
+     */
     public Mono<Session> verifyTwoFactor(String twoFactorToken, String rawCode) {
         return Mono.defer(() -> {
             TokenClaims claims = jwt.verify(twoFactorToken, TokenType.TWO_FACTOR, clock.instant());
@@ -162,12 +196,18 @@ public class AuthService {
         });
     }
 
+    /**
+     * Encerra a sessão do usuário apagando o refresh token dele no Redis.
+     */
     public Mono<Void> logout(UUID publicId) {
         return refreshTokens.revoke(publicId);
     }
 
     // ---- senha ----
 
+    /**
+     * Troca a senha de quem está logado. Exige a senha atual. Contas do Google não têm senha (422). Depois de trocar, revoga o refresh token, então todas as sessões precisam entrar de novo.
+     */
     public Mono<Void> changePassword(UUID publicId, String current, String rawNewPassword) {
         return Mono.defer(() -> {
             String newPassword = Rules.password(rawNewPassword);
@@ -195,6 +235,11 @@ public class AuthService {
         });
     }
 
+    /**
+     * Termina a recuperação: confere o código, grava a nova senha e revoga as sessões do usuário.
+     *
+     * @throws DomainException.Unauthorized "Código inválido ou expirado" se o código não confere ou a conta não existe.
+     */
     public Mono<Void> resetPassword(String rawEmail, String rawCode, String rawNewPassword) {
         return Mono.defer(() -> {
             String address = Rules.email(rawEmail);
@@ -211,14 +256,25 @@ public class AuthService {
 
     // ---- Google ----
 
+    /**
+     * Diz se o login com Google está ligado (GOOGLE_OAUTH_ENABLED).
+     */
     public boolean googleEnabled() {
         return google.enabled();
     }
 
+    /**
+     * Monta o endereço do Google para onde o navegador é enviado.
+     *
+     * @param state valor aleatório que volta no callback para provar que a volta é da mesma pessoa.
+     */
     public String googleAuthorizationUrl(String state) {
         return google.authorizationUrl(state);
     }
 
+    /**
+     * Atalho de {@link #loginWithGoogle(String, boolean)} que cria a conta se ela não existir.
+     */
     public Mono<Session> loginWithGoogle(String code) {
         return loginWithGoogle(code, true);
     }
@@ -268,17 +324,26 @@ public class AuthService {
 
     // ---- internos ----
 
+    /**
+     * Gera um código, monta o e-mail da finalidade e o envia. Devolve o código só se {@code exposeCode} estiver ligado (ambiente de teste).
+     */
     private Mono<CodeSent> sendCode(CodePurpose purpose, String address, String name) {
         return codes.issue(purpose, address)
                 .flatMap(code -> email.send(composer.verificationCode(purpose, address, name, code))
                         .thenReturn(new CodeSent(exposeCode ? code : null)));
     }
 
+    /**
+     * Busca o usuário ou falha com 401 "Sessão inválida" (a pessoa tem token, mas a conta não existe mais).
+     */
     private Mono<User> userOrUnauthorized(UUID publicId) {
         return users.findByPublicId(publicId)
                 .switchIfEmpty(Mono.error(new DomainException.Unauthorized("Sessão inválida.")));
     }
 
+    /**
+     * Abre a sessão: emite o token de acesso (15 min) e o de refresh (7 dias), com um identificador novo que é guardado no Redis (o que invalida o refresh anterior).
+     */
     private Mono<Session> openSession(User user) {
         var now = clock.instant();
         String refreshId = UUID.randomUUID().toString();

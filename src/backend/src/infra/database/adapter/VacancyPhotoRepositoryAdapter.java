@@ -18,11 +18,19 @@ public class VacancyPhotoRepositoryAdapter implements VacancyPhotoRepository {
     private final SqlExecutor sql;
     private final Clock clock;
 
+    /**
+     * Cria o adapter com o executor de SQL e o relógio.
+     */
     public VacancyPhotoRepositoryAdapter(SqlExecutor sql, Clock clock) {
         this.sql = sql;
         this.clock = clock;
     }
 
+    /**
+     * Grava a foto da vaga, trocando a que já existe (no máximo uma por vaga).
+     *
+     * @throws DomainException.NotFound se a vaga não existe.
+     */
     @Override
     public Mono<Void> save(Long vacancyId, ProfilePhoto photo) {
         return sql.update("""
@@ -36,6 +44,11 @@ public class VacancyPhotoRepositoryAdapter implements VacancyPhotoRepository {
                 .then();
     }
 
+    /**
+     * Busca a foto da vaga.
+     *
+     * @return a foto, ou vazio se a vaga não tem.
+     */
     @Override
     public Mono<ProfilePhoto> find(Long vacancyId) {
         return sql.query("SELECT content, content_type FROM vacancy_photos WHERE vacancy_id = :vacancy_id",
@@ -43,6 +56,9 @@ public class VacancyPhotoRepositoryAdapter implements VacancyPhotoRepository {
                 .map(r -> new ProfilePhoto(r.bytes("content"), r.string("content_type")));
     }
 
+    /**
+     * Remove a foto da vaga.
+     */
     @Override
     public Mono<Void> delete(Long vacancyId) {
         return sql.update("DELETE FROM vacancy_photos WHERE vacancy_id = :vacancy_id",

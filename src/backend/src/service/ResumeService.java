@@ -28,16 +28,28 @@ public class ResumeService {
     private final java.time.Clock clock;
     private final br.rhhub.application.port.out.Notifier notifier;
 
+    /**
+     * Cria o serviço com o relógio do sistema e sem avisos de sino.
+     */
     public ResumeService(ResumeRepository resumes, VacancyRepository vacancies, DocumentTextExtractor extractor,
             ResumeAnalysisPublisher analysis) {
         this(resumes, vacancies, extractor, analysis, java.time.Clock.systemUTC());
     }
 
+    /**
+     * Cria o serviço com um relógio informado (nos testes, um relógio fixo) e sem avisos de sino.
+     */
     public ResumeService(ResumeRepository resumes, VacancyRepository vacancies, DocumentTextExtractor extractor,
             ResumeAnalysisPublisher analysis, java.time.Clock clock) {
         this(resumes, vacancies, extractor, analysis, clock, br.rhhub.application.port.out.Notifier.NONE);
     }
 
+    /**
+     * Cria o serviço completo.
+     *
+     * @param analysis publica na fila do Kafka o pedido de análise.
+     * @param notifier avisa os administradores quando chega uma candidatura nova.
+     */
     public ResumeService(ResumeRepository resumes, VacancyRepository vacancies, DocumentTextExtractor extractor,
             ResumeAnalysisPublisher analysis, java.time.Clock clock, br.rhhub.application.port.out.Notifier notifier) {
         this.notifier = notifier;
@@ -96,6 +108,9 @@ public class ResumeService {
                         resumeId, error.toString()));
     }
 
+    /**
+     * Lista as candidaturas de quem está logado.
+     */
     public Flux<Resume> listMine(User actor) {
         return resumes.findByUserId(actor.id());
     }
@@ -108,19 +123,34 @@ public class ResumeService {
         });
     }
 
+    /**
+     * Busca uma candidatura. O dono ou um administrador podem ver.
+     *
+     * @throws DomainException.NotFound se não existe.
+     * @throws DomainException.Forbidden se não é do usuário e ele não é admin.
+     */
     public Mono<Resume> get(User actor, Long id) {
         return find(actor, id);
     }
 
+    /**
+     * Devolve o arquivo original do currículo para download (mesma regra de acesso de {@link #get}).
+     */
     public Mono<ResumeFile> file(User actor, Long id) {
         return find(actor, id).then(Mono.defer(() -> resumes.findFile(id)))
                 .switchIfEmpty(Mono.error(new DomainException.NotFound("Candidatura não encontrada.")));
     }
 
+    /**
+     * Apaga uma candidatura (o dono ou um administrador).
+     */
     public Mono<Void> delete(User actor, Long id) {
         return find(actor, id).then(Mono.defer(() -> resumes.deleteById(id)));
     }
 
+    /**
+     * Busca a candidatura e confere o acesso: só o dono ou um admin. Falha com 404 se não existe e 403 "Essa candidatura não é sua".
+     */
     private Mono<Resume> find(User actor, Long id) {
         return resumes.findById(id)
                 .switchIfEmpty(Mono.error(new DomainException.NotFound("Candidatura não encontrada.")))
@@ -129,6 +159,9 @@ public class ResumeService {
                         : Mono.<Resume>error(new DomainException.Forbidden("Essa candidatura não é sua.")));
     }
 
+    /**
+     * Exige papel de administrador, ou falha com 403.
+     */
     private static void requireAdmin(User actor) {
         if (!actor.isAdmin()) {
             throw new DomainException.Forbidden("Apenas administradores podem fazer isso.");

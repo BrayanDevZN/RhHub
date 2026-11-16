@@ -5,6 +5,9 @@ import java.util.List;
 /** Definição da tabela notifications (avisos dos usuários). */
 public class NotificationsTable implements TableDefinition {
 
+    /**
+     * Nome da tabela: notifications (avisos do sino).
+     */
     @Override
     public String name() {
         return "notifications";

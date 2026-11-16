@@ -14,10 +14,18 @@ public class KafkaPublisher {
 
     private final KafkaTemplate<String, String> kafka;
 
+    /**
+     * Cria o publicador sobre o KafkaTemplate.
+     */
     public KafkaPublisher(KafkaTemplate<String, String> kafka) {
         this.kafka = kafka;
     }
 
+    /**
+     * Publica uma mensagem e só termina quando o broker confirma. Roda em thread própria (boundedElastic) porque o envio do cliente Kafka bloqueia enquanto busca informações do tópico.
+     *
+     * @param key chave da mensagem (o id da candidatura); mensagens com a mesma chave vão para a mesma partição, mantendo a ordem.
+     */
     public Mono<Void> send(String topic, String key, String payload) {
         return Mono.defer(() -> Mono.fromFuture(kafka.send(topic, key, payload)))
                 .subscribeOn(Schedulers.boundedElastic())

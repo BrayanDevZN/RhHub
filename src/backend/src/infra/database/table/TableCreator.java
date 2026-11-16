@@ -21,17 +21,26 @@ public class TableCreator {
     private final Dialect dialect;
     private final List<TableDefinition> tables;
 
+    /**
+     * Cria o criador com todas as tabelas do sistema, na ordem certa (as que são referenciadas vêm antes).
+     */
     public TableCreator(SqlExecutor sql, Dialect dialect) {
         this(sql, dialect, List.of(new UsersTable(), new UserPhotosTable(), new VacanciesTable(), new VacancyPhotosTable(), new ResumesTable(),
                 new DeadLettersTable(), new NotificationsTable()));
     }
 
+    /**
+     * Cria o criador com uma lista de tabelas escolhida, usado nos testes.
+     */
     TableCreator(SqlExecutor sql, Dialect dialect, List<TableDefinition> tables) {
         this.sql = sql;
         this.dialect = dialect;
         this.tables = tables;
     }
 
+    /**
+     * Migração simples: confere no banco se a coluna existe e, se não existir, faz ALTER TABLE para acrescentá-la. Necessário porque CREATE TABLE IF NOT EXISTS não altera uma tabela que já existe de uma versão antiga.
+     */
     private Mono<Void> addColumnIfMissing(String table, TableDefinition.ColumnAddition addition) {
         String exists = dialect == Dialect.POSTGRESQL
                 ? "SELECT 1 AS found FROM information_schema.columns WHERE table_schema = current_schema() "

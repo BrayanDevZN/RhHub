@@ -7,10 +7,16 @@ public enum DocumentType {
 
     private final String contentType;
 
+    /**
+     * Associa o tipo de documento ao seu content-type.
+     */
     DocumentType(String contentType) {
         this.contentType = contentType;
     }
 
+    /**
+     * Content-type HTTP deste tipo (usado no download do currículo).
+     */
     public String contentType() {
         return contentType;
     }

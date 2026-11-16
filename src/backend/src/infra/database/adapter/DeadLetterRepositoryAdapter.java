@@ -24,11 +24,17 @@ public class DeadLetterRepositoryAdapter implements DeadLetterRepository {
     private final SqlExecutor sql;
     private final Clock clock;
 
+    /**
+     * Cria o adapter com o executor de SQL e o relógio.
+     */
     public DeadLetterRepositoryAdapter(SqlExecutor sql, Clock clock) {
         this.sql = sql;
         this.clock = clock;
     }
 
+    /**
+     * Grava a mensagem que falhou. A origem (tópico + partição + offset) é única: se já existe, o INSERT não faz nada (ON CONFLICT DO NOTHING) e devolve o registro que já estava lá. Assim, gravar duas vezes a mesma falha nunca cria duplicata.
+     */
     @Override
     public Mono<DeadLetter> save(DeadLetter d) {
         var params = Params.of()
@@ -62,12 +68,20 @@ public class DeadLetterRepositoryAdapter implements DeadLetterRepository {
                         .add("kafka_offset", d.offset(), Long.class)).next();
     }
 
+    /**
+     * Busca uma falha pelo id.
+     *
+     * @return a falha, ou vazio.
+     */
     @Override
     public Mono<DeadLetter> findById(Long id) {
         return sql.query("SELECT " + COLUMNS + " FROM dead_letters WHERE id = :id", Params.of().add("id", id)).next()
                 .map(DeadLetterRepositoryAdapter::toDomain);
     }
 
+    /**
+     * Lista o histórico de falhas de uma chave de um tópico (por exemplo, todas as falhas de uma candidatura), as mais novas primeiro.
+     */
     @Override
     public Flux<DeadLetter> findByKey(String topic, String key) {
         return sql.query("SELECT " + COLUMNS + " FROM dead_letters WHERE topic = :topic AND message_key = :key "
@@ -75,6 +89,9 @@ public class DeadLetterRepositoryAdapter implements DeadLetterRepository {
                 .map(DeadLetterRepositoryAdapter::toDomain);
     }
 
+    /**
+     * Lista as falhas, as mais novas primeiro, com filtro opcional por status (FAILED ou RESOLVED).
+     */
     @Override
     public Flux<DeadLetter> findAll(DeadLetterStatus status) {
         var query = new StringBuilder("SELECT " + COLUMNS + " FROM dead_letters");
@@ -87,6 +104,11 @@ public class DeadLetterRepositoryAdapter implements DeadLetterRepository {
         return sql.query(query.toString(), params).map(DeadLetterRepositoryAdapter::toDomain);
     }
 
+    /**
+     * Marca a falha como resolvida e guarda a data.
+     *
+     * @throws DomainException.NotFound se o registro não existe.
+     */
     @Override
     public Mono<DeadLetter> markResolved(Long id) {
         return sql.query("UPDATE dead_letters SET status = :status, resolved_at = :now WHERE id = :id RETURNING " + COLUMNS,
@@ -96,6 +118,9 @@ public class DeadLetterRepositoryAdapter implements DeadLetterRepository {
                 .switchIfEmpty(Mono.error(new DomainException.NotFound("Registro da DLQ não encontrado")));
     }
 
+    /**
+     * Converte uma linha em {@link DeadLetter}.
+     */
     static DeadLetter toDomain(Row r) {
         return new DeadLetter(r.longValue("id"), r.string("topic"), r.string("message_key"),
                 r.intValue("kafka_partition"), r.longValue("kafka_offset"), r.string("payload"), r.string("error_type"),

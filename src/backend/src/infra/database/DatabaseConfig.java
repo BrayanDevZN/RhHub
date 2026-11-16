@@ -14,6 +14,9 @@ public class DatabaseConfig {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseConfig.class);
 
+    /**
+     * Lê a DATABASE_URL e decide o banco: vazia ou "none" usa SQLite local; postgresql:// usa PostgreSQL. Registra no log qual banco foi escolhido (sem mostrar a senha).
+     */
     @Bean
     DatabaseUrl databaseUrl(AppProperties props) {
         var url = DatabaseUrl.parse(props.database().url(), props.database().sqlitePath());
@@ -21,6 +24,9 @@ public class DatabaseConfig {
         return url;
     }
 
+    /**
+     * Cria o executor de SQL do banco escolhido: PostgreSQL (com pool) ou SQLite. É o único ponto de acesso ao banco para os adapters.
+     */
     @Bean(destroyMethod = "close")
     SqlExecutor sqlExecutor(DatabaseUrl url, AppProperties props) {
         return switch (url.kind()) {

@@ -18,6 +18,13 @@ public record DatabaseUrl(
         SQLITE
     }
 
+    /**
+     * Interpreta a DATABASE_URL.
+     *
+     * Vazia, "none" ou "null" significa SQLite no caminho informado. Caso contrário espera postgresql://usuario:senha@host:porta/banco (aceita também postgres:// e jdbc:postgresql://). Usuário e senha podem ter caracteres especiais codificados na URL. A porta padrão é 5432. SSL liga com sslmode=require, sslmode=verify ou ssl=true.
+     *
+     * @throws IllegalArgumentException se faltar host ou banco, ou se for outro banco que não PostgreSQL.
+     */
     public static DatabaseUrl parse(String raw, String sqlitePath) {
         if (isNone(raw)) {
             return new DatabaseUrl(Kind.SQLITE, null, 0, null, null, null, false, Path.of(sqlitePath).toAbsolutePath());
@@ -51,6 +58,9 @@ public record DatabaseUrl(
                 password, ssl, null);
     }
 
+    /**
+     * Diz se a URL pede o SQLite local (vazia, "none" ou "null").
+     */
     public static boolean isNone(String raw) {
         return raw == null || raw.isBlank() || "none".equalsIgnoreCase(raw.strip()) || "null".equalsIgnoreCase(raw.strip());
     }
@@ -68,6 +78,9 @@ public record DatabaseUrl(
         };
     }
 
+    /**
+     * Decodifica o texto da URL (por exemplo, %40 vira @), para senhas com caracteres especiais.
+     */
     private static String decode(String value) {
         return URLDecoder.decode(value, StandardCharsets.UTF_8);
     }

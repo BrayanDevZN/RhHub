@@ -13,6 +13,9 @@ public class AdminBootstrap {
 
     private static final Logger log = LoggerFactory.getLogger(AdminBootstrap.class);
 
+    /**
+     * Roda uma vez na subida e garante o administrador raiz. Sem ADMIN_EMAIL, não cria nada. Com ele, chama {@code ensureRootAdmin}: cria a conta (usando ADMIN_PASSWORD) se não existir, ou só garante o papel de admin se já existir. Pode rodar em toda subida sem duplicar.
+     */
     @Bean
     ApplicationRunner rootAdminRunner(AuthProperties props, AuthService auth) {
         return args -> {

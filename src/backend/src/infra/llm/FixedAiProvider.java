@@ -12,11 +12,17 @@ public class FixedAiProvider implements AiProvider {
     public static final String RESPONSE =
             "aproved | Resultado da sua candidatura | <p>Seu currículo foi aprovado (resposta fixa de teste).</p>";
 
+    /**
+     * Devolve sempre a mesma resposta aprovada, sem chamar a rede (só para o ambiente de teste).
+     */
     @Override
     public Mono<String> complete(String systemPrompt, String userInput) {
         return Mono.just(RESPONSE);
     }
 
+    /**
+     * Nome do provedor: "fixed".
+     */
     @Override
     public String name() {
         return "fixed";

@@ -24,6 +24,12 @@ class DeadLetterRecoverer implements ConsumerRecordRecoverer {
     private final DeadLetterPublishingRecoverer toTopic;
     private final BiFunction<ConsumerRecord<?, ?>, Exception, Integer> attempts;
 
+    /**
+     * Cria o recuperador.
+     *
+     * @param toTopic publica a mensagem original no tópico .DLT.
+     * @param attempts calcula quantas tentativas foram feitas.
+     */
     DeadLetterRecoverer(DeadLetterRepository deadLetters, DeadLetterPublishingRecoverer toTopic,
             BiFunction<ConsumerRecord<?, ?>, Exception, Integer> attempts) {
         this.deadLetters = deadLetters;
@@ -31,6 +37,9 @@ class DeadLetterRecoverer implements ConsumerRecordRecoverer {
         this.attempts = attempts;
     }
 
+    /**
+     * Chamado quando uma mensagem esgotou as tentativas. Grava a falha na tabela dead_letters (com tópico, partição, offset, conteúdo, tipo e texto do erro) e publica a mensagem no tópico .DLT. Se qualquer passo falhar, a exceção sobe e o Kafka entrega a mensagem de novo; gravar duas vezes não duplica, porque a origem é única.
+     */
     @Override
     public void accept(ConsumerRecord<?, ?> record, Exception exception) {
         Throwable cause = exception instanceof ListenerExecutionFailedException && exception.getCause() != null

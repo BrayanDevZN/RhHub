@@ -50,11 +50,20 @@ public class AnalyzeResumeService implements AnalyzeResume {
 
     private final Notifier notifier;
 
+    /**
+     * Cria o serviço sem notificações (usado quando só interessa analisar e enviar o e-mail).
+     */
     public AnalyzeResumeService(ResumeRepository resumes, VacancyRepository vacancies, UserRepository users,
             DocumentTextExtractor extractor, AiProvider ai, EmailPublisher emails, String prompt) {
         this(resumes, vacancies, users, extractor, ai, emails, prompt, Notifier.NONE);
     }
 
+    /**
+     * Cria o serviço completo.
+     *
+     * @param prompt texto do prompt de triagem, lido uma vez na subida.
+     * @param notifier cria os avisos do sino do candidato.
+     */
     public AnalyzeResumeService(ResumeRepository resumes, VacancyRepository vacancies, UserRepository users,
             DocumentTextExtractor extractor, AiProvider ai, EmailPublisher emails, String prompt, Notifier notifier) {
         this.notifier = notifier;
@@ -67,6 +76,13 @@ public class AnalyzeResumeService implements AnalyzeResume {
         this.prompt = prompt;
     }
 
+    /**
+     * Caso de uso principal da análise (chamado pelo AnalysisConsumer a cada mensagem do Kafka).
+     *
+     * Busca a candidatura. Se ela não existe mais, ou se já saiu de PENDING (já foi analisada), não faz nada. Isso torna seguro receber a mesma mensagem duas vezes. Candidaturas pendentes seguem para {@link #analyze}.
+     *
+     * @param resumeId id da candidatura a analisar.
+     */
     @Override
     public Mono<Void> execute(Long resumeId) {
         return resumes.findById(resumeId)
@@ -85,6 +101,13 @@ public class AnalyzeResumeService implements AnalyzeResume {
                 .then();
     }
 
+    /**
+     * Faz a análise de uma candidatura pendente.
+     *
+     * Busca em paralelo a vaga, o candidato e o arquivo. Se algum sumiu, ignora. Extrai o texto do currículo (em thread separada, porque ler PDF é trabalho pesado), pede à IA a resposta usando o prompt e os dados montados por {@link #input}, converte com {@link AnalysisResult#parse} e grava com {@link #save}.
+     *
+     * Se a IA falhar ou responder fora do formato, o erro sobe e o Kafka tenta de novo; a candidatura continua pendente.
+     */
     private Mono<Void> analyze(Resume resume) {
         return Mono.zip(vacancies.findById(resume.vacancyId()), users.findById(resume.userId()),
                         resumes.findFile(resume.id()))
@@ -103,6 +126,11 @@ public class AnalyzeResumeService implements AnalyzeResume {
                 });
     }
 
+    /**
+     * Aplica o resultado da IA.
+     *
+     * 1) Grava o status (aprovado ou recusado) e o motivo na candidatura. 2) Coloca o e-mail do resultado na fila de e-mails. Se não conseguir enfileirar, desfaz: a candidatura volta para PENDING e o erro sobe, para o Kafka tentar de novo (assim ninguém fica aprovado sem receber o e-mail). 3) Cria o aviso do sino: "Aprovado na triagem" ou "Resultado da triagem".
+     */
     private Mono<Void> save(Resume resume, User user, Vacancy vacancy, AnalysisResult result) {
         log.info("Candidatura {} analisada: {}", resume.id(), result.decision().value());
         return resumes.updateResult(resume.id(), result.decision(), result.reason())
@@ -146,6 +174,9 @@ public class AnalyzeResumeService implements AnalyzeResume {
                 : text.substring(0, MAX_RESUME_CHARS) + "\n[texto truncado por tamanho]";
     }
 
+    /**
+     * Monta o texto enviado à IA como mensagem do usuário: JOB_DESCRIPTION (título, descrição e, se existirem, REQUIREMENTS e RESPONSIBILITIES), CANDIDATE_NAME e CANDIDATE_RESUME. Esses rótulos são os que o prompt espera.
+     */
     static String input(Vacancy vacancy, User user, String resumeText) {
         var job = new StringBuilder("JOB_DESCRIPTION:\nTitle: " + vacancy.name() + "\n" + vacancy.description());
         if (vacancy.requirements() != null) {

@@ -25,6 +25,9 @@ public class RedisStore {
 
     private final ReactiveStringRedisTemplate redis;
 
+    /**
+     * Cria o acesso básico ao Redis.
+     */
     public RedisStore(ReactiveStringRedisTemplate redis) {
         this.redis = redis;
     }
@@ -49,6 +52,9 @@ public class RedisStore {
         return redis.opsForValue().get(key);
     }
 
+    /**
+     * Diz se a chave existe.
+     */
     public Mono<Boolean> exists(String key) {
         return redis.hasKey(key);
     }
@@ -68,6 +74,9 @@ public class RedisStore {
         return redis.execute(INCREMENT_WITH_TTL, List.of(key), List.of(String.valueOf(ttl.toMillis()))).next();
     }
 
+    /**
+     * Define ou renova o prazo de validade de uma chave que já existe.
+     */
     public Mono<Boolean> expire(String key, Duration ttl) {
         return redis.expire(key, ttl);
     }

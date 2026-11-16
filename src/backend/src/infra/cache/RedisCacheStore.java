@@ -14,21 +14,33 @@ public class RedisCacheStore implements CacheStore {
     private final RedisStore store;
     private final ReactiveStringRedisTemplate redis;
 
+    /**
+     * Cria o armazenamento de cache sobre o Redis.
+     */
     public RedisCacheStore(RedisStore store, ReactiveStringRedisTemplate redis) {
         this.store = store;
         this.redis = redis;
     }
 
+    /**
+     * Lê o texto da chave no Redis.
+     */
     @Override
     public Mono<String> get(String key) {
         return store.get(key);
     }
 
+    /**
+     * Guarda o texto no Redis com prazo de expiração.
+     */
     @Override
     public Mono<Void> set(String key, String value, Duration ttl) {
         return store.set(key, value, ttl);
     }
 
+    /**
+     * Apaga as chaves no Redis.
+     */
     @Override
     public Mono<Void> delete(String... keys) {
         return store.delete(keys).then();

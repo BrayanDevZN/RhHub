@@ -12,6 +12,9 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 @ConfigurationProperties(prefix = "app.web")
 public record WebProperties(String frontendOrigin, Boolean cookieSecure, @DefaultValue("Strict") String cookieSameSite) {
 
+    /**
+     * Lista de endereços do front liberados no CORS, lida de FRONTEND_URL (vários, separados por vírgula). Tira espaços e aspas e normaliza cada um; vazia significa nenhum.
+     */
     public java.util.List<String> origins() {
         if (frontendOrigin == null || frontendOrigin.isBlank()) {
             return java.util.List.of();

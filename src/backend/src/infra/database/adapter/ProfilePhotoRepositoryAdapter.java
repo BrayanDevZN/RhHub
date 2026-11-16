@@ -18,11 +18,19 @@ public class ProfilePhotoRepositoryAdapter implements ProfilePhotoRepository {
     private final SqlExecutor sql;
     private final Clock clock;
 
+    /**
+     * Cria o adapter com o executor de SQL e o relógio.
+     */
     public ProfilePhotoRepositoryAdapter(SqlExecutor sql, Clock clock) {
         this.sql = sql;
         this.clock = clock;
     }
 
+    /**
+     * Grava a foto de perfil. Se o usuário já tem foto, troca (INSERT ... ON CONFLICT DO UPDATE), então há sempre no máximo uma por usuário.
+     *
+     * @throws DomainException.NotFound se o usuário não existe.
+     */
     @Override
     public Mono<Void> save(Long userId, ProfilePhoto photo) {
         return sql.update("""
@@ -36,6 +44,11 @@ public class ProfilePhotoRepositoryAdapter implements ProfilePhotoRepository {
                 .then();
     }
 
+    /**
+     * Busca a foto (bytes e tipo).
+     *
+     * @return a foto, ou vazio se o usuário não tem.
+     */
     @Override
     public Mono<ProfilePhoto> find(Long userId) {
         return sql.query("SELECT content, content_type FROM user_photos WHERE user_id = :user_id",
@@ -43,12 +56,18 @@ public class ProfilePhotoRepositoryAdapter implements ProfilePhotoRepository {
                 .map(r -> new ProfilePhoto(r.bytes("content"), r.string("content_type")));
     }
 
+    /**
+     * Diz se o usuário tem foto, sem carregar a imagem.
+     */
     @Override
     public Mono<Boolean> exists(Long userId) {
         return sql.query("SELECT 1 AS found FROM user_photos WHERE user_id = :user_id",
                 Params.of().add("user_id", userId)).hasElements();
     }
 
+    /**
+     * Remove a foto do usuário (não faz nada se não tem).
+     */
     @Override
     public Mono<Void> delete(Long userId) {
         return sql.update("DELETE FROM user_photos WHERE user_id = :user_id", Params.of().add("user_id", userId)).then();

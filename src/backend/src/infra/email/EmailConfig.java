@@ -20,6 +20,11 @@ public class EmailConfig {
 
     private static final Logger log = LoggerFactory.getLogger(EmailConfig.class);
 
+    /**
+     * Escolhe como os e-mails são enviados.
+     *
+     * 1) ENVIRONMENT=test: não envia, só registra no log. 2) Com gmail_secret definido: usa o n8n. 3) Sem o segredo: a aplicação sobe, mas cada envio falha com {@code EmailException}. O modo escolhido é registrado no log da subida.
+     */
     @Bean
     EmailSender emailSender(AppProperties props, Clock clock, ObjectMapper mapper) {
         var email = props.email();

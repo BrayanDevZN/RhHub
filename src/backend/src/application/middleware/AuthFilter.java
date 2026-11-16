@@ -37,12 +37,18 @@ public class AuthFilter implements WebFilter, Ordered {
     private final Clock clock;
     private final WebSupport web;
 
+    /**
+     * Cria o filtro de autenticação.
+     */
     public AuthFilter(JwtService jwt, Clock clock, WebSupport web) {
         this.jwt = jwt;
         this.clock = clock;
         this.web = web;
     }
 
+    /**
+     * Posição na fila: roda cedo (-100), antes do limite de requisições, para este poder contar por usuário.
+     */
     @Override
     public int getOrder() {
         return -100;
@@ -53,6 +59,9 @@ public class AuthFilter implements WebFilter, Ordered {
         return PUBLIC.contains(method + " " + path) || !path.startsWith("/api/");
     }
 
+    /**
+     * Valida o login em toda rota /api, menos as públicas e as requisições OPTIONS. Lê o cookie de acesso, confere o JWT (assinatura, validade e tipo) e guarda o identificador do usuário na requisição para o resto do sistema. Token ausente, vencido ou adulterado vira 401.
+     */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         var request = exchange.getRequest();

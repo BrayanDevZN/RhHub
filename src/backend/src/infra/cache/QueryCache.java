@@ -41,6 +41,9 @@ public class QueryCache {
             .build();
     private final AtomicLong pausedUntil = new AtomicLong();
 
+    /**
+     * Cria o cache sobre um armazenamento (na prática, o Redis).
+     */
     public QueryCache(CacheStore store) {
         this.store = store;
     }
@@ -58,14 +61,23 @@ public class QueryCache {
                 .flatMap(values -> write(key, values, ttl).thenReturn(values)))).flatMapMany(Flux::fromIterable);
     }
 
+    /**
+     * Apaga chaves do cache para forçar a próxima leitura a ir ao banco. Falha do Redis é ignorada (só registrada).
+     */
     public Mono<Void> evict(String... keys) {
         return guarded(store.delete(keys), "apagar " + String.join(",", keys));
     }
 
+    /**
+     * Apaga todas as chaves que começam com o prefixo (por exemplo, todas as vagas).
+     */
     public Mono<Void> evictPrefix(String prefix) {
         return guarded(store.deleteByPrefix(prefix), "apagar o prefixo " + prefix);
     }
 
+    /**
+     * Lê e converte o valor do cache. Qualquer falha do Redis (erro ou lentidão acima de 300 ms) conta como "não achei" e liga a pausa do cache. Valor ilegível é apagado e ignorado.
+     */
     private <T> Mono<T> read(String key, JavaType type) {
         if (paused()) {
             return Mono.empty();
@@ -83,6 +95,9 @@ public class QueryCache {
         });
     }
 
+    /**
+     * Converte o valor em JSON e guarda com prazo. Falha vira só um aviso e liga a pausa, nunca derruba a requisição.
+     */
     private Mono<Void> write(String key, Object value, Duration ttl) {
         if (paused()) {
             return Mono.empty();
@@ -103,10 +118,16 @@ public class QueryCache {
         });
     }
 
+    /**
+     * Diz se o cache está em pausa. Depois de uma falha, ele fica desligado por 30 segundos para não pagar o tempo limite em cada requisição.
+     */
     private boolean paused() {
         return System.currentTimeMillis() < pausedUntil.get();
     }
 
+    /**
+     * Registra a falha do cache no log (uma vez por pausa) e liga a pausa de 30 segundos.
+     */
     private void trip(String what, Throwable error) {
         if (!paused()) {
             log.warn("Cache indisponível ({}): {}. Seguindo sem cache por {} s", what, error.toString(), PAUSE_MS / 1000);

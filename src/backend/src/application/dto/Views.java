@@ -12,9 +12,15 @@ import java.util.UUID;
 /** O que a API devolve (campos em snake_case, como na DOCUMENTACAO.md). Nunca inclui hash de senha nem google_sub. */
 public final class Views {
 
+    /**
+     * Classe utilitária: não é criada.
+     */
     private Views() {
     }
 
+    /**
+     * JSON de um usuário enviado ao front, com os nomes em snake_case (public_id, two_factor, has_photo, created_at). Nunca inclui hash de senha nem o id do Google. Campos nulos não aparecem.
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record UserView(
             Long id,
@@ -47,6 +53,9 @@ public final class Views {
             @JsonProperty("created_at") Instant createdAt) {
     }
 
+    /**
+     * JSON de uma candidatura enviado ao front: ids, nome e tipo do arquivo, situação (pending, aproved ou recuse), motivo da IA, etapa atual e data. O arquivo em si não vai aqui (tem rota própria de download).
+     */
     public record ResumeView(
             Long id,
             @JsonProperty("user_id") Long userId,
@@ -59,6 +68,9 @@ public final class Views {
             @JsonProperty("created_at") Instant createdAt) {
     }
 
+    /**
+     * JSON de um aviso do sino: título, mensagem, rota do app para onde o clique leva, se já foi lido e a data.
+     */
     public record NotificationView(
             Long id,
             String title,
@@ -68,26 +80,45 @@ public final class Views {
             @JsonProperty("created_at") Instant createdAt) {
     }
 
+    /**
+     * JSON da caixa de avisos: a lista dos mais recentes e o total de não lidos.
+     */
     public record InboxView(List<NotificationView> items, long unread) {
     }
 
+    /**
+     * Converte a caixa de avisos do serviço para o formato enviado ao front.
+     */
     public static InboxView inbox(br.rhhub.service.NotificationService.Inbox inbox) {
         return new InboxView(inbox.items().stream()
                 .map(n -> new NotificationView(n.id(), n.title(), n.message(), n.link(), n.read(), n.createdAt()))
                 .toList(), inbox.unread());
     }
 
+    /**
+     * Converte um usuário para o formato do front.
+     *
+     * @param hasPhoto se o usuário tem foto; passe nulo para omitir o campo (listagens de admin).
+     */
     public static UserView user(User u, Boolean hasPhoto) {
         return new UserView(u.id(), u.publicId(), u.name(), u.email(), u.cpf(), u.age(),
                 u.gender() == null ? null : u.gender().value(), u.twoFactor(), u.role().value(), u.provider().value(),
                 hasPhoto, u.createdAt());
     }
 
+    /**
+     * Converte uma vaga para o formato do front.
+     *
+     * @param admin se true, inclui os dados que só o RH vê: número de candidatos e quem criou a vaga.
+     */
     public static VacancyView vacancy(Vacancy v, boolean admin) {
         return new VacancyView(v.id(), v.name(), v.description(), v.requirements(), v.responsibilities(), v.hasPhoto(), v.stages(), v.expiresAt(), admin ? v.applicants() : null,
                 admin ? v.createdBy() : null, v.createdAt());
     }
 
+    /**
+     * Converte uma candidatura para o formato do front.
+     */
     public static ResumeView resume(Resume r) {
         return new ResumeView(r.id(), r.userId(), r.vacancyId(), r.fileName(), r.contentType(), r.status().value(),
                 r.reason(), r.stage(), r.createdAt());

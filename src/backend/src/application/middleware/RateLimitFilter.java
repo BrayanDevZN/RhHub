@@ -23,16 +23,25 @@ public class RateLimitFilter implements WebFilter, Ordered {
     private final RateLimiter limiter;
     private final AuthProperties props;
 
+    /**
+     * Cria o filtro de limite de requisições.
+     */
     public RateLimitFilter(RateLimiter limiter, AuthProperties props) {
         this.limiter = limiter;
         this.props = props;
     }
 
+    /**
+     * Posição na fila: logo depois do AuthFilter (-90), para já saber quem é o usuário.
+     */
     @Override
     public int getOrder() {
         return -90;
     }
 
+    /**
+     * Aplica o limite por minuto. Sempre conta um contador global. Depois conta por usuário (rotas logadas) ou por IP (rotas públicas); POSTs públicos, que enviam e-mail ou conferem senha, contam por IP + rota com teto de 10 por minuto. Passando do limite, a requisição vira 429. A rota /api/health e as OPTIONS ficam de fora.
+     */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         var request = exchange.getRequest();

@@ -12,6 +12,14 @@ public record KafkaUrl(String bootstrapServers) {
     public static final int DEFAULT_PORT = 9092;
     public static final String LOCAL = "localhost:" + DEFAULT_PORT;
 
+    /**
+     * Interpreta o KAFKA_URL.
+     *
+     * Vazio, "none" ou "null" usa localhost:9092. Aceita vários endereços separados por vírgula, com ou sem esquema (kafka://) e sem a porta (usa 9092).
+     *
+     * @return os brokers no formato host:porta,host:porta.
+     * @throws IllegalArgumentException se a porta não for número entre 1 e 65535 ou se não houver endereço válido.
+     */
     public static KafkaUrl parse(String raw) {
         if (raw == null || raw.isBlank() || "none".equalsIgnoreCase(raw.strip()) || "null".equalsIgnoreCase(raw.strip())) {
             return new KafkaUrl(LOCAL);

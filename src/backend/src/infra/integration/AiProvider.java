@@ -12,10 +12,16 @@ public interface AiProvider {
     String name();
 
     class AiException extends RuntimeException {
+        /**
+         * Falha ao chamar a IA, com a mensagem.
+         */
         public AiException(String message) {
             super(message);
         }
 
+        /**
+         * Falha ao chamar a IA, guardando a causa original.
+         */
         public AiException(String message, Throwable cause) {
             super(message, cause);
         }

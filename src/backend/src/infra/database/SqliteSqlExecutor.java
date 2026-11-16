@@ -26,6 +26,9 @@ public class SqliteSqlExecutor implements SqlExecutor, AutoCloseable {
     private final NamedParameterJdbcTemplate jdbc;
     private final Scheduler scheduler = Schedulers.newSingle("sqlite", true);
 
+    /**
+     * Abre o SQLite local: cria a pasta do arquivo, se faltar, e abre uma única conexão com autocommit. Todas as operações rodam numa thread própria, uma por vez, porque o SQLite aceita um escritor só.
+     */
     public SqliteSqlExecutor(DatabaseUrl url) {
         try {
             Files.createDirectories(url.sqliteFile().getParent());
@@ -37,6 +40,9 @@ public class SqliteSqlExecutor implements SqlExecutor, AutoCloseable {
         this.jdbc = new NamedParameterJdbcTemplate(dataSource);
     }
 
+    /**
+     * Executa a consulta numa thread dedicada (o JDBC bloqueia) e converte cada linha em {@link Row}. Violações de unicidade e de chave estrangeira viram {@link ConstraintViolation}.
+     */
     @Override
     public Flux<Row> query(String sql, Params params) {
         return Mono.fromCallable(() -> jdbc.queryForList(sql, source(params)))
@@ -45,6 +51,9 @@ public class SqliteSqlExecutor implements SqlExecutor, AutoCloseable {
                 .flatMapMany(rows -> Flux.fromIterable(rows).map(Row::new));
     }
 
+    /**
+     * Executa o comando numa thread dedicada e devolve quantas linhas mudaram. Violações viram {@link ConstraintViolation}.
+     */
     @Override
     public Mono<Long> update(String sql, Params params) {
         return Mono.fromCallable(() -> (long) jdbc.update(sql, source(params)))
@@ -67,6 +76,9 @@ public class SqliteSqlExecutor implements SqlExecutor, AutoCloseable {
         return source;
     }
 
+    /**
+     * Traduz o erro do banco: mensagens "UNIQUE constraint failed" ou "FOREIGN KEY constraint failed" viram {@link ConstraintViolation}; qualquer outro erro passa como está.
+     */
     private static Throwable translate(DataAccessException e) {
         Throwable cause = e.getMostSpecificCause();
         if (cause instanceof SQLException sql && sql.getMessage() != null
@@ -77,6 +89,9 @@ public class SqliteSqlExecutor implements SqlExecutor, AutoCloseable {
         return e;
     }
 
+    /**
+     * Encerra a thread e a conexão do SQLite ao desligar a aplicação.
+     */
     @Override
     public void close() {
         scheduler.dispose();

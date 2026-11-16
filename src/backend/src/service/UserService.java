@@ -23,6 +23,9 @@ public class UserService {
     private final RefreshTokenStore refreshTokens;
     private final AccessPolicy policy;
 
+    /**
+     * Cria o serviço de usuários.
+     */
     public UserService(UserRepository users, PasswordHasher hasher, RefreshTokenStore refreshTokens, AccessPolicy policy) {
         this.users = users;
         this.passwords = new AsyncPasswordHasher(hasher);
@@ -30,6 +33,11 @@ public class UserService {
         this.policy = policy;
     }
 
+    /**
+     * Busca o usuário completo (com o hash de senha) para poder alterá-lo.
+     *
+     * @throws DomainException.Unauthorized "Sessão inválida" se a conta não existe mais.
+     */
     public Mono<User> me(UUID publicId) {
         return users.findByPublicId(publicId).switchIfEmpty(Mono.error(new DomainException.Unauthorized("Sessão inválida.")));
     }
@@ -40,6 +48,14 @@ public class UserService {
                 .switchIfEmpty(Mono.error(new DomainException.Unauthorized("Sessão inválida.")));
     }
 
+    /**
+     * Altera dados do próprio perfil: idade, gênero, 2FA e CPF. Só os campos enviados mudam.
+     *
+     * O CPF só pode ser preenchido uma vez e precisa ser único. Contas do Google não podem ligar o 2FA.
+     *
+     * @throws DomainException.Unprocessable se tentar mudar um CPF já preenchido ou ligar 2FA numa conta Google.
+     * @throws DomainException.Conflict se o CPF já pertence a outra conta.
+     */
     public Mono<User> update(UUID publicId, Update change) {
         return Mono.defer(() -> me(publicId).flatMap(user -> {
             Integer age = change.age() == null ? user.age() : Integer.valueOf(Rules.age(change.age()));

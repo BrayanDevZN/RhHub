@@ -31,6 +31,15 @@ public class OpenAiCompatibleProvider implements AiProvider {
     private final Duration timeout;
     private final WebClient client;
 
+    /**
+     * Cria o cliente de uma API compatível com a da OpenAI (serve para OpenAI e Groq).
+     *
+     * @param name nome para o log ("openai" ou "groq").
+     * @param apiKey chave, enviada como Authorization: Bearer.
+     * @param model modelo usado.
+     * @param baseUrl endereço base da API.
+     * @param timeout tempo máximo de espera por chamada.
+     */
     public OpenAiCompatibleProvider(String name, String apiKey, String model, String baseUrl, Duration timeout) {
         this.name = name;
         this.model = model;
@@ -43,6 +52,12 @@ public class OpenAiCompatibleProvider implements AiProvider {
                 .build();
     }
 
+    /**
+     * Pede uma resposta ao modelo: POST em /chat/completions com duas mensagens, a de sistema (o prompt) e a do usuário (vaga e currículo). Se o provedor responder 429 (limite de taxa), espera o tempo do cabeçalho Retry-After e tenta de novo, até um número limitado de vezes.
+     *
+     * @return o texto da primeira resposta do modelo.
+     * @throws AiProvider.AiException se der qualquer falha ou a resposta vier vazia.
+     */
     @Override
     public Mono<String> complete(String systemPrompt, String userInput) {
         var body = Map.of(
@@ -96,6 +111,9 @@ public class OpenAiCompatibleProvider implements AiProvider {
         return "Falha ao chamar " + name + ": " + e.getClass().getSimpleName() + (e.getMessage() == null ? "" : " " + e.getMessage());
     }
 
+    /**
+     * Nome do provedor, usado no log.
+     */
     @Override
     public String name() {
         return name;

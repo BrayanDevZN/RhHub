@@ -11,20 +11,40 @@ public final class AccessPolicy {
 
     private final String rootEmail;
 
+    /**
+     * Cria a política de acesso.
+     *
+     * @param rootEmail e-mail do administrador raiz (ADMIN_EMAIL). É normalizado (sem espaços, minúsculas); nulo vira vazio, e então ninguém é raiz.
+     */
     public AccessPolicy(String rootEmail) {
         this.rootEmail = rootEmail == null ? "" : rootEmail.strip().toLowerCase();
     }
 
+    /**
+     * Diz se o usuário é o administrador raiz. O raiz não é um papel guardado no banco: é um admin cujo e-mail é igual ao ADMIN_EMAIL.
+     *
+     * @return true só se o usuário é admin, o e-mail raiz está configurado e é o mesmo do usuário.
+     */
     public boolean isRoot(User user) {
         return user.isAdmin() && !rootEmail.isEmpty() && rootEmail.equals(user.email());
     }
 
+    /**
+     * Exige que quem faz a ação seja administrador.
+     *
+     * @throws DomainException.Forbidden (403) se não for admin.
+     */
     public void requireAdmin(User actor) {
         if (!actor.isAdmin()) {
             throw new DomainException.Forbidden("Apenas administradores podem fazer isso.");
         }
     }
 
+    /**
+     * Exige que quem faz a ação seja o administrador raiz.
+     *
+     * @throws DomainException.Forbidden (403) se não for o raiz.
+     */
     public void requireRoot(User actor) {
         if (!isRoot(actor)) {
             throw new DomainException.Forbidden("Apenas o administrador raiz pode fazer isso.");
@@ -58,6 +78,11 @@ public final class AccessPolicy {
         requireRoot(actor);
     }
 
+    /**
+     * Papel que a pessoa passa a ter depois de promovida.
+     *
+     * @return sempre {@link Role#ADMIN}.
+     */
     public Role roleAfterPromotion() {
         return Role.ADMIN;
     }

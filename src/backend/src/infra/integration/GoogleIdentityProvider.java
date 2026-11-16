@@ -13,6 +13,9 @@ public interface GoogleIdentityProvider {
     /** Troca o code devolvido pelo Google pelo perfil do usuário. Erro Unauthorized se o Google recusar. */
     Mono<Profile> fetchProfile(String code);
 
+    /**
+     * Perfil devolvido pelo Google: sub (identificador estável da conta), e-mail, se o Google verificou o e-mail e o nome.
+     */
     record Profile(String sub, String email, boolean emailVerified, String name) {
     }
 
@@ -23,11 +26,17 @@ public interface GoogleIdentityProvider {
     class LoginFailure extends RuntimeException {
         private final String reason;
 
+        /**
+         * Cria a falha com um código curto do motivo (invalid_grant, google_unreachable...) e a causa original.
+         */
         public LoginFailure(String reason, Throwable cause) {
             super("Google recusou o login: " + reason, cause);
             this.reason = reason;
         }
 
+        /**
+         * Código curto do motivo, que vai na URL de volta ao login e é traduzido numa mensagem na tela.
+         */
         public String reason() {
             return reason;
         }

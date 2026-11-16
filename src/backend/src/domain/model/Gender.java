@@ -9,6 +9,11 @@ public enum Gender {
         return name().toLowerCase();
     }
 
+    /**
+     * Converte o texto lido do banco ou da requisição para o enum, sem diferenciar maiúsculas nem espaços nas pontas.
+     *
+     * @throws IllegalArgumentException se o texto não for um valor de Gender.
+     */
     public static Gender from(String value) {
         return valueOf(value.trim().toUpperCase());
     }

@@ -11,11 +11,17 @@ import reactor.core.publisher.Mono;
 @Component
 public class SecurityHeadersFilter implements WebFilter, Ordered {
 
+    /**
+     * Posição na fila: a primeira de todas, para o cabeçalho sair até em respostas de erro.
+     */
     @Override
     public int getOrder() {
         return Ordered.HIGHEST_PRECEDENCE;
     }
 
+    /**
+     * Acrescenta à resposta: X-Content-Type-Options nosniff (o navegador não adivinha o tipo do arquivo), X-Frame-Options DENY (a página não abre dentro de iframe) e Referrer-Policy no-referrer (não vaza a URL de origem).
+     */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         var headers = exchange.getResponse().getHeaders();

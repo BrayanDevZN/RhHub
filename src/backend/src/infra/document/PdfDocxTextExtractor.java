@@ -21,6 +21,11 @@ public class PdfDocxTextExtractor implements DocumentTextExtractor {
     private static final byte[] PDF_MAGIC = {'%', 'P', 'D', 'F', '-'};
     private static final byte[] ZIP_MAGIC = {'P', 'K', 3, 4};
 
+    /**
+     * Descobre o tipo pelo conteúdo, não pelo nome nem pelo cabeçalho: PDF começa com "%PDF-" e DOCX é um zip (começa com PK) que contém word/document.xml.
+     *
+     * @return o tipo, ou vazio se não for PDF nem DOCX.
+     */
     @Override
     public Optional<DocumentType> detect(byte[] content) {
         if (content == null) {
@@ -35,6 +40,11 @@ public class PdfDocxTextExtractor implements DocumentTextExtractor {
         return Optional.empty();
     }
 
+    /**
+     * Extrai o texto do documento (PDFBox para PDF e Apache POI para DOCX).
+     *
+     * @throws DomainException.Unprocessable se o arquivo estiver corrompido ou não puder ser lido.
+     */
     @Override
     public String extract(byte[] content, DocumentType type) {
         try {
@@ -47,12 +57,18 @@ public class PdfDocxTextExtractor implements DocumentTextExtractor {
         }
     }
 
+    /**
+     * Lê todas as páginas do PDF e junta o texto.
+     */
     private static String pdfText(byte[] content) throws IOException {
         try (var doc = Loader.loadPDF(content)) {
             return new PDFTextStripper().getText(doc).strip();
         }
     }
 
+    /**
+     * Lê o texto do documento Word.
+     */
     private static String docxText(byte[] content) throws IOException {
         try (var doc = new XWPFDocument(new ByteArrayInputStream(content));
                 var extractor = new XWPFWordExtractor(doc)) {
@@ -60,6 +76,9 @@ public class PdfDocxTextExtractor implements DocumentTextExtractor {
         }
     }
 
+    /**
+     * Diz se o conteúdo começa exatamente com os bytes do prefixo (a "assinatura" do tipo de arquivo).
+     */
     private static boolean startsWith(byte[] content, byte[] prefix) {
         if (content.length < prefix.length) {
             return false;

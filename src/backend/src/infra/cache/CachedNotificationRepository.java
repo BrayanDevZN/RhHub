@@ -24,6 +24,9 @@ public class CachedNotificationRepository implements NotificationRepository {
     private final NotificationRepository db;
     private final QueryCache cache;
 
+    /**
+     * Construtor usado pelo Spring: envolve o adapter do banco com cache.
+     */
     @Autowired
     public CachedNotificationRepository(NotificationRepositoryAdapter db, QueryCache cache) {
         this((NotificationRepository) db, cache);
@@ -35,29 +38,44 @@ public class CachedNotificationRepository implements NotificationRepository {
         this.cache = cache;
     }
 
+    /**
+     * Lista os avisos do usuário pelo cache (60 s). Se não estiver, lê do banco e guarda.
+     */
     @Override
     public Flux<Notification> findByUser(Long userId, int limit) {
         return cache.list(CacheKeys.notificationList(userId, limit), CacheKeys.SHORT, Notification.class,
                 () -> db.findByUser(userId, limit));
     }
 
+    /**
+     * Conta os avisos não lidos pelo cache (60 s).
+     */
     @Override
     public Mono<Long> countUnread(Long userId) {
         return cache.one(CacheKeys.notificationUnread(userId), CacheKeys.SHORT, Long.class, () -> db.countUnread(userId));
     }
 
+    /**
+     * Grava o aviso no banco e apaga o cache do usuário, para o sino mostrar o aviso novo.
+     */
     @Override
     public Mono<Notification> create(Notification notification) {
         return db.create(notification)
                 .flatMap(saved -> cache.evictPrefix(CacheKeys.notificationPrefix(saved.userId())).thenReturn(saved));
     }
 
+    /**
+     * Marca como lido no banco e apaga o cache do usuário, para o contador mudar na hora.
+     */
     @Override
     public Mono<Boolean> markRead(Long id, Long userId) {
         return db.markRead(id, userId)
                 .flatMap(found -> cache.evictPrefix(CacheKeys.notificationPrefix(userId)).thenReturn(found));
     }
 
+    /**
+     * Marca todos como lidos no banco e apaga o cache do usuário.
+     */
     @Override
     public Mono<Void> markAllRead(Long userId) {
         return db.markAllRead(userId).then(cache.evictPrefix(CacheKeys.notificationPrefix(userId)));

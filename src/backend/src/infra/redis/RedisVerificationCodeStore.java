@@ -19,10 +19,19 @@ public class RedisVerificationCodeStore implements VerificationCodeStore {
 
     private final RedisStore redis;
 
+    /**
+     * Cria o guarda de códigos de verificação sobre o Redis.
+     */
     public RedisVerificationCodeStore(RedisStore redis) {
         this.redis = redis;
     }
 
+    /**
+     * Gera um código de 6 dígitos e o guarda com a validade da finalidade, substituindo o anterior e zerando o contador de erros. Só permite um código por minuto para o mesmo e-mail e finalidade (uma chave ":cooldown" criada só se ainda não existe).
+     *
+     * @return o código gerado.
+     * @throws DomainException.TooManyRequests se outro código foi pedido há menos de um minuto.
+     */
     @Override
     public Mono<String> issue(CodePurpose purpose, String email) {
         String key = purpose.key(email);
@@ -37,6 +46,14 @@ public class RedisVerificationCodeStore implements VerificationCodeStore {
         });
     }
 
+    /**
+     * Confere o código digitado. Certo: apaga o código e o contador, então ele vale uma vez. Errado: soma 1 no contador de tentativas; na 5ª tentativa errada apaga o código e responde 429.
+     *
+     * A comparação é em tempo constante, para não vazar por quanto tempo demora.
+     *
+     * @throws DomainException.Unauthorized "Código inválido ou expirado" se errou ou não existe.
+     * @throws DomainException.TooManyRequests se chegou a 5 erros.
+     */
     @Override
     public Mono<Void> verify(CodePurpose purpose, String email, String code) {
         String key = purpose.key(email);

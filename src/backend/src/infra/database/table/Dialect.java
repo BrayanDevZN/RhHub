@@ -7,6 +7,9 @@ public enum Dialect {
     POSTGRESQL,
     SQLITE;
 
+    /**
+     * Escolhe o dialeto a partir do tipo de banco da URL.
+     */
     public static Dialect of(DatabaseUrl.Kind kind) {
         return kind == DatabaseUrl.Kind.POSTGRESQL ? POSTGRESQL : SQLITE;
     }
@@ -21,18 +24,30 @@ public enum Dialect {
         return this == POSTGRESQL ? "BIGINT" : "INTEGER";
     }
 
+    /**
+     * Tipo de número inteiro comum (igual nos dois bancos).
+     */
     public String integer() {
         return "INTEGER";
     }
 
+    /**
+     * Tipo de texto com tamanho máximo. No PostgreSQL é VARCHAR(n); o SQLite não limita o tamanho e usa TEXT.
+     */
     public String varchar(int size) {
         return this == POSTGRESQL ? "VARCHAR(" + size + ")" : "TEXT";
     }
 
+    /**
+     * Tipo de texto longo, sem limite (igual nos dois bancos).
+     */
     public String text() {
         return "TEXT";
     }
 
+    /**
+     * Tipo de UUID: UUID no PostgreSQL e TEXT no SQLite, que não tem esse tipo.
+     */
     public String uuid() {
         return this == POSTGRESQL ? "UUID" : "TEXT";
     }
@@ -54,6 +69,9 @@ public enum Dialect {
         return this == POSTGRESQL ? "TIMESTAMPTZ" : "TEXT";
     }
 
+    /**
+     * Tipo de dado binário (arquivos e imagens): BYTEA no PostgreSQL e BLOB no SQLite.
+     */
     public String blob() {
         return this == POSTGRESQL ? "BYTEA" : "BLOB";
     }

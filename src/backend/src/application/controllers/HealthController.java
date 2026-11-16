@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class HealthController {
 
+    /**
+     * GET /api/health. Responde {"status": "ok"}. Rota pública, usada pela plataforma e pelo Docker para saber se a API está de pé.
+     */
     @GetMapping("/api/health")
     Map<String, Object> health() {
         return Map.of("status", "ok");

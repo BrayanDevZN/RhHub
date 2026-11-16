@@ -12,24 +12,41 @@ public enum TokenType {
     private final String cookie;
     private final Duration lifetime;
 
+    /**
+     * Define um tipo de token: o valor do campo typ dentro do JWT, o nome do cookie e a validade.
+     */
     TokenType(String claim, String cookie, Duration lifetime) {
         this.claim = claim;
         this.cookie = cookie;
         this.lifetime = lifetime;
     }
 
+    /**
+     * Valor gravado no campo typ do JWT ("access", "refresh" ou "2fa").
+     */
     public String claim() {
         return claim;
     }
 
+    /**
+     * Nome do cookie HTTP onde o token viaja.
+     */
     public String cookie() {
         return cookie;
     }
 
+    /**
+     * Validade do token: 15 min (acesso), 7 dias (refresh) e 5 min (2FA).
+     */
     public Duration lifetime() {
         return lifetime;
     }
 
+    /**
+     * Descobre o tipo a partir do campo typ lido do JWT.
+     *
+     * @return o tipo, ou nulo se o valor não existir (o token é então recusado).
+     */
     static TokenType fromClaim(String value) {
         for (TokenType type : values()) {
             if (type.claim.equals(value)) {

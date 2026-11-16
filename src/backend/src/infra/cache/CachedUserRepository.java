@@ -26,6 +26,9 @@ public class CachedUserRepository implements UserRepository {
     private final UserRepository db;
     private final QueryCache cache;
 
+    /**
+     * Construtor usado pelo Spring: envolve o adapter do banco.
+     */
     @Autowired
     public CachedUserRepository(UserRepositoryAdapter db, QueryCache cache) {
         this((UserRepository) db, cache);
@@ -37,12 +40,18 @@ public class CachedUserRepository implements UserRepository {
         this.cache = cache;
     }
 
+    /**
+     * Leitura de quem está logado, feita em toda requisição autenticada. Vem do cache (5 min); se não estiver, lê do banco, tira o hash da senha e o id do Google, e guarda. Nada sigiloso vai para o Redis.
+     */
     @Override
     public Mono<User> findIdentityByPublicId(UUID publicId) {
         return cache.one(CacheKeys.userIdentity(publicId), CacheKeys.LONG, User.class,
                 () -> db.findIdentityByPublicId(publicId));
     }
 
+    /**
+     * Grava no banco e apaga a identidade em cache daquele usuário, para a próxima requisição ver o dado novo (por exemplo, o papel de admin).
+     */
     @Override
     public Mono<User> save(User user) {
         return db.save(user).flatMap(saved -> cache.evict(CacheKeys.userIdentity(saved.publicId())).thenReturn(saved));
@@ -61,36 +70,57 @@ public class CachedUserRepository implements UserRepository {
                         .then(id.isPresent() ? cache.evictPrefix(CacheKeys.notificationPrefix(id.get())) : Mono.empty()));
     }
 
+    /**
+     * Sem cache: lê direto do banco.
+     */
     @Override
     public Mono<User> findById(Long id) {
         return db.findById(id);
     }
 
+    /**
+     * Sem cache: devolve o usuário completo (com hash de senha) e por isso nunca passa pelo Redis.
+     */
     @Override
     public Mono<User> findByPublicId(UUID publicId) {
         return db.findByPublicId(publicId);
     }
 
+    /**
+     * Sem cache: traz o hash da senha, que não pode ir para o Redis.
+     */
     @Override
     public Mono<User> findByEmail(String email) {
         return db.findByEmail(email);
     }
 
+    /**
+     * Sem cache: lê direto do banco.
+     */
     @Override
     public Mono<User> findByGoogleSub(String googleSub) {
         return db.findByGoogleSub(googleSub);
     }
 
+    /**
+     * Sem cache: lê direto do banco.
+     */
     @Override
     public Mono<Boolean> existsByEmail(String email) {
         return db.existsByEmail(email);
     }
 
+    /**
+     * Sem cache: lê direto do banco.
+     */
     @Override
     public Mono<Boolean> existsByCpf(String cpf) {
         return db.existsByCpf(cpf);
     }
 
+    /**
+     * Sem cache: lê direto do banco.
+     */
     @Override
     public Flux<User> findAll() {
         return db.findAll();

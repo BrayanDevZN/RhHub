@@ -30,19 +30,34 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/api")
 public class UserController {
 
+    /**
+     * Corpo do pedido do código de cadastro: nome e e-mail.
+     */
     public record SignupCodeRequest(String name, String email) {
     }
 
+    /**
+     * Corpo do cadastro: nome, e-mail, CPF, idade, gênero, senha e o código recebido por e-mail.
+     */
     public record SignupRequest(String name, String email, String cpf, Integer age, String gender, String password,
             String code) {
     }
 
+    /**
+     * Corpo da edição de perfil: set (qual campo: age, gender, cpf ou two_factor) e value (o novo valor).
+     */
     public record PatchRequest(String set, JsonNode value) {
     }
 
+    /**
+     * Corpo da exclusão de conta: a senha, para confirmar (contas do Google não precisam).
+     */
     public record DeleteRequest(String password) {
     }
 
+    /**
+     * Corpo de completar o cadastro: CPF, idade e gênero.
+     */
     public record ProfileRequest(String cpf, Integer age, String gender) {
     }
 
@@ -51,6 +66,9 @@ public class UserController {
     private final ProfilePhotoService photos;
     private final WebSupport web;
 
+    /**
+     * Recebe os serviços de que as rotas precisam; o Spring os injeta.
+     */
     public UserController(AuthService auth, UserService users, ProfilePhotoService photos, WebSupport web) {
         this.auth = auth;
         this.users = users;
@@ -58,11 +76,17 @@ public class UserController {
         this.web = web;
     }
 
+    /**
+     * POST /api/sender/signup-code. Primeiro passo do cadastro: envia o código de confirmação para o e-mail informado.
+     */
     @PostMapping("/sender/signup-code")
     Mono<Map<String, Object>> signupCode(@RequestBody SignupCodeRequest body) {
         return auth.requestSignupCode(body.name(), body.email()).map(AuthController::codeBody);
     }
 
+    /**
+     * POST /api/users. Segundo passo do cadastro: cria a conta com o código recebido, abre a sessão (cookies) e devolve o usuário (201).
+     */
     @PostMapping("/users")
     @ResponseStatus(HttpStatus.CREATED)
     Mono<Views.UserView> signup(@RequestBody SignupRequest body, ServerWebExchange exchange) {
@@ -73,6 +97,9 @@ public class UserController {
                 });
     }
 
+    /**
+     * GET /api/users/me. Devolve quem está logado, incluindo se tem foto. É a primeira chamada do front para saber se há sessão.
+     */
     @GetMapping("/users/me")
     Mono<Views.UserView> me(ServerWebExchange exchange) {
         return web.actor(exchange).flatMap(user -> photos.has(user).map(has -> Views.user(user, has)));
@@ -93,6 +120,9 @@ public class UserController {
                 .flatMap(user -> photos.has(user).map(has -> Views.user(user, has)));
     }
 
+    /**
+     * DELETE /api/users/me. Exclui a própria conta e apaga os cookies de sessão (204).
+     */
     @DeleteMapping("/users/me")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     Mono<Void> delete(@RequestBody(required = false) DeleteRequest body, ServerWebExchange exchange) {
@@ -103,6 +133,9 @@ public class UserController {
 
     // ---- foto de perfil ----
 
+    /**
+     * PUT /api/users/me/photo. Envia ou troca a foto de perfil (JPEG, PNG ou WebP, até 2 MB).
+     */
     @PutMapping(value = "/users/me/photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     Mono<Map<String, Object>> uploadPhoto(@RequestPart("file") FilePart file, ServerWebExchange exchange) {
         return web.actor(exchange)
@@ -111,22 +144,36 @@ public class UserController {
                 .then(Mono.fromSupplier(() -> Map.<String, Object>of("status", true)));
     }
 
+    /**
+     * GET /api/users/me/photo. Devolve a própria foto de perfil.
+     */
     @GetMapping("/users/me/photo")
     Mono<ResponseEntity<byte[]>> photo(ServerWebExchange exchange) {
         return web.actor(exchange).flatMap(actor -> photos.get(actor, null)).map(UserController::image);
     }
 
+    /**
+     * DELETE /api/users/me/photo. Remove a própria foto (204).
+     */
     @DeleteMapping("/users/me/photo")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     Mono<Void> deletePhoto(ServerWebExchange exchange) {
         return web.actor(exchange).flatMap(photos::remove);
     }
 
+    /**
+     * Monta a resposta HTTP de uma imagem, com o content-type certo e cache privado que sempre revalida (a foto muda quando a pessoa troca). Também é usada pelo AdminController.
+     */
     static ResponseEntity<byte[]> image(ProfilePhoto photo) {
         return ResponseEntity.ok().contentType(MediaType.parseMediaType(photo.contentType()))
                 .header("Cache-Control", "private, no-cache").body(photo.content());
     }
 
+    /**
+     * Converte o corpo {set, value} em um objeto de atualização, conferindo o tipo do valor: age precisa ser número inteiro, two_factor precisa ser verdadeiro ou falso, gender e cpf precisam ser texto.
+     *
+     * @throws DomainException.Invalid se faltar campo ou valor, se o tipo estiver errado ou se o campo não puder ser editado.
+     */
     private static UserService.Update change(PatchRequest body) {
         if (body == null || body.set() == null || body.value() == null || body.value().isNull()) {
             throw new DomainException.Invalid("Informe o campo (set) e o valor (value).");
@@ -151,6 +198,9 @@ public class UserController {
         };
     }
 
+    /**
+     * Lê o valor como texto, ou falha se ele não for um texto.
+     */
     private static String text(JsonNode value) {
         if (!value.isTextual()) {
             throw new DomainException.Invalid("O valor precisa ser um texto.");

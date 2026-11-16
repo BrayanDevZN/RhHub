@@ -10,11 +10,17 @@ public class BcryptPasswordHasher implements PasswordHasher {
 
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
+    /**
+     * Gera o hash BCrypt da senha (com sal aleatório embutido). O mesmo texto gera hashes diferentes a cada chamada.
+     */
     @Override
     public String hash(String password) {
         return encoder.encode(password);
     }
 
+    /**
+     * Confere se a senha digitada corresponde ao hash guardado.
+     */
     @Override
     public boolean matches(String password, String hash) {
         return password != null && hash != null && encoder.matches(password, hash);

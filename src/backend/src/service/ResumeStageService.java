@@ -32,11 +32,21 @@ public class ResumeStageService {
 
     private final Notifier notifier;
 
+    /**
+     * Cria o serviço sem avisos de sino.
+     */
     public ResumeStageService(ResumeRepository resumes, VacancyRepository vacancies, UserRepository users,
             EmailPublisher emails, EmailComposer composer, AccessPolicy policy) {
         this(resumes, vacancies, users, emails, composer, policy, Notifier.NONE);
     }
 
+    /**
+     * Cria o serviço completo.
+     *
+     * @param emails fila de e-mails (o candidato é avisado a cada mudança).
+     * @param composer monta o e-mail de mudança de etapa.
+     * @param notifier cria o aviso do sino.
+     */
     public ResumeStageService(ResumeRepository resumes, VacancyRepository vacancies, UserRepository users,
             EmailPublisher emails, EmailComposer composer, AccessPolicy policy, Notifier notifier) {
         this.notifier = notifier;
@@ -48,6 +58,14 @@ public class ResumeStageService {
         this.policy = policy;
     }
 
+    /**
+     * Move uma candidatura para outra etapa do processo seletivo. Só administradores.
+     *
+     * Regras: a candidatura precisa estar aprovada na triagem; a etapa precisa existir na vaga (sem diferenciar maiúsculas); se já está nela, nada acontece. Ao mover, grava a nova etapa, enfileira um e-mail e cria um aviso do sino dizendo em qual etapa o candidato está ("2 de 3").
+     *
+     * @throws DomainException.Unprocessable se a candidatura não foi aprovada.
+     * @throws DomainException.Invalid se a etapa não existe na vaga.
+     */
     public Mono<Resume> move(User actor, Long resumeId, String rawStage) {
         return Mono.defer(() -> {
             policy.requireAdmin(actor);
@@ -98,6 +116,11 @@ public class ResumeStageService {
                 });
     }
 
+    /**
+     * Procura a etapa pelo nome, sem diferenciar maiúsculas nem espaços nas pontas.
+     *
+     * @return a posição na lista, ou -1 se não existe.
+     */
     private static int indexOf(java.util.List<String> stages, String wanted) {
         for (int i = 0; i < stages.size(); i++) {
             if (stages.get(i).equalsIgnoreCase(wanted.strip())) {

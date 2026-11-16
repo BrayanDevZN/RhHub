@@ -17,6 +17,9 @@ public class AnalysisConsumer {
     private final ObjectProvider<AnalyzeResume> analyze;
     private final ObjectMapper mapper;
 
+    /**
+     * Cria o consumidor da fila de análise. O caso de uso vem por ObjectProvider para o serviço subir mesmo que ele ainda não esteja disponível.
+     */
     public AnalysisConsumer(ObjectProvider<AnalyzeResume> analyze, ObjectMapper mapper) {
         this.analyze = analyze;
         this.mapper = mapper;
@@ -26,6 +29,9 @@ public class AnalysisConsumer {
             topics = "#{@kafkaTopics.resumeAnalysis()}",
             groupId = "#{@kafkaTopics.analysisGroup()}",
             concurrency = "#{@kafkaTopics.partitions()}")
+    /**
+     * Recebe uma mensagem do tópico resume.analysis (uma por candidatura). Lê o JSON, confere que tem resumeId e chama o caso de uso de análise, esperando terminar (block). Se falhar, o erro sobe e o Kafka tenta de novo, até esgotar e ir para a dead letter.
+     */
     public void onMessage(String payload) throws JsonProcessingException {
         var message = mapper.readValue(payload, ResumeAnalysisMessage.class);
         if (message.resumeId() == null) {

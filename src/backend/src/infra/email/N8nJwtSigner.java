@@ -23,6 +23,9 @@ final class N8nJwtSigner {
     private final byte[] secret;
     private final ObjectMapper mapper;
 
+    /**
+     * Cria o assinador com o segredo (gmail_secret), usado como texto, do mesmo jeito que o n8n o usa.
+     */
     N8nJwtSigner(String secret, ObjectMapper mapper) {
         this.secret = secret.getBytes(StandardCharsets.UTF_8);
         this.mapper = mapper;
@@ -41,6 +44,9 @@ final class N8nJwtSigner {
         return signingInput + "." + B64.encodeToString(hmac(signingInput));
     }
 
+    /**
+     * Converte o mapa em JSON e codifica em Base64 URL sem preenchimento.
+     */
     private String encode(Map<String, Object> json) {
         try {
             return B64.encodeToString(mapper.writeValueAsBytes(json));
@@ -49,6 +55,9 @@ final class N8nJwtSigner {
         }
     }
 
+    /**
+     * Calcula a assinatura HMAC-SHA256 do texto com o segredo.
+     */
     private byte[] hmac(String data) {
         try {
             Mac mac = Mac.getInstance("HmacSHA256");

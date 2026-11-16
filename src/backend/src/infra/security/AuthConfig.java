@@ -26,11 +26,17 @@ public class AuthConfig {
         return new JwtService(resolveSecret(props.jwtSecret()), mapper);
     }
 
+    /**
+     * Cria a política de acesso com o e-mail do admin raiz (ADMIN_EMAIL).
+     */
     @Bean
     AccessPolicy accessPolicy(AuthProperties props) {
         return new AccessPolicy(props.adminEmail());
     }
 
+    /**
+     * Escolhe o segredo do JWT. Com JWT_SECRET definido, usa ele. Sem, gera 48 bytes aleatórios na subida: ninguém conhece o segredo, mas cada reinício invalida todas as sessões e duas réplicas da API não aceitam os tokens uma da outra (por isso produção deve definir JWT_SECRET).
+     */
     static String resolveSecret(String configured) {
         if (configured != null && !configured.isBlank()) {
             return configured;

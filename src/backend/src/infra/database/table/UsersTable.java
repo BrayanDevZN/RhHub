@@ -5,11 +5,17 @@ import java.util.List;
 /** Definição da tabela users (contas locais e do Google). */
 public class UsersTable implements TableDefinition {
 
+    /**
+     * Nome da tabela: users (contas locais e do Google).
+     */
     @Override
     public String name() {
         return "users";
     }
 
+    /**
+     * Comando CREATE TABLE da tabela users. Colunas opcionais (cpf, idade, gênero, senha) existem porque contas do Google nascem sem elas. Há restrições de unicidade (public_id, e-mail, CPF, google_sub) e de valores válidos (papel, provedor, gênero), e uma que exige senha nas contas locais.
+     */
     @Override
     public List<String> statements(Dialect d) {
         return List.of("""

@@ -37,10 +37,16 @@ public class GoogleOAuthClient implements GoogleIdentityProvider {
     private final String userinfoUrl;
     private final WebClient client;
 
+    /**
+     * Cria o cliente usando os endereços oficiais do Google.
+     */
     public GoogleOAuthClient(String clientId, String clientSecret, String redirectUri) {
         this(clientId, clientSecret, redirectUri, AUTH_URL, TOKEN_URL, USERINFO_URL);
     }
 
+    /**
+     * Cria o cliente com endereços escolhidos, usado nos testes para apontar para um servidor falso. A conexão respeita o proxy do sistema e espera no máximo 10 segundos.
+     */
     GoogleOAuthClient(String clientId, String clientSecret, String redirectUri, String authUrl, String tokenUrl,
             String userinfoUrl) {
         this.clientId = clientId;
@@ -55,11 +61,19 @@ public class GoogleOAuthClient implements GoogleIdentityProvider {
                 .build();
     }
 
+    /**
+     * Este cliente é a versão ligada: sempre devolve true.
+     */
     @Override
     public boolean enabled() {
         return true;
     }
 
+    /**
+     * Monta o endereço da tela de autorização do Google com o client_id, o redirect_uri, o escopo (openid, e-mail e perfil), o state e prompt=select_account (sempre deixa escolher a conta).
+     *
+     * @param state valor aleatório que o Google devolve intacto no callback.
+     */
     @Override
     public String authorizationUrl(String state) {
         return authUrl + "?client_id=" + enc(clientId)
@@ -70,6 +84,12 @@ public class GoogleOAuthClient implements GoogleIdentityProvider {
                 + "&prompt=select_account";
     }
 
+    /**
+     * Termina o login: troca o code pelo token de acesso (POST no endereço de token, com o segredo do app) e com ele lê o perfil no endereço userinfo (sub, e-mail, e-mail verificado e nome).
+     *
+     * @throws DomainException.Unauthorized se o code veio vazio ou o Google não confirmou o login.
+     * @throws GoogleIdentityProvider.LoginFailure se o Google recusar (por exemplo invalid_grant) ou não for possível falar com ele. A resposta de erro do Google, que não tem segredo, vai para o log.
+     */
     @Override
     public Mono<Profile> fetchProfile(String code) {
         if (code == null || code.isBlank()) {
@@ -126,6 +146,9 @@ public class GoogleOAuthClient implements GoogleIdentityProvider {
         return "google_unreachable";
     }
 
+    /**
+     * Codifica o texto para ir na URL (por exemplo, espaço vira %20).
+     */
     private static String enc(String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }

@@ -8,10 +8,16 @@ public enum ResumeStatus {
 
     private final String value;
 
+    /**
+     * Associa cada situação ao texto gravado no banco (a grafia "aproved" e "recuse" é proposital).
+     */
     ResumeStatus(String value) {
         this.value = value;
     }
 
+    /**
+     * Texto gravado no banco e devolvido pela API.
+     */
     public String value() {
         return value;
     }
@@ -21,6 +27,11 @@ public enum ResumeStatus {
         return this == PENDING && (next == APROVED || next == RECUSE);
     }
 
+    /**
+     * Converte o texto do banco para o enum, sem diferenciar maiúsculas.
+     *
+     * @throws IllegalArgumentException se o status for desconhecido.
+     */
     public static ResumeStatus from(String value) {
         for (ResumeStatus status : values()) {
             if (status.value.equalsIgnoreCase(value.trim())) {
