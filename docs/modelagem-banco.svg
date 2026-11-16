@@ -1,0 +1,254 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1420 1200" width="1420" height="1200" role="img" aria-labelledby="t d">
+<title id="t">Modelagem do banco de dados do RhHub</title>
+<desc id="d">Sete tabelas: users, user_photos, notifications, vacancies, vacancy_photos, resumes e dead_letters, com as chaves estrangeiras e as cardinalidades.</desc>
+<style>
+text{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.h1{font-size:24px;font-weight:700;fill:#0f172a} .h2{font-size:13px;fill:#475569}
+.th{font-size:15px;font-weight:700;fill:#fff} .col{font-size:13px;fill:#0f172a} .ty{font-size:12px;fill:#64748b}
+.key{font-size:10px;font-weight:700} .nt{font-size:11px;fill:#64748b;font-style:italic} .lb{font-size:12px;fill:#334155;font-weight:600}
+.cd{font-size:11px;font-weight:700;fill:#0f172a}
+</style>
+<rect width="1420" height="1200" fill="#ffffff"/>
+<text x="40" y="36" class="h1">Modelagem do banco de dados</text>
+<text x="40" y="56" class="h2">PostgreSQL em produção, SQLite no uso local. As tabelas são criadas na subida pelas classes de infra/database/table.</text>
+<rect x="40" y="70" width="300" height="152" rx="8" fill="#fff" stroke="#0e7490" stroke-width="2"/>
+<path d="M40 78 a8 8 0 0 1 8 -8 h284 a8 8 0 0 1 8 8 v26 h-300 z" fill="#0e7490"/>
+<text x="54" y="92" class="th">user_photos</text>
+<rect x="41" y="104" width="298" height="24" fill="#f6f8fa"/>
+<text x="50" y="120" class="key" fill="#b45309">PK FK</text>
+<text x="92" y="120" class="col">user_id</text>
+<text x="330" y="120" class="ty" text-anchor="end">BIGINT</text>
+<text x="92" y="144" class="col">content</text>
+<text x="330" y="144" class="ty" text-anchor="end">BLOB</text>
+<rect x="41" y="152" width="298" height="24" fill="#f6f8fa"/>
+<text x="92" y="168" class="col">content_type</text>
+<text x="330" y="168" class="ty" text-anchor="end">VARCHAR(20)</text>
+<text x="92" y="192" class="col">updated_at</text>
+<text x="330" y="192" class="ty" text-anchor="end">TIMESTAMP</text>
+<text x="52" y="215" class="nt">content_type: jpeg, png ou webp</text>
+<rect x="40" y="290" width="300" height="368" rx="8" fill="#fff" stroke="#1d4ed8" stroke-width="2"/>
+<path d="M40 298 a8 8 0 0 1 8 -8 h284 a8 8 0 0 1 8 8 v26 h-300 z" fill="#1d4ed8"/>
+<text x="54" y="312" class="th">users</text>
+<rect x="41" y="324" width="298" height="24" fill="#f6f8fa"/>
+<text x="50" y="340" class="key" fill="#b45309">PK</text>
+<text x="92" y="340" class="col">id</text>
+<text x="330" y="340" class="ty" text-anchor="end">BIGINT</text>
+<text x="50" y="364" class="key" fill="#6d28d9">UQ</text>
+<text x="92" y="364" class="col">public_id</text>
+<text x="330" y="364" class="ty" text-anchor="end">UUID</text>
+<rect x="41" y="372" width="298" height="24" fill="#f6f8fa"/>
+<text x="92" y="388" class="col">name</text>
+<text x="330" y="388" class="ty" text-anchor="end">VARCHAR(120)</text>
+<text x="50" y="412" class="key" fill="#6d28d9">UQ</text>
+<text x="92" y="412" class="col">email</text>
+<text x="330" y="412" class="ty" text-anchor="end">VARCHAR(255)</text>
+<rect x="41" y="420" width="298" height="24" fill="#f6f8fa"/>
+<text x="50" y="436" class="key" fill="#6d28d9">UQ</text>
+<text x="92" y="436" class="col">cpf</text>
+<text x="330" y="436" class="ty" text-anchor="end">VARCHAR(11) · nulo</text>
+<text x="92" y="460" class="col">age</text>
+<text x="330" y="460" class="ty" text-anchor="end">INT · nulo</text>
+<rect x="41" y="468" width="298" height="24" fill="#f6f8fa"/>
+<text x="92" y="484" class="col">gender</text>
+<text x="330" y="484" class="ty" text-anchor="end">VARCHAR(10) · nulo</text>
+<text x="92" y="508" class="col">password</text>
+<text x="330" y="508" class="ty" text-anchor="end">VARCHAR(100) · nulo</text>
+<rect x="41" y="516" width="298" height="24" fill="#f6f8fa"/>
+<text x="92" y="532" class="col">two_factor</text>
+<text x="330" y="532" class="ty" text-anchor="end">BOOLEAN</text>
+<text x="92" y="556" class="col">role</text>
+<text x="330" y="556" class="ty" text-anchor="end">VARCHAR(10)</text>
+<rect x="41" y="564" width="298" height="24" fill="#f6f8fa"/>
+<text x="92" y="580" class="col">provider</text>
+<text x="330" y="580" class="ty" text-anchor="end">VARCHAR(10)</text>
+<text x="50" y="604" class="key" fill="#6d28d9">UQ</text>
+<text x="92" y="604" class="col">google_sub</text>
+<text x="330" y="604" class="ty" text-anchor="end">VARCHAR(64) · nulo</text>
+<rect x="41" y="612" width="298" height="24" fill="#f6f8fa"/>
+<text x="92" y="628" class="col">created_at</text>
+<text x="330" y="628" class="ty" text-anchor="end">TIMESTAMP</text>
+<text x="52" y="651" class="nt">role: user|admin · provider: local|google</text>
+<rect x="40" y="730" width="300" height="224" rx="8" fill="#fff" stroke="#0e7490" stroke-width="2"/>
+<path d="M40 738 a8 8 0 0 1 8 -8 h284 a8 8 0 0 1 8 8 v26 h-300 z" fill="#0e7490"/>
+<text x="54" y="752" class="th">notifications</text>
+<rect x="41" y="764" width="298" height="24" fill="#f6f8fa"/>
+<text x="50" y="780" class="key" fill="#b45309">PK</text>
+<text x="92" y="780" class="col">id</text>
+<text x="330" y="780" class="ty" text-anchor="end">BIGINT</text>
+<text x="50" y="804" class="key" fill="#1d4ed8">FK</text>
+<text x="92" y="804" class="col">user_id</text>
+<text x="330" y="804" class="ty" text-anchor="end">BIGINT</text>
+<rect x="41" y="812" width="298" height="24" fill="#f6f8fa"/>
+<text x="92" y="828" class="col">title</text>
+<text x="330" y="828" class="ty" text-anchor="end">VARCHAR(160)</text>
+<text x="92" y="852" class="col">message</text>
+<text x="330" y="852" class="ty" text-anchor="end">TEXT</text>
+<rect x="41" y="860" width="298" height="24" fill="#f6f8fa"/>
+<text x="92" y="876" class="col">link</text>
+<text x="330" y="876" class="ty" text-anchor="end">VARCHAR(255) · nulo</text>
+<text x="92" y="900" class="col">is_read</text>
+<text x="330" y="900" class="ty" text-anchor="end">BOOLEAN</text>
+<rect x="41" y="908" width="298" height="24" fill="#f6f8fa"/>
+<text x="92" y="924" class="col">created_at</text>
+<text x="330" y="924" class="ty" text-anchor="end">TIMESTAMP</text>
+<text x="52" y="947" class="nt">índice: (user_id, created_at)</text>
+<rect x="520" y="360" width="380" height="296" rx="8" fill="#fff" stroke="#15803d" stroke-width="2"/>
+<path d="M520 368 a8 8 0 0 1 8 -8 h364 a8 8 0 0 1 8 8 v26 h-380 z" fill="#15803d"/>
+<text x="534" y="382" class="th">resumes</text>
+<rect x="521" y="394" width="378" height="24" fill="#f6f8fa"/>
+<text x="530" y="410" class="key" fill="#b45309">PK</text>
+<text x="572" y="410" class="col">id</text>
+<text x="890" y="410" class="ty" text-anchor="end">BIGINT</text>
+<text x="530" y="434" class="key" fill="#1d4ed8">FK</text>
+<text x="572" y="434" class="col">user_id</text>
+<text x="890" y="434" class="ty" text-anchor="end">BIGINT</text>
+<rect x="521" y="442" width="378" height="24" fill="#f6f8fa"/>
+<text x="530" y="458" class="key" fill="#1d4ed8">FK</text>
+<text x="572" y="458" class="col">vacancy_id</text>
+<text x="890" y="458" class="ty" text-anchor="end">BIGINT</text>
+<text x="572" y="482" class="col">file</text>
+<text x="890" y="482" class="ty" text-anchor="end">BLOB</text>
+<rect x="521" y="490" width="378" height="24" fill="#f6f8fa"/>
+<text x="572" y="506" class="col">file_name</text>
+<text x="890" y="506" class="ty" text-anchor="end">VARCHAR(255)</text>
+<text x="572" y="530" class="col">content_type</text>
+<text x="890" y="530" class="ty" text-anchor="end">VARCHAR(120)</text>
+<rect x="521" y="538" width="378" height="24" fill="#f6f8fa"/>
+<text x="572" y="554" class="col">status</text>
+<text x="890" y="554" class="ty" text-anchor="end">VARCHAR(10)</text>
+<text x="572" y="578" class="col">reason</text>
+<text x="890" y="578" class="ty" text-anchor="end">TEXT · nulo</text>
+<rect x="521" y="586" width="378" height="24" fill="#f6f8fa"/>
+<text x="572" y="602" class="col">stage</text>
+<text x="890" y="602" class="ty" text-anchor="end">VARCHAR(60)</text>
+<text x="572" y="626" class="col">created_at</text>
+<text x="890" y="626" class="ty" text-anchor="end">TIMESTAMP</text>
+<text x="532" y="649" class="nt">UQ (user_id, vacancy_id) · status: pending|aproved|recuse</text>
+<rect x="1040" y="290" width="340" height="272" rx="8" fill="#fff" stroke="#b45309" stroke-width="2"/>
+<path d="M1040 298 a8 8 0 0 1 8 -8 h324 a8 8 0 0 1 8 8 v26 h-340 z" fill="#b45309"/>
+<text x="1054" y="312" class="th">vacancies</text>
+<rect x="1041" y="324" width="338" height="24" fill="#f6f8fa"/>
+<text x="1050" y="340" class="key" fill="#b45309">PK</text>
+<text x="1092" y="340" class="col">id</text>
+<text x="1370" y="340" class="ty" text-anchor="end">BIGINT</text>
+<text x="1050" y="364" class="key" fill="#1d4ed8">FK</text>
+<text x="1092" y="364" class="col">created_by</text>
+<text x="1370" y="364" class="ty" text-anchor="end">BIGINT · nulo</text>
+<rect x="1041" y="372" width="338" height="24" fill="#f6f8fa"/>
+<text x="1050" y="388" class="key" fill="#6d28d9">UQ</text>
+<text x="1092" y="388" class="col">name</text>
+<text x="1370" y="388" class="ty" text-anchor="end">VARCHAR(160)</text>
+<text x="1092" y="412" class="col">description</text>
+<text x="1370" y="412" class="ty" text-anchor="end">TEXT</text>
+<rect x="1041" y="420" width="338" height="24" fill="#f6f8fa"/>
+<text x="1092" y="436" class="col">requirements</text>
+<text x="1370" y="436" class="ty" text-anchor="end">TEXT · nulo</text>
+<text x="1092" y="460" class="col">responsibilities</text>
+<text x="1370" y="460" class="ty" text-anchor="end">TEXT · nulo</text>
+<rect x="1041" y="468" width="338" height="24" fill="#f6f8fa"/>
+<text x="1092" y="484" class="col">stages</text>
+<text x="1370" y="484" class="ty" text-anchor="end">TEXT · nulo</text>
+<text x="1092" y="508" class="col">expires_at</text>
+<text x="1370" y="508" class="ty" text-anchor="end">TIMESTAMP · nulo</text>
+<rect x="1041" y="516" width="338" height="24" fill="#f6f8fa"/>
+<text x="1092" y="532" class="col">created_at</text>
+<text x="1370" y="532" class="ty" text-anchor="end">TIMESTAMP</text>
+<text x="1052" y="555" class="nt">stages: etapas do processo (a Triagem entra sempre)</text>
+<rect x="1040" y="70" width="340" height="152" rx="8" fill="#fff" stroke="#b45309" stroke-width="2"/>
+<path d="M1040 78 a8 8 0 0 1 8 -8 h324 a8 8 0 0 1 8 8 v26 h-340 z" fill="#b45309"/>
+<text x="1054" y="92" class="th">vacancy_photos</text>
+<rect x="1041" y="104" width="338" height="24" fill="#f6f8fa"/>
+<text x="1050" y="120" class="key" fill="#b45309">PK FK</text>
+<text x="1092" y="120" class="col">vacancy_id</text>
+<text x="1370" y="120" class="ty" text-anchor="end">BIGINT</text>
+<text x="1092" y="144" class="col">content</text>
+<text x="1370" y="144" class="ty" text-anchor="end">BLOB</text>
+<rect x="1041" y="152" width="338" height="24" fill="#f6f8fa"/>
+<text x="1092" y="168" class="col">content_type</text>
+<text x="1370" y="168" class="ty" text-anchor="end">VARCHAR(20)</text>
+<text x="1092" y="192" class="col">updated_at</text>
+<text x="1370" y="192" class="ty" text-anchor="end">TIMESTAMP</text>
+<text x="1052" y="215" class="nt">content_type: jpeg, png ou webp</text>
+<rect x="520" y="770" width="400" height="344" rx="8" fill="#fff" stroke="#b91c1c" stroke-width="2"/>
+<path d="M520 778 a8 8 0 0 1 8 -8 h384 a8 8 0 0 1 8 8 v26 h-400 z" fill="#b91c1c"/>
+<text x="534" y="792" class="th">dead_letters</text>
+<rect x="521" y="804" width="398" height="24" fill="#f6f8fa"/>
+<text x="530" y="820" class="key" fill="#b45309">PK</text>
+<text x="572" y="820" class="col">id</text>
+<text x="910" y="820" class="ty" text-anchor="end">BIGINT</text>
+<text x="572" y="844" class="col">topic</text>
+<text x="910" y="844" class="ty" text-anchor="end">VARCHAR(120)</text>
+<rect x="521" y="852" width="398" height="24" fill="#f6f8fa"/>
+<text x="572" y="868" class="col">message_key</text>
+<text x="910" y="868" class="ty" text-anchor="end">VARCHAR(255) · nulo</text>
+<text x="572" y="892" class="col">kafka_partition</text>
+<text x="910" y="892" class="ty" text-anchor="end">INT · nulo</text>
+<rect x="521" y="900" width="398" height="24" fill="#f6f8fa"/>
+<text x="572" y="916" class="col">kafka_offset</text>
+<text x="910" y="916" class="ty" text-anchor="end">BIGINT · nulo</text>
+<text x="572" y="940" class="col">payload</text>
+<text x="910" y="940" class="ty" text-anchor="end">TEXT</text>
+<rect x="521" y="948" width="398" height="24" fill="#f6f8fa"/>
+<text x="572" y="964" class="col">error_type</text>
+<text x="910" y="964" class="ty" text-anchor="end">VARCHAR(255)</text>
+<text x="572" y="988" class="col">error_message</text>
+<text x="910" y="988" class="ty" text-anchor="end">TEXT · nulo</text>
+<rect x="521" y="996" width="398" height="24" fill="#f6f8fa"/>
+<text x="572" y="1012" class="col">attempts</text>
+<text x="910" y="1012" class="ty" text-anchor="end">INT</text>
+<text x="572" y="1036" class="col">status</text>
+<text x="910" y="1036" class="ty" text-anchor="end">VARCHAR(10)</text>
+<rect x="521" y="1044" width="398" height="24" fill="#f6f8fa"/>
+<text x="572" y="1060" class="col">created_at</text>
+<text x="910" y="1060" class="ty" text-anchor="end">TIMESTAMP</text>
+<text x="572" y="1084" class="col">resolved_at</text>
+<text x="910" y="1084" class="ty" text-anchor="end">TIMESTAMP · nulo</text>
+<text x="532" y="1107" class="nt">UQ (topic, kafka_partition, kafka_offset) · status: failed|resolved</text>
+<path d="M190 290 L190 222" fill="none" stroke="#475569" stroke-width="2"/>
+<rect x="176" y="264" width="28" height="20" rx="10" fill="#fff" stroke="#94a3b8"/>
+<text x="190" y="279" class="cd" text-anchor="middle">1</text>
+<rect x="176" y="220" width="28" height="20" rx="10" fill="#fff" stroke="#94a3b8"/>
+<text x="190" y="235" class="cd" text-anchor="middle">0..1</text>
+<text x="206" y="260" class="lb" text-anchor="start">foto de perfil</text>
+<path d="M190 658 L190 730" fill="none" stroke="#475569" stroke-width="2"/>
+<rect x="176" y="660" width="28" height="20" rx="10" fill="#fff" stroke="#94a3b8"/>
+<text x="190" y="675" class="cd" text-anchor="middle">1</text>
+<rect x="176" y="704" width="28" height="20" rx="10" fill="#fff" stroke="#94a3b8"/>
+<text x="190" y="719" class="cd" text-anchor="middle">N</text>
+<text x="206" y="700" class="lb" text-anchor="start">avisos do sino</text>
+<path d="M340 470 L520 470" fill="none" stroke="#475569" stroke-width="2"/>
+<rect x="340" y="450" width="28" height="20" rx="10" fill="#fff" stroke="#94a3b8"/>
+<text x="354" y="465" class="cd" text-anchor="middle">1</text>
+<rect x="492" y="450" width="28" height="20" rx="10" fill="#fff" stroke="#94a3b8"/>
+<text x="506" y="465" class="cd" text-anchor="middle">N</text>
+<text x="430" y="456" class="lb" text-anchor="middle">candidata-se</text>
+<path d="M1040 470 L900 470" fill="none" stroke="#475569" stroke-width="2"/>
+<rect x="1012" y="450" width="28" height="20" rx="10" fill="#fff" stroke="#94a3b8"/>
+<text x="1026" y="465" class="cd" text-anchor="middle">1</text>
+<rect x="900" y="450" width="28" height="20" rx="10" fill="#fff" stroke="#94a3b8"/>
+<text x="914" y="465" class="cd" text-anchor="middle">N</text>
+<text x="970" y="456" class="lb" text-anchor="middle">recebe</text>
+<path d="M340 330 L1040 330" fill="none" stroke="#475569" stroke-width="2"/>
+<rect x="340" y="310" width="28" height="20" rx="10" fill="#fff" stroke="#94a3b8"/>
+<text x="354" y="325" class="cd" text-anchor="middle">1</text>
+<rect x="1012" y="310" width="28" height="20" rx="10" fill="#fff" stroke="#94a3b8"/>
+<text x="1026" y="325" class="cd" text-anchor="middle">N</text>
+<text x="690" y="318" class="lb" text-anchor="middle">created_by · ON DELETE SET NULL (a vaga fica se o admin for apagado)</text>
+<path d="M1210 290 L1210 222" fill="none" stroke="#475569" stroke-width="2"/>
+<rect x="1196" y="264" width="28" height="20" rx="10" fill="#fff" stroke="#94a3b8"/>
+<text x="1210" y="279" class="cd" text-anchor="middle">1</text>
+<rect x="1196" y="220" width="28" height="20" rx="10" fill="#fff" stroke="#94a3b8"/>
+<text x="1210" y="235" class="cd" text-anchor="middle">0..1</text>
+<text x="1226" y="260" class="lb" text-anchor="start">foto da vaga</text>
+<path d="M710 656 L710 770" fill="none" stroke="#b91c1c" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="726" y="712" class="lb" text-anchor="start">message_key = resumes.id</text>
+<text x="726" y="728" class="nt" text-anchor="start">relação lógica, sem chave estrangeira</text>
+<g transform="translate(40,1124)">
+ <rect width="1340" height="56" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+ <text x="14" y="22" class="key" fill="#b45309">PK</text><text x="40" y="22" class="h2">chave primária</text>
+ <text x="150" y="22" class="key" fill="#1d4ed8">FK</text><text x="176" y="22" class="h2">chave estrangeira</text>
+ <text x="300" y="22" class="key" fill="#6d28d9">UQ</text><text x="326" y="22" class="h2">valor único</text>
+ <text x="420" y="22" class="h2">1 = um · N = vários · 0..1 = nenhum ou um · "nulo" = coluna opcional</text>
+ <text x="14" y="44" class="h2">Apagar o usuário apaga em cascata suas candidaturas, avisos e foto. Apagar a vaga apaga as candidaturas e a foto dela.</text>
+</g>
+</svg>

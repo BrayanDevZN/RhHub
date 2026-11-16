@@ -1,5 +1,5 @@
 # Project Anatomy: RhHub
-Generated: 2026-11-16 | 279 files | ~283.8K tokens if all read
+Generated: 2026-11-16 | 280 files | ~286.3K tokens if all read
 
 ## Structure
 | Path | Lines | ~Tokens | Type |
@@ -255,8 +255,9 @@ Generated: 2026-11-16 | 279 files | ~283.8K tokens if all read
 | tests/unit/service/VacancyExpirationTest.java | 87 | 1.0K | test |
 | .github/CONTRIBUTING.md | 38 | 400 | docs |
 | .github/PULL_REQUEST_TEMPLATE.md | 24 | 218 | docs |
+| docs/ARQUITETURA.md | 128 | 2.4K | docs |
 | DOCUMENTACAO.md | 851 | 12.7K | docs |
-| README.md | 362 | 5.4K | docs |
+| README.md | 366 | 5.6K | docs |
 | src/backend/GUIA_DO_BACKEND.md | 77 | 1.4K | docs |
 | src/backend/HISTORICO.md | 145 | 3.3K | docs |
 | src/backend/README.md | 289 | 5.5K | docs |
@@ -288,7 +289,7 @@ Generated: 2026-11-16 | 279 files | ~283.8K tokens if all read
 - source: 184 files, ~144.1K tokens
 - config: 17 files, ~4.4K tokens
 - test: 48 files, ~75.5K tokens
-- docs: 9 files, ~36.0K tokens
+- docs: 10 files, ~38.4K tokens
 - style: 1 files, ~8.6K tokens
 - other: 20 files, ~15.2K tokens
 

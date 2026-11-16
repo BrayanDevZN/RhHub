@@ -245,6 +245,7 @@ RhHub/
 │           ├── pages/              # Login, Cadastro, Vagas, Candidaturas, Perfil, Admin…
 │           ├── components/         # layout, sino, etapas, tabela de candidaturas, ui/
 │           └── lib/                # api.ts (cliente HTTP), auth, tipos, formatação
+├── docs/                           # ARQUITETURA.md, modelagem-banco.svg e fluxo-do-sistema.svg
 ├── tests/                          # unit/, integration/, functional/ e support/ (apoio compartilhado)
 ├── Dockerfile.Api · Dockerfile.Consumer · Dockerfile.kafka · Dockerfile.front
 ├── docker-compose.yml              # Postgres, Redis, Kafka, API, consumer e front
@@ -351,6 +352,9 @@ Front e API precisam responder **no mesmo domínio** (via proxy do nginx), porqu
 
 | Documento | Conteúdo |
 |---|---|
+| [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) | Como o sistema é organizado e por quê (serviços, hexagonal, segurança, Kafka, cache) |
+| [`docs/modelagem-banco.svg`](docs/modelagem-banco.svg) | Diagrama das tabelas, chaves e relações |
+| [`docs/fluxo-do-sistema.svg`](docs/fluxo-do-sistema.svg) | Diagrama do fluxo, do navegador ao e-mail |
 | [`DOCUMENTACAO.md`](DOCUMENTACAO.md) | Arquitetura detalhada, modelo de dados, fluxos de autenticação, **todas as rotas**, regras de validação e variáveis de ambiente |
 | [`src/backend/README.md`](src/backend/README.md) | Camadas do back end, estado de cada uma e notas de deploy |
 | [`src/backend/HISTORICO.md`](src/backend/HISTORICO.md) | Decisões, problemas encontrados e o que falta |

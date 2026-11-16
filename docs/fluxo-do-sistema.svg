@@ -1,0 +1,155 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1130" width="1500" height="1130" role="img" aria-labelledby="t d">
+<title id="t">Fluxo do sistema RhHub</title>
+<desc id="d">Do navegador ao nginx e à API, gravação no PostgreSQL, fila no Kafka, análise por IA no serviço consumer, e-mail pelo n8n e dead letter para as falhas.</desc>
+<defs>
+ <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#334155"/></marker>
+ <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#b91c1c"/></marker>
+ <marker id="p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#6d28d9"/></marker>
+ <marker id="y" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#a16207"/></marker>
+</defs>
+<style>
+text{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.h1{font-size:24px;font-weight:700;fill:#0f172a} .h2{font-size:13px;fill:#475569} .bh{font-size:15px;font-weight:700;fill:#0f172a}
+.bt{font-size:15px;font-weight:700} .bl{font-size:12px;fill:#334155} .st{font-size:13px;font-weight:700;fill:#166534}
+.lb{font-size:12px;fill:#0f172a;font-weight:600} .nt{font-size:12px;fill:#64748b;font-style:italic}
+.nb{font-size:11px;font-weight:700;fill:#fff}
+</style>
+<rect width="1500" height="1130" fill="#ffffff"/>
+<text x="20" y="34" class="h1">Fluxo do sistema</text>
+<text x="20" y="56" class="h2">Do clique do candidato até o e-mail de resultado.</text>
+<rect x="20" y="70" width="1460" height="380" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+<text x="36" y="96" class="bh">1 · Requisição síncrona: o candidato envia o currículo e recebe a resposta na hora</text>
+<rect x="20" y="470" width="1460" height="640" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+<text x="36" y="496" class="bh">2 · Processamento em segundo plano: análise por IA, resultado e e-mail (não segura a resposta)</text>
+<rect x="40" y="120" width="200" height="90" rx="10" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2"/>
+<text x="140.0" y="144" class="bt" text-anchor="middle" fill="#1d4ed8">Navegador</text>
+<text x="140.0" y="165" class="bl" text-anchor="middle">SPA React 19</text>
+<text x="140.0" y="182" class="bl" text-anchor="middle">cookies JWT HttpOnly</text>
+<rect x="310" y="120" width="200" height="90" rx="10" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2"/>
+<text x="410.0" y="144" class="bt" text-anchor="middle" fill="#1d4ed8">nginx (front)</text>
+<text x="410.0" y="165" class="bl" text-anchor="middle">serve a SPA e repassa</text>
+<text x="410.0" y="182" class="bl" text-anchor="middle">/api, /oauth2, /login/oauth2</text>
+<rect x="590" y="114" width="330" height="316" rx="10" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+<text x="755.0" y="138" class="bt" text-anchor="middle" fill="#15803d">API · Spring WebFlux</text>
+<rect x="610" y="150" width="290" height="52" rx="7" fill="#fff" stroke="#86efac"/>
+<text x="755.0" y="171" class="st" text-anchor="middle">Filtros</text>
+<text x="755.0" y="188" class="bl" text-anchor="middle">Segurança · limite por IP · AuthFilter (JWT)</text>
+<rect x="610" y="212" width="290" height="52" rx="7" fill="#fff" stroke="#86efac"/>
+<text x="755.0" y="233" class="st" text-anchor="middle">Controllers</text>
+<text x="755.0" y="250" class="bl" text-anchor="middle">/api/resumes, /vacancies, /users...</text>
+<rect x="610" y="274" width="290" height="52" rx="7" fill="#fff" stroke="#86efac"/>
+<text x="755.0" y="295" class="st" text-anchor="middle">Services</text>
+<text x="755.0" y="312" class="bl" text-anchor="middle">regras: ResumeService, AuthService...</text>
+<rect x="610" y="336" width="290" height="52" rx="7" fill="#fff" stroke="#86efac"/>
+<text x="755.0" y="357" class="st" text-anchor="middle">Portas e adapters</text>
+<text x="755.0" y="374" class="bl" text-anchor="middle">repositórios, cache, publicação Kafka</text>
+<rect x="1040" y="100" width="220" height="90" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="2"/>
+<text x="1150.0" y="124" class="bt" text-anchor="middle" fill="#475569">PostgreSQL</text>
+<text x="1150.0" y="145" class="bl" text-anchor="middle">users, vacancies, resumes,</text>
+<text x="1150.0" y="162" class="bl" text-anchor="middle">notifications, dead_letters</text>
+<rect x="1040" y="220" width="220" height="100" rx="10" fill="#e2e8f0" stroke="#475569" stroke-width="2"/>
+<text x="1150.0" y="244" class="bt" text-anchor="middle" fill="#475569">Redis</text>
+<text x="1150.0" y="265" class="bl" text-anchor="middle">cache (5 min / 60 s)</text>
+<text x="1150.0" y="282" class="bl" text-anchor="middle">refresh token, códigos 2FA,</text>
+<text x="1150.0" y="299" class="bl" text-anchor="middle">limite de requisições</text>
+<rect x="40" y="300" width="220" height="120" rx="10" fill="#fef9c3" stroke="#a16207" stroke-width="2"/>
+<text x="150.0" y="324" class="bt" text-anchor="middle" fill="#a16207">Google (OAuth2)</text>
+<text x="150.0" y="345" class="bl" text-anchor="middle">Login e cadastro:</text>
+<text x="150.0" y="362" class="bl" text-anchor="middle">→ /oauth2/authorization/google</text>
+<text x="150.0" y="379" class="bl" text-anchor="middle">← /login/oauth2/code/google</text>
+<text x="150.0" y="396" class="bl" text-anchor="middle">(state em cookie + code)</text>
+<path d="M240 165 L310 165" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#a)"/>
+<circle cx="275" cy="148" r="11" fill="#0f172a"/><text x="275" y="152" class="nb" text-anchor="middle">1</text>
+<text x="275" y="232" class="lb" text-anchor="middle">POST /api/resumes</text>
+<path d="M510 165 L590 165" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#a)"/>
+<circle cx="550" cy="148" r="11" fill="#0f172a"/><text x="550" y="152" class="nb" text-anchor="middle">2</text>
+<text x="542" y="232" class="lb" text-anchor="middle">proxy + JWT</text>
+<path d="M920 140 L1040 140" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#a)"/>
+<circle cx="980" cy="123" r="11" fill="#0f172a"/><text x="980" y="127" class="nb" text-anchor="middle">3</text>
+<text x="980" y="163" class="lb" text-anchor="middle">grava (pending)</text>
+<path d="M920 270 L1040 270" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#a)"/>
+<text x="980" y="262" class="lb" text-anchor="middle">cache e sessão</text>
+<path d="M140 210 L140 300" fill="none" stroke="#a16207" stroke-width="2" marker-end="url(#y)"/>
+<text x="150" y="262" class="lb" text-anchor="start">redirect</text>
+<path d="M260 380 L590 380" fill="none" stroke="#a16207" stroke-width="2" marker-end="url(#y)"/>
+<text x="425" y="372" class="lb" text-anchor="middle">callback com code (via nginx)</text>
+<text x="1230" y="418" class="nt" text-anchor="end">A API responde 201 ao candidato logo após gravar;</text>
+<text x="1230" y="434" class="nt" text-anchor="end">a análise acontece depois, em outro serviço.</text>
+<rect x="590" y="520" width="330" height="170" rx="10" fill="#ffedd5" stroke="#c2410c" stroke-width="2"/>
+<text x="755.0" y="544" class="bt" text-anchor="middle" fill="#c2410c">Kafka</text>
+<text x="755.0" y="565" class="bl" text-anchor="middle">resume.analysis  (3 partições)</text>
+<text x="755.0" y="582" class="bl" text-anchor="middle">email.send  (3 partições)</text>
+<text x="755.0" y="599" class="bl" text-anchor="middle">*.DLT  (mensagens que esgotaram)</text>
+<rect x="1040" y="520" width="310" height="190" rx="10" fill="#ede9fe" stroke="#6d28d9" stroke-width="2"/>
+<text x="1195.0" y="544" class="bt" text-anchor="middle" fill="#6d28d9">Serviço consumer</text>
+<text x="1195.0" y="565" class="bl" text-anchor="middle">AnalysisConsumer  (resume.analysis)</text>
+<text x="1195.0" y="582" class="bl" text-anchor="middle">EmailConsumer  (email.send)</text>
+<text x="1195.0" y="599" class="bl" text-anchor="middle">PendingResumeRepublisher</text>
+<text x="1195.0" y="616" class="bl" text-anchor="middle">(a cada 1 min reenvia pending &gt; 3 min)</text>
+<rect x="590" y="800" width="330" height="130" rx="10" fill="#fee2e2" stroke="#b91c1c" stroke-width="2"/>
+<text x="755.0" y="824" class="bt" text-anchor="middle" fill="#b91c1c">Dead letter</text>
+<text x="755.0" y="845" class="bl" text-anchor="middle">tópico &lt;nome&gt;.DLT</text>
+<text x="755.0" y="862" class="bl" text-anchor="middle">+ tabela dead_letters</text>
+<text x="755.0" y="879" class="bl" text-anchor="middle">(histórico das falhas)</text>
+<rect x="1040" y="800" width="200" height="90" rx="10" fill="#fef9c3" stroke="#a16207" stroke-width="2"/>
+<text x="1140.0" y="824" class="bt" text-anchor="middle" fill="#a16207">IA (Groq / OpenAI)</text>
+<text x="1140.0" y="845" class="bl" text-anchor="middle">aprovado ou recusado</text>
+<text x="1140.0" y="862" class="bl" text-anchor="middle">+ motivo + e-mail em HTML</text>
+<rect x="1280" y="800" width="190" height="90" rx="10" fill="#fef9c3" stroke="#a16207" stroke-width="2"/>
+<text x="1375.0" y="824" class="bt" text-anchor="middle" fill="#a16207">n8n</text>
+<text x="1375.0" y="845" class="bl" text-anchor="middle">webhook com JWT</text>
+<text x="1375.0" y="862" class="bl" text-anchor="middle">→ envia o e-mail</text>
+<rect x="1280" y="940" width="190" height="70" rx="10" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2"/>
+<text x="1375.0" y="964" class="bt" text-anchor="middle" fill="#1d4ed8">Candidato</text>
+<text x="1375.0" y="985" class="bl" text-anchor="middle">recebe o e-mail</text>
+<path d="M755 430 L755 520" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#a)"/>
+<circle cx="737" cy="470" r="11" fill="#0f172a"/><text x="737" y="474" class="nb" text-anchor="middle">4</text>
+<text x="765" y="462" class="lb" text-anchor="start">publica resume.analysis</text>
+<path d="M920 560 L1040 560" fill="none" stroke="#6d28d9" stroke-width="2" marker-end="url(#p)"/>
+<circle cx="980" cy="543" r="11" fill="#0f172a"/><text x="980" y="547" class="nb" text-anchor="middle">5</text>
+<text x="980" y="580" class="lb" text-anchor="middle">consome</text>
+<path d="M1040 610 L920 610" fill="none" stroke="#6d28d9" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#p)"/>
+<text x="980" y="603" class="lb" text-anchor="middle">reenvia pending</text>
+<path d="M1040 665 L920 665" fill="none" stroke="#6d28d9" stroke-width="2" marker-end="url(#p)"/>
+<circle cx="980" cy="648" r="11" fill="#0f172a"/><text x="980" y="652" class="nb" text-anchor="middle">8</text>
+<text x="980" y="686" class="lb" text-anchor="middle">publica email.send</text>
+<path d="M1140 710 L1140 800" fill="none" stroke="#6d28d9" stroke-width="2" marker-end="url(#p)"/>
+<circle cx="1122" cy="742" r="11" fill="#0f172a"/><text x="1122" y="746" class="nb" text-anchor="middle">6</text>
+<text x="1156" y="745" class="lb" text-anchor="start">extrai o texto e</text>
+<text x="1156" y="761" class="lb" text-anchor="start">pede a análise</text>
+<path d="M1290 520 L1290 145 L1262 145" fill="none" stroke="#6d28d9" stroke-width="2" marker-end="url(#p)"/>
+<circle cx="1290" cy="300" r="11" fill="#0f172a"/><text x="1290" y="304" class="nb" text-anchor="middle">7</text>
+<text x="1306" y="296" class="lb" text-anchor="start">grava o resultado</text>
+<text x="1306" y="312" class="lb" text-anchor="start">e a notificação (sino)</text>
+<path d="M1330 710 L1375 800" fill="none" stroke="#6d28d9" stroke-width="2" marker-end="url(#p)"/>
+<circle cx="1342" cy="750" r="11" fill="#0f172a"/><text x="1342" y="754" class="nb" text-anchor="middle">9</text>
+<text x="1374" y="776" class="lb" text-anchor="start">envia</text>
+<path d="M1375 890 L1375 940" fill="none" stroke="#a16207" stroke-width="2" marker-end="url(#y)"/>
+<text x="1385" y="918" class="lb" text-anchor="start">e-mail</text>
+<path d="M1040 700 L920 840" fill="none" stroke="#b91c1c" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#r)"/>
+<circle cx="985" cy="760" r="11" fill="#b91c1c"/><text x="985" y="764" class="nb" text-anchor="middle">!</text>
+<text x="960" y="778" class="lb" text-anchor="end">esgotou as tentativas</text>
+<text x="590" y="958" class="nt" text-anchor="start">Falha da IA ou do n8n: o Kafka tenta de novo;</text>
+<text x="590" y="974" class="nt" text-anchor="start">se esgotar, vai para a dead letter e não se perde.</text>
+<rect x="40" y="520" width="510" height="300" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<text x="60" y="548" class="bt" text-anchor="start">Vida de uma candidatura</text>
+<text x="60" y="578" class="lb" text-anchor="start">Criada</text>
+<text x="150" y="578" class="bl" text-anchor="start">status pending, etapa Triagem (passos 1 a 3).</text>
+<text x="60" y="604" class="lb" text-anchor="start">Analisada</text>
+<text x="150" y="604" class="bl" text-anchor="start">a IA marca aproved ou recuse e guarda o motivo (6 e 7).</text>
+<text x="60" y="630" class="lb" text-anchor="start">Avisada</text>
+<text x="150" y="630" class="bl" text-anchor="start">e-mail pelo n8n e aviso no sino do candidato (8 e 9).</text>
+<text x="60" y="656" class="lb" text-anchor="start">Avançada</text>
+<text x="150" y="656" class="bl" text-anchor="start">o RH muda a etapa em PATCH /api/resumes/{id}/stage;</text>
+<text x="150" y="682" class="bl" text-anchor="start">cada mudança gera outro e-mail e outro aviso.</text>
+<text x="60" y="708" class="lb" text-anchor="start">Reenviada</text>
+<text x="150" y="708" class="bl" text-anchor="start">se o Kafka falhar no passo 4, ela fica pending e o</text>
+<text x="150" y="734" class="bl" text-anchor="start">PendingResumeRepublisher recoloca na fila.</text>
+<text x="60" y="760" class="lb" text-anchor="start">Registrada</text>
+<text x="150" y="760" class="bl" text-anchor="start">o que esgota as tentativas vai para dead_letters.</text>
+<g transform="translate(40,1030)"><rect width="900" height="70" rx="8" fill="#fff" stroke="#cbd5e1"/>
+<line x1="16" y1="22" x2="56" y2="22" stroke="#334155" stroke-width="2" marker-end="url(#a)"/><text x="68" y="26" class="bl" text-anchor="start">chamada principal</text>
+<line x1="200" y1="22" x2="240" y2="22" stroke="#b91c1c" stroke-width="2" stroke-dasharray="7 5" marker-end="url(#r)"/><text x="252" y="26" class="bl" text-anchor="start">falha ou reprocessamento</text>
+<line x1="430" y1="22" x2="470" y2="22" stroke="#a16207" stroke-width="2" marker-end="url(#y)"/><text x="482" y="26" class="bl" text-anchor="start">serviço externo</text>
+<text x="16" y="52" class="bl" text-anchor="start">Os números mostram a ordem do fluxo da candidatura (1 a 9). O login com Google segue o caminho em amarelo, à esquerda.</text></g>
+</svg>
