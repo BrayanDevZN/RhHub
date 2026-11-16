@@ -1,5 +1,5 @@
 # Project Anatomy: RhHub
-Generated: 2026-11-16 | 280 files | ~286.3K tokens if all read
+Generated: 2026-11-16 | 276 files | ~285.9K tokens if all read
 
 ## Structure
 | Path | Lines | ~Tokens | Type |
@@ -194,10 +194,6 @@ Generated: 2026-11-16 | 280 files | ~286.3K tokens if all read
 | .github/ISSUE_TEMPLATE/feature_request.yml | 22 | 123 | config |
 | .github/workflows/ci.yml | 159 | 1.2K | config |
 | docker-compose.yml | 114 | 849 | config |
-| railway.api.json | 14 | 77 | config |
-| railway.consumer.json | 8 | 38 | config |
-| railway.front.json | 14 | 75 | config |
-| railway.kafka.json | 8 | 37 | config |
 | src/backend/resources/application.yml | 79 | 791 | config |
 | src/frontend/.oxlintrc.json | 9 | 62 | config |
 | src/frontend/components.json | 26 | 129 | config |
@@ -257,7 +253,7 @@ Generated: 2026-11-16 | 280 files | ~286.3K tokens if all read
 | .github/PULL_REQUEST_TEMPLATE.md | 24 | 218 | docs |
 | docs/ARQUITETURA.md | 127 | 2.4K | docs |
 | DOCUMENTACAO.md | 851 | 12.7K | docs |
-| README.md | 366 | 5.5K | docs |
+| README.md | 365 | 5.5K | docs |
 | src/backend/GUIA_DO_BACKEND.md | 77 | 1.4K | docs |
 | src/backend/HISTORICO.md | 145 | 3.3K | docs |
 | src/backend/README.md | 289 | 5.4K | docs |
@@ -287,9 +283,9 @@ Generated: 2026-11-16 | 280 files | ~286.3K tokens if all read
 
 ## Summary
 - source: 184 files, ~144.1K tokens
-- config: 17 files, ~4.4K tokens
+- config: 13 files, ~4.2K tokens
 - test: 48 files, ~75.5K tokens
-- docs: 10 files, ~38.5K tokens
+- docs: 10 files, ~38.3K tokens
 - style: 1 files, ~8.6K tokens
 - other: 20 files, ~15.2K tokens
 

@@ -748,7 +748,7 @@ flowchart LR
 | `redis` | `redis:alpine` | |
 | `kafka` | `apache/kafka` em modo KRaft | Sem Zookeeper. Topics criados na subida |
 
-O `Dockerfile` da raiz é o do front: é o que o Railway usa por padrão. Os outros serviços apontam para o próprio arquivo (`Dockerfile.Api`, `Dockerfile.Consumer`, `Dockerfile.kafka`), pelo `railway.*.json` ou pela variável `RAILWAY_DOCKERFILE_PATH`. Não há `railway.json` na raiz: um arquivo assim valeria para todos os serviços e passaria por cima do que cada um escolhe no painel.
+Cada serviço usa o próprio Dockerfile (`Dockerfile.front`, `Dockerfile.Api`, `Dockerfile.Consumer` e `Dockerfile.kafka`); no Railway, aponte cada serviço para o seu pela variável `RAILWAY_DOCKERFILE_PATH`.
 
 ### 7.0 Cache (Redis, cache-aside)
 

@@ -123,4 +123,4 @@ O CI roda um job por categoria.
 
 ## 9. Deploy
 
-Railway, um serviço por Dockerfile: `Dockerfile.front`, `Dockerfile.Api`, `Dockerfile.Consumer` e `Dockerfile.kafka`, cada um com seu `railway.*.json`. Localmente, `docker compose up --build` sobe tudo (PostgreSQL, Redis, Kafka, API, consumer e front). Variáveis de ambiente e passo a passo: [`README.md`](../README.md) e [`DOCUMENTACAO.md`](../DOCUMENTACAO.md).
+Railway, um serviço por Dockerfile: `Dockerfile.front`, `Dockerfile.Api`, `Dockerfile.Consumer` e `Dockerfile.kafka`. Localmente, `docker compose up --build` sobe tudo (PostgreSQL, Redis, Kafka, API, consumer e front). Variáveis de ambiente e passo a passo: [`README.md`](../README.md) e [`DOCUMENTACAO.md`](../DOCUMENTACAO.md).

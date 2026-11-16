@@ -34,18 +34,18 @@ Todas em `/api`, JSON em snake_case, sessão por cookie `HttpOnly`. A lista comp
 
 ### Deploy
 
-| Serviço | Dockerfile | Config do Railway |
-| --- | --- | --- |
-| API | `Dockerfile.Api` | `railway.api.json` (ou `RAILWAY_DOCKERFILE_PATH=Dockerfile.Api`) |
-| Consumers (análise e e-mail) | `Dockerfile.Consumer` | `railway.consumer.json` (ou `RAILWAY_DOCKERFILE_PATH=Dockerfile.Consumer`) |
-| Kafka | `Dockerfile.kafka` | `railway.kafka.json` (ou `RAILWAY_DOCKERFILE_PATH=Dockerfile.kafka`) |
-| Front (nginx, repassa `/api` para a API; lê `BACKEND_URL`) | `Dockerfile.front` | `railway.front.json` (ou `RAILWAY_DOCKERFILE_PATH=Dockerfile.front`) |
+| Serviço | Dockerfile |
+| --- | --- |
+| API | `Dockerfile.Api` |
+| Consumers (análise e e-mail) | `Dockerfile.Consumer` |
+| Kafka | `Dockerfile.kafka` |
+| Front (nginx, repassa `/api` para a API; lê `BACKEND_URL`) | `Dockerfile.front` |
 
 **Kafka e acesso de fora do projeto.** O broker escuta na porta **9092**. Entre serviços do mesmo projeto use a rede privada: `KAFKA_URL=<serviço do Kafka>.railway.internal:9092` no back end e `KAFKA_ADVERTISED_HOST=<serviço do Kafka>.railway.internal` no Kafka. De outro projeto (a rede privada não atravessa projetos) use o TCP Proxy público do Railway, com o **destino na porta 9092**, e informe o endereço público ao Kafka: `KAFKA_ADVERTISED_HOST=<host do proxy>` e `KAFKA_ADVERTISED_PORT=<porta do proxy>`; o back end usa `KAFKA_URL=<host do proxy>:<porta do proxy>`. Um proxy com destino errado (por exemplo 9001) fecha a conexão durante a autenticação.
 
 **Kafka precisa de volume.** Sem um **Volume** do Railway montado em `/var/lib/kafka/data` (os dados ficam na subpasta `kafka-logs`, porque a raiz do volume tem `lost+found` e o Kafka não sobe com ela), todo reinício do Kafka (inclusive os deploys automáticos a cada push) apaga os tópicos e as mensagens. O consumer recria os tópicos sozinho a cada minuto (`TopicEnsurer`) e reenfileira as candidaturas pendentes (`PendingResumeRepublisher`), mas o que estava na fila no momento do reinício se perde. Em **Settings → Build → Watch Paths** de cada serviço, limite o deploy automático ao que é dele (por exemplo, no Kafka: `/Dockerfile.kafka` e `/src/backend/kafka/**`), para um push no front não reiniciar o Kafka.
 
-**Cada serviço do Railway precisa apontar para o seu Dockerfile** (config path ou a variável acima). Não existe mais um `Dockerfile` padrão na raiz: sem apontar, o Railway não sabe qual construir.
+**Cada serviço do Railway precisa apontar para o seu Dockerfile** (pela variável `RAILWAY_DOCKERFILE_PATH`, por exemplo `Dockerfile.Api`). Não existe mais um `Dockerfile` padrão na raiz: sem apontar, o Railway não sabe qual construir.
 
 `docker compose up --build` sobe tudo local (veja `.env.compose.example` na raiz). Front e API precisam estar no **mesmo domínio**: os cookies são `SameSite=Strict`.
 

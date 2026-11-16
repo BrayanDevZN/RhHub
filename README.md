@@ -249,7 +249,6 @@ RhHub/
 ├── tests/                          # unit/, integration/ e functional/
 ├── Dockerfile.Api · Dockerfile.Consumer · Dockerfile.kafka · Dockerfile.front
 ├── docker-compose.yml              # Postgres, Redis, Kafka, API, consumer e front
-├── railway.*.json                  # configuração de cada serviço no Railway
 ├── .github/                        # CI (um job por categoria de teste), templates de PR e issue, dependabot, CODEOWNERS
 ├── DOCUMENTACAO.md                 # documentação completa (rotas, regras, variáveis)
 └── PROJECT_ANATOMY.md              # mapa de arquivos do projeto
@@ -341,9 +340,9 @@ O projeto roda no **Railway** com um serviço por Dockerfile:
 
 | Serviço | Dockerfile | Observação |
 |---|---|---|
-| Front (nginx) | `Dockerfile.front` | `railway.front.json`. Lê `BACKEND_URL` e repassa `/api`, `/oauth2` e `/login/oauth2` |
-| API | `Dockerfile.Api` | `railway.api.json` |
-| Consumers (análise e e-mail) | `Dockerfile.Consumer` | `railway.consumer.json` |
+| Front (nginx) | `Dockerfile.front` | Lê `BACKEND_URL` e repassa `/api`, `/oauth2` e `/login/oauth2` |
+| API | `Dockerfile.Api` | |
+| Consumers (análise e e-mail) | `Dockerfile.Consumer` | |
 | Kafka | `Dockerfile.kafka` | Precisa de um **volume** em `/var/lib/kafka/data`, senão cada reinício apaga os tópicos |
 
 Front e API precisam responder **no mesmo domínio** (via proxy do nginx), porque os cookies de sessão são `SameSite=Strict`. Detalhes de Kafka, rede privada e Watch Paths estão em [`src/backend/README.md`](src/backend/README.md).
