@@ -57,7 +57,7 @@ Sem `src/main`: o `pom.xml` aponta para `src/`, `resources/` e `test/`.
 src/backend/
 ├── pom.xml
 ├── .env.example
-├── src/br/rhhub/
+├── src/
 │   ├── RhHubApplication.java
 │   ├── domain/
 │   │   ├── model/            User, Vacancy, Resume, ResumeFile, enums

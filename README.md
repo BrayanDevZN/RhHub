@@ -233,7 +233,7 @@ Apagar um usuário ou uma vaga apaga, em cascata, as candidaturas, fotos e aviso
 RhHub/
 ├── src/
 │   ├── backend/                    # API e consumers (Java / Spring Boot)
-│   │   ├── src/br/rhhub/
+│   │   ├── src/
 │   │   │   ├── domain/             # modelos, regras, JWT, etapas
 │   │   │   ├── service/            # casos de uso
 │   │   │   ├── application/        # controllers, filtros, portas, DTOs

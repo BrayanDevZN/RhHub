@@ -1,7 +1,7 @@
 # Guia do backend (para ler e apresentar)
 
 Java 21 + Spring Boot 3.5 com **WebFlux** (reativo: tudo devolve `Mono` = 0 ou 1 valor, `Flux` = vários).
-Código em `src/br/rhhub`, testes em `test/br/rhhub`.
+Código em `src/`, testes em `test/`. Os pacotes Java continuam `br.rhhub.*` (o nome do pacote não precisa repetir as pastas).
 
 ## 1. A ideia central: arquitetura hexagonal
 

@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Os testes do back end rodam por categoria (tags do JUnit em src/backend/test/br/rhhub/testing), sempre com
+  # Os testes do back end rodam por categoria (tags do JUnit em src/backend/test/testing), sempre com
   # ENVIRONMENT=test, o ambiente de teste da aplicação: códigos de verificação na resposta, IA fixa, cookies sem Secure.
   backend-unit:
     name: Back end · unit
