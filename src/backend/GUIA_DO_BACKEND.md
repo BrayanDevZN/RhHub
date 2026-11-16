@@ -9,7 +9,7 @@ O miolo do sistema não conhece banco, Kafka, Redis nem Google. Ele só conhece 
 Quem fala com o mundo de fora são os **adapters**, plugados por fora.
 
 ```
- navegador ──► application/controller ──► service ──► infra/repository, integration, store (interfaces)
+ navegador ──► application/middleware ──► application/controllers ──► service ──► infra/repository, integration, store (interfaces)
                 (controllers)     (regras de        ▲
                                    negócio)         │ implementadas por
                                                     │
@@ -23,9 +23,12 @@ Vantagem para explicar: dá para trocar PostgreSQL por SQLite, ou a IA por uma r
 
 | Pasta | O que tem | Exemplos |
 |---|---|---|
-| `application/controller` | Rotas HTTP (uma classe por assunto) | `AuthController`, `VacancyController`, `ResumeController` |
-| `application/filter` | Filtros que rodam antes das rotas | `AuthFilter`, `RateLimitFilter`, `SecurityHeadersFilter`, `CorsConfig` |
-| `application/web` | Apoio das rotas: erros padronizados e conversão para JSON | `ApiExceptionHandler`, `WebSupport`, `Views` |
+| `application/middleware` | Roda antes de toda rota: segurança, limite de requisições e checagem do login (JWT) | `AuthFilter`, `RateLimitFilter`, `SecurityHeadersFilter` |
+| `application/cors` | Define de quais endereços de front a API aceita chamadas | `CorsConfig` |
+| `application/controllers` | As rotas HTTP, uma classe por assunto | `AuthController`, `VacancyController`, `ResumeController` |
+| `application/handlers` | Trata os erros e devolve a resposta HTTP certa (404, 403, 401...) | `ApiExceptionHandler` |
+| `application/dto` | Formato do JSON que vai para o front | `Views` |
+| `application/utils` | Ferramentas das rotas: quem está logado, cookies de sessão, upload | `WebSupport` |
 | `infra/repository` | Interfaces para ler e gravar dados | `UserRepository`, `VacancyRepository`, `ResumeRepository` |
 | `infra/integration` | Interfaces para serviços de fora | `AiProvider`, `EmailSender`, `GoogleIdentityProvider` |
 | `infra/store` | Interfaces do Redis: limite, sessão e códigos | `RateLimiter`, `RefreshTokenStore`, `VerificationCodeStore` |

@@ -10,7 +10,7 @@ Todo acesso a dados é assíncrono (`Mono`/`Flux`).
 | `domain` | As **regras de negócio**: modelos, validações, erros e o token JWT. Não conhece banco, rede nem Spring. |
 | `adapter` | As **abstrações**: as interfaces que o resto do sistema usa para falar com o que é externo (repositórios, LLM etc.). |
 | `service` | **Junta as camadas**: orquestra domínio e adapters para cumprir cada caso de uso. |
-| `application` | **Só onde a aplicação e as rotas começam**: controllers, filtros e apoio das rotas. |
+| `application` | **Só onde a aplicação e as rotas começam**: controllers, middleware, cors, handlers de erro, dto e utils. |
 | `infra` | Código que **usa os dados externos**: conexão com o banco, chamada à LLM e leitura das variáveis de ambiente. Implementa os adapters. |
 
 Fluxo de uma requisição: `application` (rota) → `service` → `domain` + `adapter` (interface) → `infra` (implementação).
@@ -22,7 +22,7 @@ Fluxo de uma requisição: `application` (rota) → `service` → `domain` + `ad
 | `infra` | **Pronta**: `config`, `database` (tabelas e repositórios), `redis` (códigos, refresh token, rate limit), `messaging` (Kafka), `llm`, `email` (n8n e templates), `google` (OAuth) e `security` (BCrypt, JWT). |
 | `domain` | **Pronta**: modelos, regras de validação (`Rules`), JWT de sessão, política de acesso (`AccessPolicy`) e erros. |
 | `service` | **Pronta**: autenticação, conta do usuário, foto de perfil, vagas, candidaturas, administração e a análise com a IA. |
-| `application` | **Pronta**: rotas sob `/api` (controllers), filtros de login, de limite e de segurança, CORS e erros padronizados. |
+| `application` | **Pronta**: rotas sob `/api` (controllers), middleware de login, de limite e de segurança, CORS e handler de erros padronizados. |
 
 As interfaces dos adapters ficam em `infra/repository`, `infra/integration` e `infra/store` (e os casos de uso dos consumers em `service/usecase`).
 

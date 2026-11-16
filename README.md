@@ -143,7 +143,7 @@ flowchart TB
 |---|---|
 | `domain` | Regras que não dependem de nada externo: modelos (`Vacancy`, `Resume`, `User`…), validações (`Rules`), etapas (`Stages`), JWT e política de acesso. Não conhece banco, rede nem Spring |
 | `service` | Orquestra o domínio e as portas para cumprir cada caso de uso |
-| `application` | Só a entrada da aplicação: as rotas REST sob `/api` (`controller`), os filtros (autenticação, rate limit, cabeçalhos, CORS) e o apoio das rotas (`web`) |
+| `application` | Só a entrada da aplicação: as rotas REST sob `/api` (`controllers`), os `middleware` (autenticação, limite de requisições, cabeçalhos de segurança), o `cors`, os `handlers` de erro, os `dto` (formato do JSON) e `utils` |
 | `infra` | Adaptadores que implementam as portas: repositórios SQL, Redis, Kafka, provedor de IA, e-mail, Google OAuth e segurança |
 
 O fluxo de uma requisição é `application` → `service` → `domain` + portas → `infra`. Isso permite testar os serviços com repositórios em memória e trocar uma implementação (por exemplo, o provedor de IA) sem mexer nas regras.
