@@ -104,7 +104,7 @@ Cache-aside: lê do cache, se não achar lê do banco e guarda com validade. Que
 | Serviço | Para quê | Onde no código |
 |---|---|---|
 | **Google OAuth2** | Login e cadastro | `infra/google`, `application/web/GoogleController` |
-| **Groq / OpenAI** (API compatível) | Analisar o currículo contra a vaga | `infra/llm`; o prompt está em `resources/prompt/resume_analysis.md` |
+| **Groq / OpenAI** (API compatível) | Analisar o currículo contra a vaga | `infra/llm`; o prompt está em `infra/resources/prompt/resume_analysis.md` |
 | **n8n** | Enviar o e-mail (webhook assinado com JWT) | `infra/email` |
 
 Com `ENVIRONMENT=test` a IA devolve uma resposta fixa, o e-mail só é registrado no log e os códigos de verificação voltam na resposta, o que permite testar tudo sem rede.

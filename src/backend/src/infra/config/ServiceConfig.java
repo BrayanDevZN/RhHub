@@ -91,7 +91,7 @@ public class ServiceConfig {
         return new AdminService(users, refresh, policy);
     }
 
-    /** O prompt de triagem (o mesmo do AgentRH) vem de resources/prompt/resume_analysis.md e é lido uma vez, na subida. */
+    /** O prompt de triagem (o mesmo do AgentRH) vem de infra/resources/prompt/resume_analysis.md e é lido uma vez, na subida. */
     @Bean
     AnalyzeResume analyzeResume(ResumeRepository resumes, VacancyRepository vacancies, UserRepository users,
             DocumentTextExtractor extractor, AiProvider ai, EmailPublisher emails,

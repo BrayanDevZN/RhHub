@@ -221,8 +221,8 @@ Apagar um usuário ou uma vaga apaga, em cascata, as candidaturas, fotos e aviso
 | **Documentos** | Apache PDFBox 3 (PDF) e Apache POI 5 (DOCX) para extrair o texto do currículo |
 | **Front end** | React 19, TypeScript, Vite 8, Tailwind CSS 4, React Router 7, Base UI + componentes no estilo shadcn/ui, lucide-react, Three.js (`@react-three/fiber` e `drei`) na cena 3D do login |
 | **Dados** | PostgreSQL 16, Redis 7 (códigos de verificação, refresh tokens, rate limit e **cache-aside** das leituras), Apache Kafka (tópicos `resume.analysis` e `email.send`) |
-| **IA** | Qualquer provedor compatível com a API da OpenAI: Groq (`openai/gpt-oss-120b`) por padrão ou OpenAI (`gpt-4o-mini`). O prompt de triagem fica em `src/backend/resources/prompt/resume_analysis.md` |
-| **E-mail** | Workflow no n8n (Gmail) chamado por webhook com JWT HS256; templates HTML em `src/backend/resources/templates` |
+| **IA** | Qualquer provedor compatível com a API da OpenAI: Groq (`openai/gpt-oss-120b`) por padrão ou OpenAI (`gpt-4o-mini`). O prompt de triagem fica em `src/backend/src/infra/resources/prompt/resume_analysis.md` |
+| **E-mail** | Workflow no n8n (Gmail) chamado por webhook com JWT HS256; templates HTML em `src/backend/src/infra/resources/templates` |
 | **Autenticação** | BCrypt, JWT, Google OAuth 2.0, 2FA por e-mail |
 | **Infra** | Docker e Docker Compose, nginx, Railway, GitHub Actions |
 | **Testes** | JUnit 5 (tags `unit`, `integration`, `functional` e `live`), AssertJ, Mockito, Reactor Test, Spring Kafka Test |
@@ -237,8 +237,7 @@ RhHub/
 │   │   │   ├── domain/             # modelos, regras, JWT, etapas
 │   │   │   ├── service/            # casos de uso
 │   │   │   ├── application/        # controllers, filtros, portas, DTOs
-│   │   │   └── infra/              # banco, redis, kafka, llm, email, google, security
-│   │   ├── resources/              # application.yml, prompt da IA, templates de e-mail
+│   │   │   └── infra/              # banco, redis, kafka, llm, email, google, security + resources/ (application.yml, prompt da IA, templates de e-mail)
 │   │   └── kafka/                  # entrypoint do broker
 │   └── frontend/                   # SPA React + nginx
 │       └── src/
@@ -250,8 +249,7 @@ RhHub/
 ├── Dockerfile.Api · Dockerfile.Consumer · Dockerfile.kafka · Dockerfile.front
 ├── docker-compose.yml              # Postgres, Redis, Kafka, API, consumer e front
 ├── .github/                        # CI (um job por categoria de teste), templates de PR e issue, dependabot, CODEOWNERS
-├── DOCUMENTACAO.md                 # documentação completa (rotas, regras, variáveis)
-└── PROJECT_ANATOMY.md              # mapa de arquivos do projeto
+└── DOCUMENTACAO.md                 # documentação completa (rotas, regras, variáveis)
 ```
 
 ## 🚀 Como rodar
@@ -356,8 +354,6 @@ Front e API precisam responder **no mesmo domínio** (via proxy do nginx), porqu
 | [`docs/fluxo-do-sistema.svg`](docs/fluxo-do-sistema.svg) | Diagrama do fluxo, do navegador ao e-mail |
 | [`DOCUMENTACAO.md`](DOCUMENTACAO.md) | Arquitetura detalhada, modelo de dados, fluxos de autenticação, **todas as rotas**, regras de validação e variáveis de ambiente |
 | [`src/backend/README.md`](src/backend/README.md) | Camadas do back end, estado de cada uma e notas de deploy |
-| [`src/backend/HISTORICO.md`](src/backend/HISTORICO.md) | Decisões, problemas encontrados e o que falta |
-| [`PROJECT_ANATOMY.md`](PROJECT_ANATOMY.md) | Mapa de todos os arquivos, com tamanho estimado |
 
 ## 👥 Autoria
 

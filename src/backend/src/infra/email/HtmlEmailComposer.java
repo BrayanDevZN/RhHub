@@ -11,7 +11,7 @@ import java.util.Map;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
-/** Templates HTML de resources/templates (os do AgentRH). Os dois campos, {{name}} e {{code}}, entram escapados. */
+/** Templates HTML de infra/resources/templates (os do AgentRH). Os dois campos, {{name}} e {{code}}, entram escapados. */
 @Component
 public class HtmlEmailComposer implements EmailComposer {
 

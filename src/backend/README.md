@@ -3,8 +3,6 @@
 Back end Java (Spring Boot 3, WebFlux) do RhHub, portado do [AgentRH](https://github.com/BrayanDevZN/AgentRH).
 Todo acesso a dados é assíncrono (`Mono`/`Flux`).
 
-O que já foi feito, as decisões, os problemas encontrados e o que falta: veja o [HISTORICO.md](HISTORICO.md).
-
 ## Camadas
 
 | Camada | Responsabilidade |
@@ -51,7 +49,7 @@ Todas em `/api`, JSON em snake_case, sessão por cookie `HttpOnly`. A lista comp
 
 ## Estrutura de pastas
 
-Sem `src/main`: o `pom.xml` aponta para `src/`, `resources/` e `../../tests/` (os testes ficam na raiz do repositório).
+Sem `src/main`: o `pom.xml` aponta para `src/` (com os arquivos de configuração em `src/infra/resources/`) e `../../tests/` (os testes ficam na raiz do repositório).
 
 ```
 src/backend/
@@ -76,7 +74,7 @@ src/backend/
 │       ├── redis/            RedisConfig (conexão), RedisStore (operações)
 │       ├── messaging/        KafkaConfig, KafkaUrl, KafkaTopics, publishers, AnalysisConsumer, EmailConsumer, DeadLetterRecoverer
 │       └── llm/              OpenAiCompatibleProvider, FixedAiProvider, LlmConfig
-├── resources/application.yml
+# configs, prompt da IA e templates: src/infra/resources/
 # testes: ../../tests/ (unit, integration, functional)
 └── kafka/entrypoint.sh       usado pelo Dockerfile.kafka (na raiz do repositório)
 ```
@@ -204,7 +202,7 @@ Depois disso o `DeadLetterRecoverer` **grava o job na tabela `dead_letters`** (c
 
 1. Busca a candidatura. Se não existe mais, ou **não está `pending`**, ignora (idempotente).
 2. Busca a vaga, o candidato e o arquivo, e **extrai o texto** do PDF (PDFBox) ou do DOCX (POI), reconhecendo o tipo pelo conteúdo. Limite de 20 000 caracteres.
-3. Chama a IA com o prompt de triagem (`resources/prompt/resume_analysis.md`, o mesmo do AgentRH) e esta entrada: `JOB_DESCRIPTION` (título e descrição da vaga), `CANDIDATE_NAME` e `CANDIDATE_RESUME`.
+3. Chama a IA com o prompt de triagem (`src/infra/resources/prompt/resume_analysis.md`, o mesmo do AgentRH) e esta entrada: `JOB_DESCRIPTION` (título e descrição da vaga), `CANDIDATE_NAME` e `CANDIDATE_RESUME`.
 4. Lê a resposta `DECISÃO | ASSUNTO | HTML` (`AnalysisResult.parse`): a decisão tem de ser exatamente `aproved` ou `recuse`, o assunto não pode estar vazio nem ter `|`, e o corpo tem de ser um documento HTML. Tolera espaços, maiúsculas e cercas de código (```). O HTML pode conter ` | `.
 5. **Grava `status` e `reason`** (o assunto e o corpo em texto, sem tags, para o front mostrar) e **enfileira o e-mail** para o candidato.
 

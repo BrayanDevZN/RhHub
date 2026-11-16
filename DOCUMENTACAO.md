@@ -481,7 +481,7 @@ Uma chave vazia ou só com espaços conta como ausente. O provedor escolhido apa
 | `update_password.html` | Código de recuperação de senha | `/auth/password/reset-code` |
 | `resume_analysis_test.html` | Resultado da análise (modo teste) | Consumer da IA |
 
-O resultado real da análise usa o HTML gerado pela IA. Os templates do AgentRH são reaproveitados em `resources/templates`.
+O resultado real da análise usa o HTML gerado pela IA. Os templates do AgentRH são reaproveitados em `src/backend/src/infra/resources/templates`.
 
 ### 4.9 Redis: cache e limites
 

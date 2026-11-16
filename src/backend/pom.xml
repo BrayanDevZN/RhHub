@@ -98,11 +98,11 @@
     </dependencies>
 
     <build>
-        <!-- Sem a estrutura src/main/java: fontes em src/, configs em resources/, testes em tests/ na raiz do repositório -->
+        <!-- Sem a estrutura src/main/java: fontes em src/, configs e templates em src/infra/resources/, testes em tests/ na raiz do repositório -->
         <sourceDirectory>src</sourceDirectory>
         <resources>
             <resource>
-                <directory>resources</directory>
+                <directory>src/infra/resources</directory>
             </resource>
         </resources>
         <testSourceDirectory>../../tests</testSourceDirectory>
