@@ -141,12 +141,327 @@ flowchart TB
 
 | Camada | Responsabilidade |
 |---|---|
-| `domain` | Regras que não dependem de nada externo: modelos (`Vacancy`, `Resume`, `User`…), validações (`Rules`), etapas (`Stages`), JWT e política de acesso. Não conhece banco, rede nem Spring |
-| `service` | Orquestra o domínio e as portas para cumprir cada caso de uso |
-| `application` | Só a entrada da aplicação: as rotas REST sob `/api` (`controllers`), os `middleware` (autenticação, limite de requisições, cabeçalhos de segurança), o `cors`, os `handlers` de erro, os `dto` (formato do JSON) e `utils` |
-| `infra` | Adaptadores que implementam as portas: repositórios SQL, Redis, Kafka, provedor de IA, e-mail, Google OAuth e segurança |
+| `application` | **Só onde a aplicação e as rotas começam.** Recebe a requisição HTTP e devolve a resposta: `controllers` (as rotas `/api`), `middleware` (login, limite de requisições, cabeçalhos de segurança), `cors`, `handlers` (traduz erros para HTTP), `dto` (formato do JSON) e `utils`. Não tem regra de negócio |
+| `service` | **As regras de negócio.** Um serviço por assunto (autenticação, vagas, candidaturas, análise, avisos...). Orquestra o `domain` e fala com o mundo de fora só por interfaces. Não conhece Spring, banco nem rede. O `usecase` tem os dois casos que os consumidores de fila chamam |
+| `domain` | **O núcleo.** Os objetos do sistema (`User`, `Vacancy`, `Resume`...), as validações (`Rules`, `Stages`), o JWT e a política de acesso, e os erros de negócio. Não depende de nenhuma outra camada |
+| `infra` | **Tudo que conecta com dados e serviços externos.** Contém as interfaces do que o sistema precisa (`repository`, `integration`, `store`) e as implementações: banco (`database`), cache e Redis (`cache`, `redis`), Kafka (`messaging`), IA (`llm`), e-mail (`email`), Google (`google`), leitura de PDF/DOCX (`document`), senha (`security`) e configuração (`config`) |
 
 O fluxo de uma requisição é `application` → `service` → `domain` + portas → `infra`. Isso permite testar os serviços com repositórios em memória e trocar uma implementação (por exemplo, o provedor de IA) sem mexer nas regras.
+
+### O que cada arquivo do back end faz
+
+O código fica em `src/backend/src`. A tabela abaixo está agrupada por pasta, na ordem em que uma requisição atravessa o sistema. Cada método dentro dos arquivos também tem comentário explicando o que faz.
+
+**Entrada da aplicação:** `RhHubApplication` inicia o Spring Boot. O mesmo jar roda a API e o consumer; a variável `KAFKA_CONSUMERS_ENABLED` decide se ele lê as filas (consumer) ou só publica nelas (API).
+
+#### `application/controllers`: onde cada rota começa
+
+Recebem a requisição HTTP, chamam um serviço e devolvem a resposta. Não têm regra de negócio.
+
+| Arquivo | O que faz |
+|---|---|
+| `AdminController` | `/api/admin/users`: o administrador lista, consulta, muda o papel, apaga usuários e vê a foto deles |
+| `AuthController` | `/api/auth`: login, 2FA, renovar sessão (refresh), logout, trocar e recuperar senha, e quais logins externos estão ligados |
+| `GoogleController` | Login com Google: começa o fluxo (`/oauth2/authorization/google`) e trata a volta (`/login/oauth2/code/google`) |
+| `HealthController` | `/api/health`: responde "ok" para a plataforma saber que a API está de pé |
+| `NotificationController` | `/api/notifications`: o sino, com listar avisos, marcar um ou todos como lidos |
+| `ResumeController` | `/api/resumes`: enviar currículo, listar, ver, baixar o arquivo, mover de etapa e apagar |
+| `UserController` | `/api/users` e `/api/sender`: cadastro com código por e-mail, perfil (`/me`), foto e exclusão da própria conta |
+| `VacancyController` | `/api/vacancies`: listar, ver, criar, editar e apagar vagas, e a foto da vaga |
+
+#### `application/middleware`: roda antes de toda rota
+
+Filtros que cada requisição atravessa antes de chegar ao controller, nesta ordem.
+
+| Arquivo | O que faz |
+|---|---|
+| `SecurityHeadersFilter` | Põe cabeçalhos de segurança em toda resposta (sem iframe, sem adivinhar tipo de arquivo, sem referrer) |
+| `AuthFilter` | Exige o cookie com o JWT em tudo que é `/api` (menos as rotas públicas) e guarda quem é o usuário na requisição |
+| `RateLimitFilter` | Limita requisições por minuto: por IP nas rotas públicas, por usuário nas logadas, mais um contador global |
+
+#### `application/cors`
+
+| Arquivo | O que faz |
+|---|---|
+| `CorsConfig` | Define de quais endereços de front a API aceita chamadas (`FRONTEND_URL`), com cookies |
+
+#### `application/handlers`
+
+| Arquivo | O que faz |
+|---|---|
+| `ApiExceptionHandler` | Transforma qualquer erro em JSON `{status, error, message, path}` com o código HTTP certo; erro inesperado vira 500 sem detalhe interno |
+
+#### `application/dto`
+
+| Arquivo | O que faz |
+|---|---|
+| `Views` | Formato do JSON que vai para o front (usuário, vaga, candidatura, avisos). Nunca inclui hash de senha nem id do Google |
+
+#### `application/utils`
+
+| Arquivo | O que faz |
+|---|---|
+| `WebSupport` | Ferramentas das rotas: cookies de sessão, descobrir quem está logado, ler upload com limite de tamanho e converter ids |
+
+#### `service`: as regras de negócio (casos de uso)
+
+Cada serviço cuida de um assunto, orquestra o `domain` e fala com o mundo de fora só pelas interfaces. Não conhecem Spring, banco nem rede.
+
+| Arquivo | O que faz |
+|---|---|
+| `AuthService` | Cadastro, login (com 2FA opcional), refresh, logout, troca e recuperação de senha, login com Google e criação do admin raiz |
+| `UserService` | A conta do próprio usuário: ver, alterar perfil, completar cadastro, ligar 2FA e excluir a conta |
+| `AdminService` | Administração de usuários: listar, mudar papel e excluir, seguindo a política de permissões |
+| `VacancyService` | Vagas: listar, ver, criar, editar e apagar (só admin), com etapas, prazo de expiração e foto |
+| `ResumeService` | Candidaturas: validar e gravar o currículo como `pending`, pedir a análise em segundo plano, listar, baixar e apagar |
+| `ResumeStageService` | Mover uma candidatura aprovada de etapa (só admin); o candidato recebe e-mail e aviso |
+| `AnalyzeResumeService` | A análise: lê o currículo, monta a pergunta para a IA, grava o resultado, enfileira o e-mail e cria o aviso |
+| `DeliverEmailService` | Entrega à implementação de envio o e-mail que veio da fila |
+| `NotificationService` | O sino do app: listar avisos, marcar como lidos e criar avisos para usuários ou administradores |
+| `ProfilePhotoService` | Foto de perfil: o dono troca e remove; o dono e os admins veem |
+| `AsyncPasswordHasher` | Faz o hash BCrypt fora da thread do servidor (leva ~250 ms de CPU) para não travar outras requisições |
+
+#### `service/usecase`
+
+Os dois casos de uso que os consumidores de fila chamam.
+
+| Arquivo | O que faz |
+|---|---|
+| `AnalyzeResume` | Interface do caso de uso "analisar uma candidatura" (implementado por `AnalyzeResumeService`) |
+| `DeliverEmail` | Interface do caso de uso "entregar um e-mail" (implementado por `DeliverEmailService`) |
+
+#### `domain/model`: os objetos do sistema
+
+Dados e regras simples sobre eles. Não dependem de nada externo.
+
+| Arquivo | O que faz |
+|---|---|
+| `User` | A conta: dados pessoais, papel, provedor (local ou Google), hash de senha. Métodos `with...` devolvem cópias alteradas |
+| `Vacancy` | A vaga: nome, descrição, requisitos, responsabilidades, etapas, prazo e quantos candidatos tem |
+| `Resume` | A candidatura: quem, qual vaga, situação (`pending`, `aproved`, `recuse`), motivo e etapa. O arquivo não viaja aqui |
+| `ResumeFile` | O arquivo de um currículo (bytes, nome e tipo), usado no download |
+| `ResumeStatus` | As situações da candidatura e a regra de quais mudanças são permitidas (só sai de `pending`) |
+| `AnalysisResult` | A resposta da IA já interpretada (`DECISÃO | ASSUNTO | HTML`), com a conversão do HTML em texto para o motivo |
+| `Notification` | Um aviso do sino |
+| `ProfilePhoto` | Uma foto (perfil ou vaga): descobre o tipo pelo conteúdo e limita a 2 MB |
+| `DocumentType` | Tipos de currículo aceitos: PDF e DOCX |
+| `DeadLetter` | O registro de uma mensagem do Kafka que falhou de vez |
+| `DeadLetterStatus` | Situação da falha: `failed` ou `resolved` |
+| `Role` | Papel: `user` (candidato) ou `admin` (RH) |
+| `AuthProvider` | Como a conta foi criada: `local` ou `google` |
+| `Gender` | Gênero do cadastro: `male`, `female` ou `other` |
+
+#### `domain/rule`
+
+| Arquivo | O que faz |
+|---|---|
+| `Rules` | Validação e normalização dos campos: e-mail `@gmail.com`, senha, nome, CPF, idade, gênero, código, textos da vaga |
+| `Stages` | Etapas do processo seletivo: a Triagem é obrigatória e sempre a primeira; o padrão é Triagem, Entrevista e Contratado |
+
+#### `domain/auth`
+
+| Arquivo | O que faz |
+|---|---|
+| `JwtService` | Emite e confere os tokens de sessão (HS256): assinatura, validade e tipo |
+| `TokenType` | Os 3 tokens: acesso (15 min), refresh (7 dias) e 2FA (5 min), cada um com seu cookie |
+| `TokenClaims` | O que um token válido carrega: usuário, tipo, id e datas |
+| `AccessPolicy` | Quem pode o quê: promover, rebaixar e excluir; define o admin raiz (o e-mail de `ADMIN_EMAIL`) |
+| `CodeGenerator` | Gera o código de 6 dígitos com `SecureRandom` |
+| `CodePurpose` | Para que serve o código (cadastro, 2FA ou troca de senha): chave no Redis e validade |
+| `PasswordHasher` | Interface do hash de senha (a implementação BCrypt fica em `infra/security`) |
+
+#### `domain/exception`
+
+| Arquivo | O que faz |
+|---|---|
+| `DomainException` | Os erros de negócio (400, 401, 403, 404, 409, 422 e 429), que o `ApiExceptionHandler` traduz para HTTP |
+
+#### `infra/repository`: interfaces de acesso a dados
+
+O que o sistema precisa para ler e gravar dados. As implementações estão em `infra/database` (SQL) e `infra/cache` (com Redis na frente).
+
+| Arquivo | O que faz |
+|---|---|
+| `UserRepository` | Usuários: buscar por id, e-mail, Google ou CPF, salvar e apagar; leitura rápida da identidade de quem está logado |
+| `VacancyRepository` | Vagas: buscar, listar, salvar, apagar e conferir nome repetido |
+| `ResumeRepository` | Candidaturas: buscar, listar com filtros, ler o arquivo, criar, mudar resultado e etapa, apagar |
+| `NotificationRepository` | Avisos: criar, listar, contar não lidos e marcar como lidos |
+| `ProfilePhotoRepository` | Foto de perfil: uma por usuário |
+| `VacancyPhotoRepository` | Foto da vaga: uma por vaga |
+| `DeadLetterRepository` | Mensagens que falharam de vez: gravar (sem duplicar), consultar e marcar como resolvida |
+
+#### `infra/integration`: interfaces de serviços de fora
+
+O que o sistema precisa de fora do banco. As implementações estão em `infra/llm`, `infra/email`, `infra/google`, `infra/document` e `infra/messaging`.
+
+| Arquivo | O que faz |
+|---|---|
+| `AiProvider` | Pede uma resposta a um modelo de IA |
+| `EmailSender` | Envia um e-mail |
+| `EmailMessage` | Um e-mail pronto: destinatário, assunto, corpo e tipo (HTML ou texto) |
+| `EmailComposer` | Monta os e-mails do sistema (código de verificação e mudança de etapa) |
+| `EmailPublisher` | Coloca um e-mail na fila |
+| `ResumeAnalysisPublisher` | Coloca uma candidatura na fila de análise |
+| `GoogleIdentityProvider` | Login com Google: monta o endereço de autorização e lê o perfil |
+| `DocumentTextExtractor` | Descobre o tipo do arquivo (PDF ou DOCX) e extrai o texto |
+| `Notifier` | Cria os avisos do sino sem nunca derrubar a ação principal |
+
+#### `infra/store`: interfaces do Redis
+
+| Arquivo | O que faz |
+|---|---|
+| `RateLimiter` | Conta requisições por minuto |
+| `RefreshTokenStore` | Guarda o refresh token vigente de cada usuário, para poder encerrar a sessão |
+| `VerificationCodeStore` | Códigos de 6 dígitos por e-mail: validade, um por minuto e no máximo 5 tentativas |
+
+#### `infra/database`: conexão com o banco
+
+PostgreSQL em produção (assíncrono, R2DBC) ou SQLite local.
+
+| Arquivo | O que faz |
+|---|---|
+| `DatabaseConfig` | Escolhe e cria o banco a partir de `DATABASE_URL` e cria as tabelas na subida |
+| `DatabaseUrl` | Interpreta a `DATABASE_URL` (host, porta, usuário, senha, SSL) ou escolhe o SQLite se vier vazia |
+| `SqlExecutor` | Interface para executar SQL: consulta (devolve linhas) e comando (devolve quantas mudaram) |
+| `PostgresSqlExecutor` | Executa SQL no PostgreSQL sem bloquear, com pool de conexões |
+| `SqliteSqlExecutor` | Executa SQL no SQLite numa thread própria, uma operação por vez |
+| `Params` | Parâmetros nomeados de uma consulta (o tipo importa quando o valor é nulo) |
+| `Row` | Uma linha do resultado, com leitura de texto, número, UUID, data, booleano e bytes nos dois bancos |
+
+#### `infra/database/adapter`
+
+Escrevem o SQL de cada repositório. Todos funcionam igual no PostgreSQL e no SQLite.
+
+| Arquivo | O que faz |
+|---|---|
+| `UserRepositoryAdapter` | SQL dos usuários; erro de unicidade vira "e-mail/CPF/Google já cadastrado" |
+| `VacancyRepositoryAdapter` | SQL das vagas, já calculando se têm foto e quantos candidatos |
+| `ResumeRepositoryAdapter` | SQL das candidaturas; as consultas comuns não trazem o arquivo (que é pesado) |
+| `NotificationRepositoryAdapter` | SQL dos avisos |
+| `ProfilePhotoRepositoryAdapter` | SQL da foto de perfil (inserir ou trocar) |
+| `VacancyPhotoRepositoryAdapter` | SQL da foto da vaga (inserir ou trocar) |
+| `DeadLetterRepositoryAdapter` | SQL das falhas do Kafka; a origem é única, então não duplica |
+
+#### `infra/database/table`
+
+Criam as tabelas na subida (`CREATE TABLE IF NOT EXISTS`), sem ferramenta de migração.
+
+| Arquivo | O que faz |
+|---|---|
+| `TableCreator` | Cria as tabelas que faltam, na ordem das chaves estrangeiras, e acrescenta colunas novas em bancos antigos |
+| `TableDefinition` | Interface de uma tabela: nome, comandos de criação e colunas acrescentadas depois |
+| `Dialect` | Os tipos de coluna de cada banco, para escrever a tabela uma vez só |
+| `UsersTable` | Tabela `users` |
+| `UserPhotosTable` | Tabela `user_photos` |
+| `VacanciesTable` | Tabela `vacancies` |
+| `VacancyPhotosTable` | Tabela `vacancy_photos` |
+| `ResumesTable` | Tabela `resumes` (candidatura e arquivo) |
+| `NotificationsTable` | Tabela `notifications` |
+| `DeadLettersTable` | Tabela `dead_letters` |
+
+#### `infra/cache`: cache com Redis
+
+Cache-aside: lê do cache, senão do banco e guarda; ao alterar, apaga. Se o Redis cair, a leitura segue pelo banco.
+
+| Arquivo | O que faz |
+|---|---|
+| `QueryCache` | O mecanismo do cache-aside, com limite de 300 ms e pausa de 30 s se o Redis falhar |
+| `CacheStore` | Interface do armazenamento do cache (texto com prazo) |
+| `RedisCacheStore` | Implementação no Redis; apaga por prefixo com SCAN, sem travar o servidor |
+| `CacheKeys` | Chaves e prazos do cache num lugar só (5 min e 60 s) |
+| `CachedUserRepository` | Guarda a identidade de quem está logado; nunca guarda hash de senha |
+| `CachedVacancyRepository` | Guarda a lista e cada vaga; salvar ou apagar limpa tudo |
+| `CachedNotificationRepository` | Guarda a lista e o contador do sino de cada usuário |
+| `CachedResumeRepository` | Não guarda candidaturas (mudam o tempo todo); só limpa o cache das vagas quando o número de candidatos muda |
+
+#### `infra/redis`: o que o Redis guarda além do cache
+
+| Arquivo | O que faz |
+|---|---|
+| `RedisConfig` | Conexão com o Redis, teste de conexão na subida |
+| `RedisStore` | Operações básicas do Redis, incluindo o contador atômico com expiração |
+| `RedisRateLimiter` | Implementa o limite de requisições por minuto |
+| `RedisRefreshTokenStore` | Implementa a guarda do refresh token (`refresh:<usuário>`) |
+| `RedisVerificationCodeStore` | Implementa os códigos de verificação, com a regra de 5 tentativas |
+
+#### `infra/messaging`: Kafka
+
+As filas `resume.analysis` e `email.send`, com tentativas, dead letter e reenvio.
+
+| Arquivo | O que faz |
+|---|---|
+| `KafkaConfig` | Conexão, produtor, consumidor, criação dos tópicos e a política de erro (tentativas e dead letter) |
+| `KafkaTopics` | Nomes dos tópicos, grupos de consumo e do tópico `.DLT` de cada um |
+| `KafkaUrl` | Interpreta o `KAFKA_URL` |
+| `KafkaPublisher` | Publica uma mensagem e só termina quando o broker confirma |
+| `KafkaResumeAnalysisPublisher` | Coloca o id da candidatura na fila de análise |
+| `KafkaEmailPublisher` | Coloca o e-mail na fila de e-mails |
+| `ResumeAnalysisMessage` | A mensagem da fila de análise: só o id da candidatura |
+| `EmailKafkaMessage` | A mensagem da fila de e-mails |
+| `AnalysisConsumer` | Lê a fila de análise e chama o caso de uso |
+| `EmailConsumer` | Lê a fila de e-mails e chama o envio |
+| `DeadLetterRecoverer` | Quando as tentativas acabam: grava em `dead_letters` e publica no `.DLT` |
+| `PendingResumeRepublisher` | A cada minuto recoloca na fila as candidaturas esquecidas em `pending` |
+| `TopicEnsurer` | A cada minuto recria os tópicos que sumirem (por exemplo, se o Kafka reiniciar) |
+
+#### `infra/llm`: a IA
+
+| Arquivo | O que faz |
+|---|---|
+| `LlmConfig` | Escolhe o provedor: resposta fixa no teste, senão OpenAI, depois Groq |
+| `OpenAiCompatibleProvider` | Chama a API `/chat/completions` (serve para OpenAI e Groq), esperando e tentando de novo no limite de taxa |
+| `FixedAiProvider` | Resposta aprovada fixa, sem rede, só para o ambiente de teste |
+
+#### `infra/email`: e-mail
+
+| Arquivo | O que faz |
+|---|---|
+| `EmailConfig` | Escolhe o envio: teste (só log), n8n (com `gmail_secret`) ou desligado |
+| `N8nEmailSender` | Faz o POST no webhook do n8n com um JWT novo a cada chamada |
+| `N8nJwtSigner` | Assina o JWT que o webhook do n8n exige |
+| `HtmlEmailComposer` | Monta os e-mails a partir dos modelos HTML, escapando nome e código |
+
+#### `infra/google`: login com Google
+
+| Arquivo | O que faz |
+|---|---|
+| `GoogleConfig` | Liga ou desliga o login com Google; ligado, exige as 3 variáveis |
+| `GoogleOAuthClient` | Monta o endereço de autorização, troca o `code` pelo token e lê o perfil |
+
+#### `infra/document`
+
+| Arquivo | O que faz |
+|---|---|
+| `PdfDocxTextExtractor` | Identifica PDF ou DOCX pelo conteúdo e extrai o texto (PDFBox e Apache POI) |
+
+#### `infra/security`
+
+| Arquivo | O que faz |
+|---|---|
+| `BcryptPasswordHasher` | Hash de senha com BCrypt (custo 12) |
+| `AuthConfig` | Monta o JWT (gera um segredo aleatório se não houver `JWT_SECRET`), a política de acesso e o hash |
+
+#### `infra/config`: configuração
+
+| Arquivo | O que faz |
+|---|---|
+| `AppProperties` | Lê as variáveis de ambiente (banco, Redis, Kafka, IA, e-mail) |
+| `AuthProperties` | Variáveis de autenticação: segredo do JWT, admin raiz, limites e Google |
+| `WebProperties` | Variáveis web: `FRONTEND_URL`, cookies Secure e SameSite |
+| `ServiceConfig` | Cria cada serviço com as implementações de `infra`, e carrega o prompt uma vez |
+| `AdminBootstrap` | Na subida, cria o admin raiz a partir de `ADMIN_EMAIL` e `ADMIN_PASSWORD` |
+| `ClockConfig` | Fornece o relógio (UTC) |
+| `SchedulingConfig` | Liga as tarefas agendadas |
+
+#### `infra/resources`: arquivos que não são código
+
+| Arquivo | O que é |
+|---|---|
+| `application.yml` | Todas as configurações, lendo as variáveis de ambiente |
+| `prompt/resume_analysis.md` | O prompt da IA: critérios para `aproved` ou `recuse` e o formato da resposta |
+| `templates/create_account.html` | E-mail do código de cadastro |
+| `templates/two_factor_authentication.html` | E-mail do código de 2FA |
+| `templates/update_password.html` | E-mail do código de troca de senha |
 
 ### Decisões de projeto
 
