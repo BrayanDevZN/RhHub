@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom"
 import {
   ArrowUpRightIcon, BriefcaseBusinessIcon, ChevronDownIcon,
@@ -41,6 +41,45 @@ export function AppLayout() {
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const profileBox = useRef<HTMLDivElement>(null)
+
+  // Menu lateral no celular: trava a rolagem da página, fecha com Esc e some ao passar para a tela larga.
+  useEffect(() => {
+    if (!mobileOpen) return
+    const previous = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    const wide = window.matchMedia("(min-width: 741px)")
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileOpen(false)
+    }
+    const onWide = () => {
+      if (wide.matches) setMobileOpen(false)
+    }
+    document.addEventListener("keydown", onKey)
+    wide.addEventListener("change", onWide)
+    return () => {
+      document.body.style.overflow = previous
+      document.removeEventListener("keydown", onKey)
+      wide.removeEventListener("change", onWide)
+    }
+  }, [mobileOpen])
+
+  // Menu da conta: fecha ao tocar fora dele ou apertar Esc.
+  useEffect(() => {
+    if (!profileOpen) return
+    const onDown = (event: PointerEvent) => {
+      if (profileBox.current && !profileBox.current.contains(event.target as Node)) setProfileOpen(false)
+    }
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setProfileOpen(false)
+    }
+    document.addEventListener("pointerdown", onDown)
+    document.addEventListener("keydown", onKey)
+    return () => {
+      document.removeEventListener("pointerdown", onDown)
+      document.removeEventListener("keydown", onKey)
+    }
+  }, [profileOpen])
 
   async function handleLogout() {
     setProfileOpen(false)
@@ -72,7 +111,7 @@ export function AppLayout() {
   return (
     <div className="rh-shell">
       {mobileOpen && <button className="rh-mobile-shade" onClick={() => setMobileOpen(false)} aria-label="Fechar menu" />}
-      <aside className={`rh-sidebar ${mobileOpen ? "is-open" : ""}`}>
+      <aside className={`rh-sidebar ${mobileOpen ? "is-open" : ""}`} id="menu-lateral">
         <div className="rh-brand">
           <NavLink to="/" className="rh-brand-link" onClick={() => setMobileOpen(false)}>
             <span className="rh-brand-mark"><BriefcaseBusinessIcon className="size-[21px]" strokeWidth={2.1} /></span>
@@ -115,14 +154,14 @@ export function AppLayout() {
 
       <div className="rh-main">
         <header className="rh-topbar">
-          <div className="flex min-w-0 items-center gap-3">
-            <button className="rh-topbar-mobile" onClick={() => setMobileOpen(true)} aria-label="Abrir menu"><MenuIcon className="size-5" /></button>
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <button className="rh-topbar-mobile" onClick={() => setMobileOpen(true)} aria-label="Abrir menu" aria-controls="menu-lateral" aria-expanded={mobileOpen}><MenuIcon className="size-5" /></button>
             <div className="rh-breadcrumb"><span>Workspace</span><span className="rh-breadcrumb-divider">/</span><strong>{TITLES[pathname] ?? "RhHub"}</strong></div>
           </div>
           <div className="rh-top-actions">
             <NavLink to="/vagas" className="rh-top-search"><SearchIcon className="size-4" /><span>Buscar oportunidades</span><kbd>⌕</kbd></NavLink>
             <NotificationBell />
-            <div className="rh-topbar-profile">
+            <div className="rh-topbar-profile" ref={profileBox}>
               <button className="rh-top-profile-btn" onClick={() => setProfileOpen((v) => !v)} aria-label="Opções da conta" aria-expanded={profileOpen}>
                 <span className="rh-top-avatar" style={{ overflow: "hidden" }}>{avatar}</span>
                 <ChevronDownIcon className="size-3.5" />

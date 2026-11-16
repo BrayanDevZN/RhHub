@@ -61,6 +61,32 @@ export default function AdminUsers() {
     }
   }
 
+  const userActions = (user: User) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={<Button variant="ghost" size="icon-sm" disabled={user.public_id === me.public_id} />}
+      >
+        <MoreHorizontalIcon />
+        <span className="sr-only">Ações</span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuGroup>
+          <DropdownMenuItem onClick={() => toggleRole(user)}>
+            {user.role === "admin" ? <ShieldOffIcon /> : <ShieldIcon />}
+            {user.role === "admin" ? "Remover admin" : "Tornar admin"}
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem variant="destructive" onClick={() => setDeleting(user)}>
+            <Trash2Icon />
+            Excluir conta
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+
   return (
     <>
       <PageHeader title="Usuários" description="Promova administradores e gerencie contas." />
@@ -77,7 +103,8 @@ export default function AdminUsers() {
           </EmptyHeader>
         </Empty>
       ) : (
-        <Card className="py-0">
+        <>
+        <Card className="hidden py-0 md:flex">
           <Table>
             <TableHeader>
               <TableRow>
@@ -119,35 +146,34 @@ export default function AdminUsers() {
                     {formatDate(user.created_at)}
                   </TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        render={<Button variant="ghost" size="icon-sm" disabled={user.public_id === me.public_id} />}
-                      >
-                        <MoreHorizontalIcon />
-                        <span className="sr-only">Ações</span>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuGroup>
-                          <DropdownMenuItem onClick={() => toggleRole(user)}>
-                            {user.role === "admin" ? <ShieldOffIcon /> : <ShieldIcon />}
-                            {user.role === "admin" ? "Remover admin" : "Tornar admin"}
-                          </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuGroup>
-                          <DropdownMenuItem variant="destructive" onClick={() => setDeleting(user)}>
-                            <Trash2Icon />
-                            Excluir conta
-                          </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {userActions(user)}
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </Card>
+        <div className="flex flex-col gap-3 md:hidden">
+          {users.map((user) => (
+            <Card key={user.public_id} className="flex-row items-center gap-3 px-4">
+              <Avatar className="size-9 shrink-0">
+                <AvatarFallback>{initials(user.name)}</AvatarFallback>
+              </Avatar>
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="truncate font-medium">
+                  {user.name}
+                  {user.public_id === me.public_id && " (você)"}
+                </span>
+                <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+                <Badge variant={user.role === "admin" ? "default" : "secondary"} className="mt-0.5 w-fit">
+                  {user.role === "admin" ? "Admin" : "Candidato"}
+                </Badge>
+              </div>
+              <div className="shrink-0">{userActions(user)}</div>
+            </Card>
+          ))}
+        </div>
+        </>
       )}
 
       <AlertDialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>

@@ -477,7 +477,6 @@ body { background: #0a1024; color: #f7f9ff; }
 [data-slot="textarea"]::placeholder { color: #aab7d3; }
 @media (max-width: 740px) {
   .rh-topbar { background: #10182f; }
-  .rh-sidebar { box-shadow: 16px 0 44px rgb(0 0 0 / 45%); }
   .rh-hero { border-color: rgb(129 140 248 / 30%); }
 }
 
@@ -509,3 +508,61 @@ body { background: #0a1024; color: #f7f9ff; }
 
 /* A barra fica acima da página, para o painel do sino e o menu da conta não ficarem atrás dos cartões. */
 .rh-topbar { position: relative; z-index: 30; }
+
+/* Correções do layout no celular. Mexem só em posição, tamanho e empilhamento; cores, fontes e raios continuam os mesmos. */
+.rh-shell { min-height: 100vh; min-height: 100dvh; }
+.rh-dashboard, .rh-opportunities { min-width: 0; }
+.rh-overview-grid > *, .rh-bottom-grid > * { min-width: 0; }
+.rh-breadcrumb { min-width: 0; }
+.rh-breadcrumb strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.rh-top-actions { flex-shrink: 0; }
+
+@media (max-width: 950px) {
+  .rh-overview-grid, .rh-bottom-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 740px) {
+  /* Menu lateral: acima da barra do topo, com altura da área visível, rolável e sem sombra quando fechado. */
+  .rh-sidebar {
+    height: 100vh; height: 100dvh; width: min(280px, 86vw); z-index: 50;
+    overflow-y: auto; overscroll-behavior: contain;
+    visibility: hidden; box-shadow: none;
+    transition: transform .25s, visibility 0s linear .25s;
+  }
+  .rh-sidebar.is-open {
+    visibility: visible; box-shadow: 16px 0 44px rgb(0 0 0 / 45%);
+    transition: transform .25s, visibility 0s;
+  }
+  .rh-mobile-shade { z-index: 45; }
+  .rh-brand, .rh-workspace, .rh-side-help, .rh-side-user { flex-shrink: 0; }
+  .rh-sidebar-nav { flex: 1 0 auto; overflow: visible; }
+  .rh-sidebar-bottom { padding-bottom: 20px; }
+  .rh-close-mobile, .rh-topbar-mobile, .rh-top-icon, .rh-top-profile-btn {
+    min-width: 40px; min-height: 40px; display: grid; place-items: center;
+  }
+  .rh-top-profile-btn { display: flex; justify-content: center; }
+  .rh-close-mobile { margin-right: -8px; }
+  .rh-topbar-mobile { margin-left: -10px; }
+
+  /* Barra do topo: o título encolhe com reticências em vez de passar por baixo do sino. */
+  .rh-topbar { gap: 8px; }
+  .rh-top-actions { gap: 4px; }
+  .rh-top-icon .rh-notif-count { right: 3px; top: 3px; }
+  .rh-notif { position: static; }
+  .rh-notif-panel { left: 16px; right: 16px; top: calc(100% + 8px); width: auto; }
+  .rh-notif-panel ul { max-height: min(380px, 60vh); }
+  .rh-profile-menu { top: calc(100% + 8px); width: min(218px, calc(100vw - 32px)); }
+
+  /* Páginas: as telas que usam só PageHeader + conteúdo ganham o espaçamento entre blocos. */
+  .rh-page { display: flex; flex-direction: column; gap: 20px; }
+  .rh-page > .rh-dashboard { width: 100%; }
+  .rh-footer { gap: 4px; }
+}
+
+@media (max-width: 740px) and (max-height: 760px) {
+  .rh-side-help { display: none; }
+}
+
+@media (max-width: 480px) {
+  .rh-breadcrumb > span { display: none; }
+}
