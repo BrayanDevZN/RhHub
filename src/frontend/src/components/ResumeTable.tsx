@@ -82,6 +82,55 @@ export function ResumeTable({
     }
   }
 
+  const stageControl = (resume: Resume) => (
+    users && resume.status === "aproved" ? (
+      <Select items={stagesOf(resume.vacancy_id).map((s) => ({ value: s, label: s }))} value={resume.stage} onValueChange={(value) => value && changeStage(resume, value as string)}>
+        <SelectTrigger size="sm" aria-label="Etapa do candidato">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            {stagesOf(resume.vacancy_id).map((stage) => (
+              <SelectItem key={stage} value={stage}>
+                {stage}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+    ) : (
+      <span className="text-sm text-muted-foreground">{resume.status === "recuse" ? "—" : resume.stage}</span>
+    )
+  )
+
+  const rowActions = (resume: Resume) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
+        <MoreHorizontalIcon />
+        <span className="sr-only">Ações</span>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuGroup>
+          <DropdownMenuItem disabled={resume.status === "pending"} onClick={() => setViewing(resume)}>
+            <EyeIcon />
+            Ver resultado
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => downloadFile(resume)}>
+            <DownloadIcon />
+            Baixar arquivo
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem variant="destructive" onClick={() => setDeleting(resume)}>
+            <Trash2Icon />
+            Excluir
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+
   if (!resumes) return <Skeleton className="h-48 w-full" />
 
   if (resumes.length === 0) {
@@ -102,7 +151,7 @@ export function ResumeTable({
 
   return (
     <>
-      <Card className="py-0">
+      <Card className="hidden py-0 md:flex">
         <Table>
           <TableHeader>
             <TableRow>
@@ -132,57 +181,37 @@ export function ResumeTable({
                   <StatusBadge status={resume.status} />
                 </TableCell>
                 <TableCell>
-                  {users && resume.status === "aproved" ? (
-                    <Select items={stagesOf(resume.vacancy_id).map((s) => ({ value: s, label: s }))} value={resume.stage} onValueChange={(value) => value && changeStage(resume, value as string)}>
-                      <SelectTrigger size="sm" aria-label="Etapa do candidato">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {stagesOf(resume.vacancy_id).map((stage) => (
-                            <SelectItem key={stage} value={stage}>
-                              {stage}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">{resume.status === "recuse" ? "—" : resume.stage}</span>
-                  )}
+                  {stageControl(resume)}
                 </TableCell>
                 <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />}>
-                      <MoreHorizontalIcon />
-                      <span className="sr-only">Ações</span>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuGroup>
-                        <DropdownMenuItem disabled={resume.status === "pending"} onClick={() => setViewing(resume)}>
-                          <EyeIcon />
-                          Ver resultado
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => downloadFile(resume)}>
-                          <DownloadIcon />
-                          Baixar arquivo
-                        </DropdownMenuItem>
-                      </DropdownMenuGroup>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuGroup>
-                        <DropdownMenuItem variant="destructive" onClick={() => setDeleting(resume)}>
-                          <Trash2Icon />
-                          Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuGroup>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {rowActions(resume)}
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </Card>
+
+      <div className="flex flex-col gap-3 md:hidden">
+        {sorted.map((resume) => (
+          <Card key={resume.id} className="gap-3">
+            <div className="flex items-start justify-between gap-2 px-4">
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <span className="leading-snug font-medium">{vacancyName(resume.vacancy_id)}</span>
+                {users && <span className="truncate text-xs text-muted-foreground">{userName(resume.user_id)}</span>}
+              </div>
+              <div className="-mt-1 -mr-1 shrink-0">{rowActions(resume)}</div>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4">
+              <StatusBadge status={resume.status} />
+              {stageControl(resume)}
+            </div>
+            <p className="truncate px-4 text-xs text-muted-foreground">
+              {formatDate(resume.created_at)} · {resume.file_name}
+            </p>
+          </Card>
+        ))}
+      </div>
 
       <Dialog open={viewing !== null} onOpenChange={(open) => !open && setViewing(null)}>
         <DialogContent className="sm:max-w-lg">

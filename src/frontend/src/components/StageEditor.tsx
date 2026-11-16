@@ -40,10 +40,11 @@ export function StageEditor({ stages, onChange }: { stages: string[]; onChange: 
           </Badge>
         ))}
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Input
           value={draft}
           maxLength={40}
+          className="basis-full sm:flex-1 sm:basis-0"
           placeholder="Nova etapa (ex.: Teste técnico)"
           disabled={stages.length >= MAX_STAGES}
           onChange={(e) => setDraft(e.target.value)}

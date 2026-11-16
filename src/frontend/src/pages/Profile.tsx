@@ -367,18 +367,18 @@ export default function Profile() {
     <>
       <PageHeader title="Perfil" description="Seus dados, segurança e conta." />
       <Card>
-        <CardHeader className="flex flex-row items-center gap-4">
+        <CardHeader className="flex flex-row flex-wrap items-center gap-4">
           <Avatar className="size-16">
             {user.has_photo && <AvatarImage src={api.users.photoUrl(photoVersion)} alt="" />}
             <AvatarFallback>{initials(user.name)}</AvatarFallback>
           </Avatar>
-          <div className="flex min-w-0 flex-col gap-1">
+          <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-none">
             <CardTitle className="truncate">{user.name}</CardTitle>
             <CardDescription className="truncate">
               {user.email} · desde {formatDate(user.created_at)}
             </CardDescription>
           </div>
-          <div className="ml-auto flex flex-col items-end gap-2">
+          <div className="flex basis-full flex-col items-start gap-2 sm:ml-auto sm:basis-auto sm:items-end">
             <PhotoActions />
             <div className="flex gap-2">
             <Badge variant="secondary">{user.role === "admin" ? "Admin" : "Candidato"}</Badge>

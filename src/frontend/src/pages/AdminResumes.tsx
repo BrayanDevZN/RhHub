@@ -32,6 +32,7 @@ export default function AdminResumes() {
       <PageHeader title="Todas as candidaturas" description="Currículos recebidos em todas as vagas." />
       <ToggleGroup
         variant="outline"
+        className="max-w-full flex-wrap"
         value={[filter]}
         onValueChange={(value: string[]) => value[0] && setFilter(value[0] as Filter)}
       >
