@@ -214,15 +214,15 @@ export function ResumeTable({
       </div>
 
       <Dialog open={viewing !== null} onOpenChange={(open) => !open && setViewing(null)}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
+        <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-lg">
+          <DialogHeader className="pr-8">
             <DialogTitle>{viewing && vacancyName(viewing.vacancy_id)}</DialogTitle>
             <DialogDescription>Resultado da análise feita pela IA.</DialogDescription>
           </DialogHeader>
           {viewing && (
             <div className="flex flex-col gap-3">
               <StatusBadge status={viewing.status} />
-              <p className="text-sm leading-relaxed">{viewing.reason || "Sem detalhes da análise."}</p>
+              <p className="text-sm leading-relaxed break-words">{viewing.reason || "Sem detalhes da análise."}</p>
               {stagesOf(viewing.vacancy_id).length > 0 && (
                 <StageProgress stages={stagesOf(viewing.vacancy_id)} resume={viewing} />
               )}

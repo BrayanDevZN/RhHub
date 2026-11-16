@@ -10,7 +10,7 @@ export function StageProgress({ stages, resume }: { stages: string[]; resume: Pi
   )
   const refused = resume.status === "recuse"
   return (
-    <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+    <ol className="flex flex-col items-start gap-y-1.5 text-xs sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-2 sm:gap-y-1">
       {stages.map((stage, index) => {
         const done = index < current || (index === current && !refused && resume.status === "aproved" && index > 0)
         const active = index === current
@@ -28,7 +28,7 @@ export function StageProgress({ stages, resume }: { stages: string[]; resume: Pi
               {done && !active && <CheckIcon className="size-3" />}
               {stage}
             </span>
-            {index < stages.length - 1 && <span className="text-muted-foreground">›</span>}
+            {index < stages.length - 1 && <span className="hidden text-muted-foreground sm:inline">›</span>}
           </li>
         )
       })}
