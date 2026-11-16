@@ -15,7 +15,7 @@
 
 <p align="center">
   <img alt="React 19" src="https://img.shields.io/badge/REACT-19-61DAFB?style=for-the-badge&logo=react&logoColor=black">
-  <img alt="TypeScript" src="https://img.shields.io/badge/TYPESCRIPT-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TYPESCRIPT-7-3178C6?style=for-the-badge&logo=typescript&logoColor=white">
   <img alt="shadcn/ui" src="https://img.shields.io/badge/SHADCN%2FUI-BASE_NOVA-000000?style=for-the-badge&logo=shadcnui&logoColor=white">
   <img alt="Tailwind CSS 4" src="https://img.shields.io/badge/TAILWIND-4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white">
   <img alt="Three.js" src="https://img.shields.io/badge/THREE.JS-3D-000000?style=for-the-badge&logo=threedotjs&logoColor=white">
@@ -24,8 +24,8 @@
 </p>
 
 <p align="center">
-  <img alt="Front end" src="https://img.shields.io/badge/FRONT_END-PRONTO_COM_API_SIMULADA-brightgreen?style=flat-square">
-  <img alt="Back end" src="https://img.shields.io/badge/BACK_END-A_IMPLEMENTAR-orange?style=flat-square">
+  <img alt="Front end" src="https://img.shields.io/badge/FRONT_END-INTEGRADO_COM_A_API-brightgreen?style=flat-square">
+  <img alt="Back end" src="https://img.shields.io/badge/BACK_END-IMPLEMENTADO-brightgreen?style=flat-square">
   <img alt="Origem" src="https://img.shields.io/badge/PORTE_DE-AGENTRH_(PYTHON)-3776AB?style=flat-square&logo=python&logoColor=white">
 </p>
 
@@ -61,7 +61,7 @@
 9. [Pontos em aberto](#9-pontos-em-aberto)
 
 **Legenda de status:**
-![pronto](https://img.shields.io/badge/-pronto_(simulado)-brightgreen?style=flat-square)
+![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square)
 ![integrar](https://img.shields.io/badge/-integrar_com_a_API-yellow?style=flat-square)
 ![back](https://img.shields.io/badge/-depende_do_back_end-orange?style=flat-square)
 ![ideia](https://img.shields.io/badge/-sugest%C3%A3o-lightgrey?style=flat-square)
@@ -174,9 +174,9 @@ flowchart LR
 
 ### 4.1 Estrutura de pacotes
 
-A arquitetura em camadas (`domain`, `adapter`, `service`, `application` e `infra`), a estrutura de pastas real do código, o banco (PostgreSQL ou SQLite por `DATABASE_URL`) e o estado de cada camada estão em [`src/backend/README.md`](src/backend/README.md).
+A arquitetura em camadas (`domain`, `service`, `application` e `infra`, com as interfaces das portas dentro de `infra`), a estrutura de pastas real do código, o banco (PostgreSQL ou SQLite por `DATABASE_URL`), o cache, o Kafka e as variáveis de ambiente estão em [`src/backend/README.md`](src/backend/README.md).
 
-> O desenho por pacotes de funcionalidade que existia aqui (`auth/`, `user/`, `vacancy/`, `messaging/`...) foi substituído por esse. As seções abaixo seguem como **plano funcional** do back end: o Flyway foi trocado por classes Java de tabela, e Redis, Kafka, e-mail e JWT ainda não foram implementados.
+> O desenho por pacotes de funcionalidade que existia aqui (`auth/`, `user/`, `vacancy/`, `messaging/`...) foi substituído por esse. As seções abaixo descrevem o **comportamento funcional** do back end (regras, rotas e fluxos). O Flyway foi trocado por classes Java de tabela (`infra/database/table`).
 
 ### 4.2 Modelo de dados
 
@@ -586,7 +586,7 @@ Problemas encontrados lendo o código original, que **não** devem ser repetidos
 ![Router](https://img.shields.io/badge/REACT_ROUTER-7-CA4245?style=flat-square&logo=reactrouter&logoColor=white)
 ![shadcn](https://img.shields.io/badge/SHADCN%2FUI-BASE_UI-000000?style=flat-square&logo=shadcnui&logoColor=white)
 
-Código em `src/frontend`. Hoje roda sobre uma **API simulada** (`src/lib/api.ts`), em que cada função documenta a rota real. Qualquer e-mail, senha e código são aceitos, e e-mails com `admin` entram como administrador.
+Código em `src/frontend` (guia de uso e estrutura em [`src/frontend/README.md`](src/frontend/README.md)). Fala com a **API real** por `src/lib/api.ts`, em `/api` e com cookies de sessão (seção 6).
 
 ### 5.1 Funcionalidades por módulo
 
@@ -595,12 +595,12 @@ Código em `src/frontend`. Hoje roda sobre uma **API simulada** (`src/lib/api.ts
 | Funcionalidade | Status | Detalhe |
 | --- | --- | --- |
 | Login com e-mail e senha | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) | `POST /auth/login` |
-| Login com Google | ![pronto](https://img.shields.io/badge/-pronto_(simulado)-brightgreen?style=flat-square) | Hoje entra direto; no real redireciona para o Google |
+| Login com Google | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) | Redireciona para `/oauth2/authorization/google`; o botão só aparece se `GET /auth/providers` devolver `google: true` |
 | Verificação em duas etapas | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) | Campo de 6 dígitos (`InputOTP`) |
 | Cadastro com código por e-mail | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) | Duas etapas: dados e código |
 | Esqueci a senha | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) | Diálogo com e-mail, código e nova senha |
 | Sair | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) | Menu do usuário |
-| Renovação automática da sessão | ![integrar](https://img.shields.io/badge/-integrar-yellow?style=flat-square) | Ao receber `401`, chamar `POST /auth/refresh` e repetir a requisição |
+| Renovação automática da sessão | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) | Ao receber `401`, chamar `POST /auth/refresh` e repetir a requisição |
 | Validação de senha em tempo real | ![ideia](https://img.shields.io/badge/-sugest%C3%A3o-lightgrey?style=flat-square) | Indicador das regras ao digitar |
 
 #### Painel
@@ -632,7 +632,7 @@ Código em `src/frontend`. Hoje roda sobre uma **API simulada** (`src/lib/api.ts
 | --- | --- | --- |
 | Tabela com vaga, arquivo, data e status | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) | |
 | Ver o resultado da IA | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) | Desabilitado enquanto `pending` |
-| Baixar o PDF enviado | ![integrar](https://img.shields.io/badge/-integrar-yellow?style=flat-square) | Trocar o Base64 por `GET /resumes/{id}/pdf` |
+| Baixar o currículo enviado | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) | `GET /resumes/{id}/file` (PDF ou DOCX) |
 | Excluir candidatura | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) | Com confirmação |
 | Atualização automática do status | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) | Consulta a cada 2 s enquanto houver `pending` |
 
@@ -645,7 +645,7 @@ Código em `src/frontend`. Hoje roda sobre uma **API simulada** (`src/lib/api.ts
 | Ligar e desligar o 2FA | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 | Trocar a senha (contas locais) | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 | Excluir a conta com confirmação de senha | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
-| Completar CPF e idade em contas Google | ![back](https://img.shields.io/badge/-depende_do_back_end-orange?style=flat-square) |
+| Completar CPF, idade e gênero em contas Google | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 
 #### Administração
 
@@ -681,7 +681,7 @@ Quem está logado e abre `/login` vai para `/`; quem não está logado vai para 
 | Cadastro | `POST /sender/signup-code`, `POST /users` |
 | Painel | `GET /vacancies`, `GET /resumes/me` |
 | Vagas | `GET /vacancies`, `GET /resumes/me`, `POST /resumes`, `POST` `PATCH` `DELETE /vacancies` (admin) |
-| Minhas candidaturas | `GET /resumes/me`, `GET /vacancies`, `GET /resumes/{id}/pdf`, `DELETE /resumes/{id}` |
+| Minhas candidaturas | `GET /resumes/me`, `GET /vacancies`, `GET /resumes/{id}/file`, `DELETE /resumes/{id}` |
 | Perfil | `GET /users/me`, `PATCH /users/me`, `PATCH /auth/password`, `DELETE /users/me` |
 | Admin: usuários | `GET /admin/users`, `PATCH /admin/users/{id}/role`, `DELETE /admin/users/{id}` |
 | Admin: candidaturas | `GET /resumes`, `GET /vacancies`, `GET /admin/users` |
@@ -693,11 +693,11 @@ Quem está logado e abre `/login` vai para `/`; quem não está logado vai para 
 | --- | --- |
 | Tema escuro com tokens semânticos do shadcn | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 | Layout responsivo com barra lateral recolhível | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
-| Elementos 3D (three.js) nas telas de entrada e no painel | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
+| Elemento 3D (three.js) nas telas de entrada (login e cadastro), carregado sob demanda | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 | Avisos (toast) de sucesso e erro | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 | Estados de carregamento (skeleton e spinner) e de lista vazia | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 | Rotas protegidas por sessão e por papel | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
-| Tratamento do `429` (rate limit) com mensagem própria | ![integrar](https://img.shields.io/badge/-integrar-yellow?style=flat-square) |
+| Tratamento do `429` (rate limit) com mensagem própria | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 | Tema claro | ![ideia](https://img.shields.io/badge/-sugest%C3%A3o-lightgrey?style=flat-square) |
 
 ---
@@ -773,7 +773,7 @@ Testes: `QueryCacheTest` e `CachedRepositoriesTest` (unit, com `MemoryCacheStore
 
 ### 7.1 Testes e CI
 
-Os testes do back end ficam em `src/backend/test` e têm **quatro categorias**, marcadas por tags do JUnit 5 (anotações em `br.rhhub.testing`). Todos rodam com `ENVIRONMENT=test` (configurado no `maven-surefire-plugin`): `AppProperties.isTest()` faz os códigos de verificação voltarem na resposta, troca a IA por `FixedAiProvider` (sempre aprovado) e desliga o `Secure` dos cookies, então nenhum teste depende de e-mail nem de chave externa.
+Os testes do back end ficam em `tests/` (na raiz do repositório; o `pom.xml` aponta para `../../tests`) e têm **quatro categorias**, marcadas por tags do JUnit 5 (anotações em `br.rhhub.testing`). Todos rodam com `ENVIRONMENT=test` (configurado no `maven-surefire-plugin`): `AppProperties.isTest()` faz os códigos de verificação voltarem na resposta, troca a IA por `FixedAiProvider` (sempre aprovado) e desliga o `Secure` dos cookies, então nenhum teste depende de e-mail nem de chave externa.
 
 | Categoria | Anotação | Escopo | Precisa de | Testes |
 | --- | --- | --- | --- | --- |
@@ -796,8 +796,8 @@ O `pom.xml` define a propriedade `test.groups` (vazia: tudo) e `test.excluded` (
 
 | Arquivo | Função |
 | --- | --- |
-| `workflows/ci.yml` | Um job por categoria no back end (`unit`, `integration` com PostgreSQL 16 e `redis-server`, `functional`), todos com `ENVIRONMENT=test`; mais lint e build do front, conferência `Dockerfile` = `Dockerfile.front` e build das quatro imagens. Os relatórios do surefire sobem como artefato quando algo falha |
-| `PULL_REQUEST_TEMPLATE.md` | Checklist de PR: categoria do teste, lint, Dockerfiles idênticos, documentação |
+| `workflows/ci.yml` | Um job por categoria no back end (`unit`, `integration` com PostgreSQL 16 e `redis-server`, `functional`), todos com `ENVIRONMENT=test`; mais lint e build do front e build das quatro imagens (`Dockerfile.Api`, `Dockerfile.Consumer`, `Dockerfile.front` e `Dockerfile.kafka`). Os relatórios do surefire sobem como artefato quando algo falha |
+| `PULL_REQUEST_TEMPLATE.md` | Checklist de PR: categoria do teste, lint, documentação |
 | `ISSUE_TEMPLATE/` | Formulários de bug e de sugestão; issues em branco desligadas |
 | `dependabot.yml` | Atualizações semanais de Maven e npm, mensais de Actions e Docker |
 | `CODEOWNERS` | Revisor padrão de cada pasta |
@@ -807,32 +807,32 @@ O `pom.xml` define a propriedade `test.groups` (vazia: tudo) e `test.excluded` (
 
 ## 8. Roadmap
 
-- [x] Front end com autenticação, vagas, candidaturas, perfil e admin (API simulada)
+- [x] Front end com autenticação, vagas, candidaturas, perfil e admin
 - [x] Dockerfile do front end e deploy
 - [x] E-mail pelo workflow `gmail` do n8n (webhook com JWT), com envio real confirmado
 - [x] Back end: projeto Spring Boot, banco assíncrono (PostgreSQL ou SQLite) e tabelas criadas por classes Java (sem Flyway)
-- [ ] Autenticação: cadastro com código, login, cookies JWT, refresh e logout
-- [ ] 2FA por e-mail e recuperação de senha
-- [ ] Login com Google (OAuth2): implementar atrás da flag `GOOGLE_OAUTH_ENABLED` (desligada localmente)
+- [x] Autenticação: cadastro com código, login, cookies JWT, refresh e logout
+- [x] 2FA por e-mail e recuperação de senha
+- [x] Login com Google (OAuth2), atrás da flag `GOOGLE_OAUTH_ENABLED` (desligada por padrão)
 - [ ] Ligar o Google OAuth na nuvem (credenciais, URI de redirecionamento, flag)
-- [ ] CRUD de vagas e controle de papéis
-- [ ] Upload de candidaturas e download do PDF
+- [x] CRUD de vagas e controle de papéis
+- [x] Upload de candidaturas e download do PDF
 - [x] Kafka: topics `resume.analysis` e `email.send` (3 partições), retry, DLT e tabela `dead_letters` (falta testar contra o Kafka do Railway)
 - [x] Análise por IA com leitura de PDF e DOCX, e escolha de provedor (OpenAI ou Groq); validada com o Groq de verdade
-- [ ] Rate limit com Redis (a conexão e o `RedisStore` já existem; falta o filtro)
-- [ ] Docker Compose completo (front, back, Postgres, Redis, Kafka)
-- [ ] Testes unitários, de integração (Testcontainers) e funcionais
-- [ ] Trocar a API simulada do front pela real
+- [x] Rate limit com Redis (`RateLimitFilter`)
+- [x] Docker Compose completo (front, back, Postgres, Redis, Kafka)
+- [x] Testes unitários, de integração e funcionais (em `tests/`)
+- [x] Trocar a API simulada do front pela real
 
 ---
 
 ## 9. Pontos em aberto
 
-1. **CPF em contas Google:** o Google não fornece CPF, idade nem gênero. O front mostra "Não informado" e não deixa editar o CPF. É preciso um endpoint para completar o cadastro.
+1. ~~**CPF em contas Google**~~ **Resolvido:** a conta nova do Google passa por `/completar-cadastro` (`PUT /users/me/profile`) para informar CPF, idade e gênero antes de usar o app.
 2. ~~**Tipos de arquivo**~~ **Decidido:** PDF e DOCX (`.doc` antigo fica de fora).
 3. ~~**E-mail**~~ **Decidido:** só `@gmail.com`, sem o mínimo de 8 caracteres do AgentRH.
 8. **Google OAuth na nuvem:** o código fica pronto, mas desligado por padrão. Falta, quando houver URL pública, criar as credenciais no Google Cloud, cadastrar a URI de redirecionamento e ligar `GOOGLE_OAUTH_ENABLED=true` ([seção 4.3](#43-autenticação-e-sessão)).
-4. **Duração do token de acesso:** 15 minutos com refresh (proposto) ou 7 dias, como no original?
+4. ~~**Duração do token de acesso**~~ **Decidido:** 15 minutos, com refresh token de 7 dias.
 5. **Vários admins raiz:** hoje só um (`ADMIN_EMAIL`). Vale permitir mais de um?
 6. **Reenvio de código:** limite de reenvios por e-mail e por IP.
 7. **Paginação** de vagas e de candidaturas no admin, quando houver volume.

@@ -598,6 +598,8 @@ npm ci
 npm run dev
 ```
 
+O Vite não tem proxy configurado: só com `npm run dev` as chamadas a `/api` não chegam à API. Para ver o sistema funcionando, use o Docker Compose (acima) ou veja as alternativas no [`README` do front](src/frontend/README.md#só-o-servidor-do-vite).
+
 ### Variáveis de ambiente principais
 
 | Variável | Para que serve |
@@ -617,7 +619,7 @@ A lista completa, com exemplos, está em [`src/backend/.env.example`](src/backen
 
 ## 🧪 Testes
 
-Os testes do back end ficam em `src/backend/test` e são divididos em **três categorias**, marcadas com tags do JUnit 5 (anotações em `br.rhhub.testing`). Todos rodam no **ambiente de teste** (`ENVIRONMENT=test`): os códigos de verificação voltam na resposta, a IA é substituída por uma resposta fixa e os cookies não exigem HTTPS, então nada depende de e-mail nem de chave externa.
+Os testes do back end ficam em `tests/` (na raiz do repositório) e são divididos em **três categorias**, marcadas com tags do JUnit 5 (anotações em `br.rhhub.testing`). Todos rodam no **ambiente de teste** (`ENVIRONMENT=test`): os códigos de verificação voltam na resposta, a IA é substituída por uma resposta fixa e os cookies não exigem HTTPS, então nada depende de e-mail nem de chave externa.
 
 | Categoria | Anotação | O que testa | Precisa de | Testes |
 |---|---|---|---|---|
@@ -645,7 +647,7 @@ cd src/frontend
 npm run lint && npm run build
 ```
 
-O workflow [`ci.yml`](.github/workflows/ci.yml) tem **um job por categoria** (`unit`, `integration` com PostgreSQL e Redis de verdade, `functional`), mais o front, a conferência de que `Dockerfile` e `Dockerfile.front` são idênticos e o build das imagens Docker. Roda a cada push na `main` e em todo pull request.
+O workflow [`ci.yml`](.github/workflows/ci.yml) tem **um job por categoria** (`unit`, `integration` com PostgreSQL e Redis de verdade, `functional`), mais o front (lint e build) e o build das imagens Docker. Roda a cada push na `main` e em todo pull request.
 
 ## ☁️ Deploy
 
@@ -668,7 +670,9 @@ Front e API precisam responder **no mesmo domínio** (via proxy do nginx), porqu
 | [`docs/modelagem-banco.svg`](docs/modelagem-banco.svg) | Diagrama das tabelas, chaves e relações |
 | [`docs/fluxo-do-sistema.svg`](docs/fluxo-do-sistema.svg) | Diagrama do fluxo, do navegador ao e-mail |
 | [`DOCUMENTACAO.md`](DOCUMENTACAO.md) | Arquitetura detalhada, modelo de dados, fluxos de autenticação, **todas as rotas**, regras de validação e variáveis de ambiente |
-| [`src/backend/README.md`](src/backend/README.md) | Camadas do back end, estado de cada uma e notas de deploy |
+| [`src/backend/README.md`](src/backend/README.md) | Back end: camadas, estrutura de pastas, banco, cache, Kafka, análise por IA, e-mail, variáveis de ambiente, testes e deploy |
+| [`src/backend/GUIA_DO_BACKEND.md`](src/backend/GUIA_DO_BACKEND.md) | Roteiro de leitura do código (mapa de pastas e os fluxos principais) |
+| [`src/frontend/README.md`](src/frontend/README.md) | Front end: como rodar, estrutura, rotas, cliente da API, estilo e build com nginx |
 
 ## 👥 Autoria
 

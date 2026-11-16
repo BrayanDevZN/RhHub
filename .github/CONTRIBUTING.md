@@ -6,7 +6,7 @@
 cp .env.compose.example .env && docker compose up --build   # tudo junto, em http://localhost:9000
 ```
 
-Ou separado: `cd src/backend && ./mvnw spring-boot:run` e `cd src/frontend && npm ci && npm run dev`.
+Ou separado: `cd src/backend && ./mvnw spring-boot:run` e `cd src/frontend && npm ci && npm run dev`. Atenção: o Vite não tem proxy para a API, então só com `npm run dev` as chamadas a `/api` não chegam ao back end (detalhes e saídas em [`src/frontend/README.md`](../src/frontend/README.md)).
 
 ## Testes
 
@@ -32,6 +32,5 @@ No front: `cd src/frontend && npm run lint && npm run build`.
 ## Commits e pull requests
 
 - Mensagens no padrão `tipo: o que mudou` (`feat`, `fix`, `docs`, `refactor`, `test`, `chore`), com `(escopo)` quando ajudar: `fix(auth): ...`.
-- Se mexer em `Dockerfile`, altere também `Dockerfile.front` (o CI exige que sejam idênticos).
 - Se a API ou uma regra mudar, atualize a `DOCUMENTACAO.md`.
 - Nunca commite segredos: use o `.env` (fora do git) e o `.env.compose.example` como modelo.
