@@ -24,7 +24,7 @@ Fluxo de uma requisição: `application` (rota) → `service` → `domain` + `ad
 | `service` | **Pronta**: autenticação, conta do usuário, foto de perfil, vagas, candidaturas, administração e a análise com a IA. |
 | `application` | **Pronta**: rotas sob `/api` (controllers), filtros de login, de limite e de segurança, CORS e erros padronizados. |
 
-As interfaces dos adapters ainda ficam em `application/port/out` (e as de entrada em `application/port/in`).
+As interfaces dos adapters ficam em `application/repository`, `application/integration` e `application/store` (e os casos de uso dos consumers em `application/usecase`).
 
 ### Rotas
 
@@ -61,8 +61,10 @@ src/backend/
 │   │   ├── model/            User, Vacancy, Resume, ResumeFile, enums
 │   │   └── exception/        DomainException (Invalid, Unauthorized, Forbidden, NotFound, Conflict...)
 │   ├── service/              DeliverEmailService
-│   ├── application/port/in/  AnalyzeResume, DeliverEmail (casos de uso que os consumers chamam)
-│   ├── application/port/out/ interfaces: UserRepository, VacancyRepository, ResumeRepository, AiProvider, EmailSender, EmailMessage, EmailPublisher, ResumeAnalysisPublisher, DeadLetterRepository
+│   ├── application/usecase/  AnalyzeResume, DeliverEmail (casos de uso que os consumers chamam)
+│   ├── application/repository/   interfaces dos repositórios (UserRepository, VacancyRepository, ResumeRepository...)
+│   ├── application/integration/  interfaces de serviços de fora (AiProvider, EmailSender, EmailPublisher, GoogleIdentityProvider...)
+│   ├── application/store/        RateLimiter, RefreshTokenStore, VerificationCodeStore
 │   └── infra/
 │       ├── config/           AppProperties (variáveis de ambiente), ClockConfig
 │       ├── database/

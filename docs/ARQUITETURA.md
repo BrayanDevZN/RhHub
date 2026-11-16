@@ -31,7 +31,7 @@ Mais três peças de apoio: **PostgreSQL** (dados), **Redis** (cache, sessão, l
 O código do backend fica em `src/backend/src` (os pacotes Java são `br.rhhub.*`). A ideia central é que o **miolo do sistema não conhece tecnologia**: ele só conhece interfaces, chamadas de *portas*. Banco, Kafka, Redis, Google e IA são *adapters* plugados por fora.
 
 ```
- HTTP ──► application/web ──► service ──► application/port/out  (interfaces)
+ HTTP ──► application/controller ──► service ──► application/repository, integration, store  (interfaces)
           (controllers,       (regras)           ▲
            filtros)                              │ implementadas por
                                                  │
@@ -44,8 +44,11 @@ O código do backend fica em `src/backend/src` (os pacotes Java são `br.rhhub.*
 |---|---|
 | `domain/` | Modelos (`User`, `Vacancy`, `Resume`...), validações (`Rules`), etapas (`Stages`), JWT e política de acesso, erros de negócio |
 | `service/` | Regras de negócio, um serviço por assunto: `AuthService`, `ResumeService`, `ResumeStageService`, `VacancyService`... |
-| `application/web/` | Controllers REST, filtros (segurança, limite, autenticação) e a conversão para JSON (`Views`) |
-| `application/port/out/` | Interfaces do que o sistema precisa de fora: `UserRepository`, `AiProvider`, `EmailSender`, `RateLimiter`... |
+| `application/controller/` | Rotas REST, uma classe por assunto (`AuthController`, `VacancyController`...) |
+| `application/filter/` | Filtros de segurança, limite de requisições e autenticação |
+| `application/web/` | Apoio das rotas: erros padronizados (`ApiExceptionHandler`) e conversão para JSON (`Views`) |
+| `application/repository/`, `integration/`, `store/` | Interfaces do que o sistema precisa de fora: dados, serviços externos e Redis |
+| `application/usecase/` | O que os consumidores de fila chamam |
 | `infra/` | Implementações: `database`, `cache`, `redis`, `messaging` (Kafka), `llm`, `email`, `google`, `security`, `config` |
 
 **Vantagem prática:** dá para trocar PostgreSQL por SQLite (uso local), ou a IA por uma resposta fixa (`ENVIRONMENT=test`), sem mexer em nenhuma regra. Os testes usam versões em memória das portas (`tests/unit/service/Fakes.java`).
@@ -103,7 +106,7 @@ Cache-aside: lê do cache, se não achar lê do banco e guarda com validade. Que
 
 | Serviço | Para quê | Onde no código |
 |---|---|---|
-| **Google OAuth2** | Login e cadastro | `infra/google`, `application/web/GoogleController` |
+| **Google OAuth2** | Login e cadastro | `infra/google`, `application/controller/GoogleController` |
 | **Groq / OpenAI** (API compatível) | Analisar o currículo contra a vaga | `infra/llm`; o prompt está em `infra/resources/prompt/resume_analysis.md` |
 | **n8n** | Enviar o e-mail (webhook assinado com JWT) | `infra/email` |
 

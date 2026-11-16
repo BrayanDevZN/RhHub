@@ -9,7 +9,7 @@ O miolo do sistema não conhece banco, Kafka, Redis nem Google. Ele só conhece 
 Quem fala com o mundo de fora são os **adapters**, plugados por fora.
 
 ```
- navegador ──► application/web ──► service ──► application/port/out (interfaces)
+ navegador ──► application/controller ──► service ──► application/repository, integration, store (interfaces)
                 (controllers)     (regras de        ▲
                                    negócio)         │ implementadas por
                                                     │
@@ -23,9 +23,13 @@ Vantagem para explicar: dá para trocar PostgreSQL por SQLite, ou a IA por uma r
 
 | Pasta | O que tem | Exemplos |
 |---|---|---|
-| `application/web` | Controllers (rotas HTTP), filtros e conversão para JSON | `AuthController`, `VacancyController`, `AuthFilter`, `RateLimitFilter`, `dto/Views` |
-| `application/port/in` | O que o sistema oferece aos consumidores de fila | `AnalyzeResume`, `DeliverEmail` |
-| `application/port/out` | Interfaces do que o sistema precisa do mundo de fora | `UserRepository`, `AiProvider`, `EmailSender`, `RateLimiter` |
+| `application/controller` | Rotas HTTP (uma classe por assunto) | `AuthController`, `VacancyController`, `ResumeController` |
+| `application/filter` | Filtros que rodam antes das rotas | `AuthFilter`, `RateLimitFilter`, `SecurityHeadersFilter`, `CorsConfig` |
+| `application/web` | Apoio das rotas: erros padronizados e conversão para JSON | `ApiExceptionHandler`, `WebSupport`, `Views` |
+| `application/repository` | Interfaces para ler e gravar dados | `UserRepository`, `VacancyRepository`, `ResumeRepository` |
+| `application/integration` | Interfaces para serviços de fora | `AiProvider`, `EmailSender`, `GoogleIdentityProvider` |
+| `application/store` | Interfaces do Redis: limite, sessão e códigos | `RateLimiter`, `RefreshTokenStore`, `VerificationCodeStore` |
+| `application/usecase` | O que os consumidores de fila chamam | `AnalyzeResume`, `DeliverEmail` |
 | `service` | Regras de negócio (um serviço por assunto) | `AuthService`, `ResumeService`, `VacancyService` |
 | `domain/model` | Os "objetos" do sistema | `User`, `Vacancy`, `Resume`, `Notification` |
 | `domain/rule` | Validações puras | `Rules` (e-mail, CPF, senha), `Stages` (etapas da vaga) |
@@ -62,7 +66,7 @@ Vantagem para explicar: dá para trocar PostgreSQL por SQLite, ou a IA por uma r
 1. Comece pelo comentário `/** ... */` no topo da classe: diz o papel dela.
 2. Controller → mostra a rota e chama um `service`.
 3. Service → tem a regra. Os `.flatMap(...)` encadeiam passos assíncronos; `switchIfEmpty` é o "senão".
-4. Interface em `port/out` → o que ele precisa; a implementação está em `infra/`.
+4. Interface em `application/repository`, `integration` ou `store` → o que ele precisa; a implementação está em `infra/`.
 
 ## 6. Nomes que mudaram
 
