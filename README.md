@@ -239,14 +239,14 @@ RhHub/
 │   │   │   ├── application/        # controllers, filtros, portas, DTOs
 │   │   │   └── infra/              # banco, redis, kafka, llm, email, google, security
 │   │   ├── resources/              # application.yml, prompt da IA, templates de e-mail
-│   │   ├── test/                   # testes unitários, de web, de banco e de fluxo
 │   │   └── kafka/                  # entrypoint do broker
 │   └── frontend/                   # SPA React + nginx
 │       └── src/
 │           ├── pages/              # Login, Cadastro, Vagas, Candidaturas, Perfil, Admin…
 │           ├── components/         # layout, sino, etapas, tabela de candidaturas, ui/
 │           └── lib/                # api.ts (cliente HTTP), auth, tipos, formatação
-├── Dockerfile · Dockerfile.Api · Dockerfile.Consumer · Dockerfile.kafka · Dockerfile.front
+├── tests/                          # unit/, integration/, functional/ e support/ (apoio compartilhado)
+├── Dockerfile.Api · Dockerfile.Consumer · Dockerfile.kafka · Dockerfile.front
 ├── docker-compose.yml              # Postgres, Redis, Kafka, API, consumer e front
 ├── railway.*.json                  # configuração de cada serviço no Railway
 ├── .github/                        # CI (um job por categoria de teste), templates de PR e issue, dependabot, CODEOWNERS
@@ -340,7 +340,7 @@ O projeto roda no **Railway** com um serviço por Dockerfile:
 
 | Serviço | Dockerfile | Observação |
 |---|---|---|
-| Front (nginx) | `Dockerfile` | Lê `BACKEND_URL` e repassa `/api`, `/oauth2` e `/login/oauth2` |
+| Front (nginx) | `Dockerfile.front` | `railway.front.json`. Lê `BACKEND_URL` e repassa `/api`, `/oauth2` e `/login/oauth2` |
 | API | `Dockerfile.Api` | `railway.api.json` |
 | Consumers (análise e e-mail) | `Dockerfile.Consumer` | `railway.consumer.json` |
 | Kafka | `Dockerfile.kafka` | Precisa de um **volume** em `/var/lib/kafka/data`, senão cada reinício apaga os tópicos |

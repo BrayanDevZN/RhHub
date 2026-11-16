@@ -1,7 +1,7 @@
 # Guia do backend (para ler e apresentar)
 
 Java 21 + Spring Boot 3.5 com **WebFlux** (reativo: tudo devolve `Mono` = 0 ou 1 valor, `Flux` = vários).
-Código em `src/`, testes em `test/`. Os pacotes Java continuam `br.rhhub.*` (o nome do pacote não precisa repetir as pastas).
+Código em `src/`, testes em `tests/` na raiz do repositório. Os pacotes Java continuam `br.rhhub.*` (o nome do pacote não precisa repetir as pastas).
 
 ## 1. A ideia central: arquitetura hexagonal
 
@@ -17,7 +17,7 @@ Quem fala com o mundo de fora são os **adapters**, plugados por fora.
  domain/ (modelos e regras puras) é usado por todos e não depende de ninguém.
 ```
 
-Vantagem para explicar: dá para trocar PostgreSQL por SQLite, ou a IA por uma resposta fixa, sem mexer nas regras. Os testes usam versões em memória (`test/.../service/Fakes.java`).
+Vantagem para explicar: dá para trocar PostgreSQL por SQLite, ou a IA por uma resposta fixa, sem mexer nas regras. Os testes usam versões em memória (`tests/support/service/Fakes.java`).
 
 ## 2. Mapa de pastas
 
@@ -73,4 +73,4 @@ Vantagem para explicar: dá para trocar PostgreSQL por SQLite, ou a IA por uma r
 
 ## 7. Testes
 
-`./mvnw test` roda tudo. Separados em `unit`, `integration` e `functional` (anotações em `test/.../testing`).
+`./mvnw test` roda tudo. Separados em `unit`, `integration` e `functional` (pastas `tests/unit`, `tests/integration` e `tests/functional`; o que é compartilhado fica em `tests/support`).

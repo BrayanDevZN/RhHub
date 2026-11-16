@@ -742,7 +742,7 @@ flowchart LR
 
 | Serviço | Imagem | Observação |
 | --- | --- | --- |
-| `front` | `Dockerfile` da raiz (Node para o build, nginx para servir) | Porta 9000 |
+| `front` | `Dockerfile.front` (Node para o build, nginx para servir) | Porta 9000 |
 | `backend` | Imagem do Spring Boot | Consumers no mesmo app |
 | `postgres` | `postgres:16` | O AgentRH não incluía o banco no Compose |
 | `redis` | `redis:alpine` | |

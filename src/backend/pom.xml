@@ -98,14 +98,14 @@
     </dependencies>
 
     <build>
-        <!-- Sem a estrutura src/main/java: fontes em src/, configs em resources/, testes em test/ -->
+        <!-- Sem a estrutura src/main/java: fontes em src/, configs em resources/, testes em tests/ na raiz do repositório -->
         <sourceDirectory>src</sourceDirectory>
         <resources>
             <resource>
                 <directory>resources</directory>
             </resource>
         </resources>
-        <testSourceDirectory>test</testSourceDirectory>
+        <testSourceDirectory>../../tests</testSourceDirectory>
         <plugins>
             <!--
               Testes em ambiente de teste (ENVIRONMENT=test: códigos de verificação na resposta, IA fixa, cookies sem

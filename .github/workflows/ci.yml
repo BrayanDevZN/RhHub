@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Os testes do back end rodam por categoria (tags do JUnit em src/backend/test/testing), sempre com
+  # Os testes do back end rodam por categoria (tags do JUnit; os testes ficam em tests/unit, tests/integration e tests/functional), sempre com
   # ENVIRONMENT=test, o ambiente de teste da aplicação: códigos de verificação na resposta, IA fixa, cookies sem Secure.
   backend-unit:
     name: Back end · unit
@@ -124,9 +124,6 @@ jobs:
         working-directory: src/frontend
     steps:
       - uses: actions/checkout@v4
-      - name: Dockerfile e Dockerfile.front precisam ser idênticos
-        working-directory: .
-        run: cmp Dockerfile Dockerfile.front
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -146,7 +143,7 @@ jobs:
         include:
           - { file: Dockerfile.Api, tag: rhhub-api }
           - { file: Dockerfile.Consumer, tag: rhhub-consumer }
-          - { file: Dockerfile, tag: rhhub-front }
+          - { file: Dockerfile.front, tag: rhhub-front }
           - { file: Dockerfile.kafka, tag: rhhub-kafka }
     steps:
       - uses: actions/checkout@v4
