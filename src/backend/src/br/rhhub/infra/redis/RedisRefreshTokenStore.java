@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+/** Guarda no Redis o id do refresh token válido de cada usuário (permite encerrar sessões). */
 @Component
 public class RedisRefreshTokenStore implements RefreshTokenStore {
 

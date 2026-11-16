@@ -6,6 +6,7 @@ import java.time.Duration;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+/** Limite de requisições por minuto, contado com um contador do Redis que expira em 60 s. */
 @Component
 public class RedisRateLimiter implements RateLimiter {
 

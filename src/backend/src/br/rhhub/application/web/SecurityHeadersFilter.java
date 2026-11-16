@@ -7,6 +7,7 @@ import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
+/** Filtro que coloca cabeçalhos de segurança em toda resposta (nosniff, sem iframe, sem referrer). */
 @Component
 public class SecurityHeadersFilter implements WebFilter, Ordered {
 

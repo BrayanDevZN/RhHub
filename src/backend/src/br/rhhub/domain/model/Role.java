@@ -1,5 +1,6 @@
 package br.rhhub.domain.model;
 
+/** Papel do usuário: USER (candidato) ou ADMIN (RH). */
 public enum Role {
     USER, ADMIN;
 

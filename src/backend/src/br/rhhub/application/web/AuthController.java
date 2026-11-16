@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+/** Rotas /api/auth: login, 2FA, renovar sessão (refresh), logout, trocar e recuperar senha. */
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {

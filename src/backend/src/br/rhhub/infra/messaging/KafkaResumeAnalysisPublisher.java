@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+/** Coloca a candidatura na fila do Kafka para a IA analisar; o AnalysisConsumer processa. */
 @Component
 public class KafkaResumeAnalysisPublisher implements ResumeAnalysisPublisher {
 

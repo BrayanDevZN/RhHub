@@ -10,6 +10,7 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
+/** Adapter: guarda a foto da vaga na tabela vacancy_photos. */
 @Repository
 @DependsOn("tableCreator")
 public class VacancyPhotoRepositoryAdapter implements VacancyPhotoRepository {

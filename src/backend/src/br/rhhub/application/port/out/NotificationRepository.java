@@ -4,6 +4,7 @@ import br.rhhub.domain.model.Notification;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+/** Porta de saída: persistência dos avisos (sino de notificações) de cada usuário. */
 public interface NotificationRepository {
 
     Mono<Notification> create(Notification notification);

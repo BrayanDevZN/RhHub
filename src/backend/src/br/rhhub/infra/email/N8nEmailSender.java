@@ -28,12 +28,12 @@ public class N8nEmailSender implements EmailSender {
     private static final Pattern EMAIL = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
 
     private final WebClient client;
-    private final JwtHs256 jwt;
+    private final N8nJwtSigner jwt;
     private final Clock clock;
     private final Duration timeout;
 
     public N8nEmailSender(String webhookUrl, String jwtSecret, Duration timeout, Clock clock, ObjectMapper mapper) {
-        this.jwt = new JwtHs256(jwtSecret, mapper);
+        this.jwt = new N8nJwtSigner(jwtSecret, mapper);
         this.clock = clock;
         this.timeout = timeout;
         this.client = WebClient.builder()

@@ -2,6 +2,7 @@ package br.rhhub.infra.database.table;
 
 import java.util.List;
 
+/** Definição da tabela users (contas locais e do Google). */
 public class UsersTable implements TableDefinition {
 
     @Override

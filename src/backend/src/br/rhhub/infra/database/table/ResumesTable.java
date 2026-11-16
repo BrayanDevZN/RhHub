@@ -2,6 +2,7 @@ package br.rhhub.infra.database.table;
 
 import java.util.List;
 
+/** Definição da tabela resumes (candidaturas e o arquivo do currículo). */
 public class ResumesTable implements TableDefinition {
 
     @Override

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+/** Adapter: implementa UserRepository com SQL. Converte linha do banco em User e erros de unicidade em Conflict. */
 @Repository
 @DependsOn("tableCreator")
 public class UserRepositoryAdapter implements UserRepository {

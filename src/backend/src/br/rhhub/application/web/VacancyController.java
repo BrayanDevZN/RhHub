@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+/** Rotas /api/vacancies: listar, ver, criar, editar e apagar vagas, e a foto da vaga. */
 @RestController
 @RequestMapping("/api/vacancies")
 public class VacancyController {

@@ -5,11 +5,11 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 /** BCrypt gasta ~250 ms de CPU: roda fora da thread do servidor para não travar as outras requisições. */
-final class Passwords {
+final class AsyncPasswordHasher {
 
     private final PasswordHasher hasher;
 
-    Passwords(PasswordHasher hasher) {
+    AsyncPasswordHasher(PasswordHasher hasher) {
         this.hasher = hasher;
     }
 

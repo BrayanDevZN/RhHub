@@ -10,6 +10,7 @@ import java.time.Duration;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+/** Códigos de verificação no Redis: validade, 1 por minuto e no máximo 5 tentativas erradas. */
 @Component
 public class RedisVerificationCodeStore implements VerificationCodeStore {
 

@@ -19,13 +19,13 @@ public class UserService {
     }
 
     private final UserRepository users;
-    private final Passwords passwords;
+    private final AsyncPasswordHasher passwords;
     private final RefreshTokenStore refreshTokens;
     private final AccessPolicy policy;
 
     public UserService(UserRepository users, PasswordHasher hasher, RefreshTokenStore refreshTokens, AccessPolicy policy) {
         this.users = users;
-        this.passwords = new Passwords(hasher);
+        this.passwords = new AsyncPasswordHasher(hasher);
         this.refreshTokens = refreshTokens;
         this.policy = policy;
     }

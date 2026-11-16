@@ -1,5 +1,6 @@
 package br.rhhub.domain.model;
 
+/** Como a conta foi criada: LOCAL (e-mail e senha) ou GOOGLE. */
 public enum AuthProvider {
     LOCAL, GOOGLE;
 

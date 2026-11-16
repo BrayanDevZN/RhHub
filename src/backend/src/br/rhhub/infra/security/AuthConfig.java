@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/** Monta os beans de autenticação: JWT, política de acesso (admin raiz) e o hash de senha. */
 @Configuration
 public class AuthConfig {
 

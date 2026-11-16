@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+/** Rotas /api/users e /api/sender: cadastro com código por e-mail, perfil (/me), foto e exclusão da própria conta. */
 @RestController
 @RequestMapping("/api")
 public class UserController {

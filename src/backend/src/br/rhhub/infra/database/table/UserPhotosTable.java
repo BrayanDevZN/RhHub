@@ -2,6 +2,7 @@ package br.rhhub.infra.database.table;
 
 import java.util.List;
 
+/** Definição da tabela user_photos (foto de perfil). */
 public class UserPhotosTable implements TableDefinition {
 
     @Override

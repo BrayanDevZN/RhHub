@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+/** Rotas /api/resumes: enviar currículo (PDF/DOCX), listar, baixar o arquivo, apagar e mover de etapa. */
 @RestController
 @RequestMapping("/api/resumes")
 public class ResumeController {

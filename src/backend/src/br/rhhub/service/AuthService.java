@@ -43,7 +43,7 @@ public class AuthService {
     public static final String NO_ACCOUNT = "Não encontramos uma conta com esse e-mail. Crie uma conta para entrar.";
 
     private final UserRepository users;
-    private final Passwords passwords;
+    private final AsyncPasswordHasher passwords;
     private final JwtService jwt;
     private final RefreshTokenStore refreshTokens;
     private final VerificationCodeStore codes;
@@ -57,7 +57,7 @@ public class AuthService {
             VerificationCodeStore codes, EmailComposer composer, EmailSender email, GoogleIdentityProvider google,
             Clock clock, boolean exposeCode) {
         this.users = users;
-        this.passwords = new Passwords(hasher);
+        this.passwords = new AsyncPasswordHasher(hasher);
         this.jwt = jwt;
         this.refreshTokens = refreshTokens;
         this.codes = codes;

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+/** Adapter: implementa DeadLetterRepository com SQL (PostgreSQL ou SQLite). */
 @Repository
 @DependsOn("tableCreator")
 public class DeadLetterRepositoryAdapter implements DeadLetterRepository {

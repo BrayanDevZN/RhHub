@@ -6,6 +6,7 @@ import br.rhhub.domain.model.ResumeStatus;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+/** Porta de saída: persistência das candidaturas (currículo + status + etapa). */
 public interface ResumeRepository {
 
     Mono<Resume> findById(Long id);

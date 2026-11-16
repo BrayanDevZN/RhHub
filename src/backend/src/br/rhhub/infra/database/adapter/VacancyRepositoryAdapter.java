@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+/** Adapter: implementa VacancyRepository com SQL (PostgreSQL ou SQLite). */
 @Repository
 @DependsOn("tableCreator")
 public class VacancyRepositoryAdapter implements VacancyRepository {

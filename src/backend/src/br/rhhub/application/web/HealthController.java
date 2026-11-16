@@ -4,6 +4,7 @@ import java.util.Map;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/** GET /api/health: responde ok, para a plataforma saber que a API está de pé. */
 @RestController
 public class HealthController {
 

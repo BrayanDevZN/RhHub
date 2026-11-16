@@ -2,6 +2,7 @@ package br.rhhub.application.port.out;
 
 import reactor.core.publisher.Mono;
 
+/** Porta de saída: pede a resposta de um modelo de IA (analisar currículo). A implementação real fica em infra/llm. */
 public interface AiProvider {
 
     /** Texto bruto da resposta do modelo. Qualquer falha vira erro AiException. */

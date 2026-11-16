@@ -2,6 +2,7 @@ package br.rhhub.infra.database.table;
 
 import java.util.List;
 
+/** Definição da tabela vacancy_photos (foto da vaga). */
 public class VacancyPhotosTable implements TableDefinition {
 
     @Override

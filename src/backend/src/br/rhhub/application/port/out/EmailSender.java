@@ -2,6 +2,7 @@ package br.rhhub.application.port.out;
 
 import reactor.core.publisher.Mono;
 
+/** Porta de saída: envia um e-mail. A implementação real chama o n8n (infra/email). */
 public interface EmailSender {
 
     /**

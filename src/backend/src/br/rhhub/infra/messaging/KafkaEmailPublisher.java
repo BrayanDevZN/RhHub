@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+/** Coloca um e-mail na fila do Kafka (tópico de e-mails); quem envia de fato é o EmailConsumer. */
 @Component
 public class KafkaEmailPublisher implements EmailPublisher {
 

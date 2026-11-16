@@ -2,6 +2,7 @@ package br.rhhub.infra.database.table;
 
 import java.util.List;
 
+/** Definição da tabela notifications (avisos dos usuários). */
 public class NotificationsTable implements TableDefinition {
 
     @Override

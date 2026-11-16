@@ -3,6 +3,7 @@ package br.rhhub.application.port.out;
 import br.rhhub.domain.auth.CodePurpose;
 import reactor.core.publisher.Mono;
 
+/** Porta de saída: códigos de 6 dígitos enviados por e-mail (cadastro, 2FA, troca de senha), com validade e limite de tentativas. */
 public interface VerificationCodeStore {
 
     /**

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+/** Rotas /api/admin/users: só administradores listam, consultam, mudam o papel e apagam usuários. */
 @RestController
 @RequestMapping("/api/admin/users")
 public class AdminController {

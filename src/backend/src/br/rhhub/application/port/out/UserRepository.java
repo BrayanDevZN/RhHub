@@ -5,6 +5,7 @@ import java.util.UUID;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+/** Porta de saída: persistência dos usuários. O resto do sistema só conhece esta interface, não o banco. */
 public interface UserRepository {
 
     Mono<User> findById(Long id);

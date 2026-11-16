@@ -16,14 +16,14 @@ import javax.crypto.spec.SecretKeySpec;
  * Assina o JWT HS256 que o webhook do n8n exige (credencial "JWT Auth", Key Type Passphrase).
  * O segredo é usado como texto, do jeito que o n8n usa.
  */
-final class JwtHs256 {
+final class N8nJwtSigner {
 
     private static final Base64.Encoder B64 = Base64.getUrlEncoder().withoutPadding();
 
     private final byte[] secret;
     private final ObjectMapper mapper;
 
-    JwtHs256(String secret, ObjectMapper mapper) {
+    N8nJwtSigner(String secret, ObjectMapper mapper) {
         this.secret = secret.getBytes(StandardCharsets.UTF_8);
         this.mapper = mapper;
     }

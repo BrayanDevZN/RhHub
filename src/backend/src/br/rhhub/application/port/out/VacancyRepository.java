@@ -4,6 +4,7 @@ import br.rhhub.domain.model.Vacancy;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+/** Porta de saída: persistência das vagas. */
 public interface VacancyRepository {
 
     Mono<Vacancy> findById(Long id);

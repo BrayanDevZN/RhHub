@@ -1,5 +1,6 @@
 package br.rhhub.domain.model;
 
+/** Gênero informado no cadastro (male, female, other). */
 public enum Gender {
     MALE, FEMALE, OTHER;
 

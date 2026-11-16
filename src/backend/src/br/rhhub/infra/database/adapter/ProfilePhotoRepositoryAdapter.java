@@ -10,6 +10,7 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
+/** Adapter: guarda a foto de perfil na tabela user_photos. */
 @Repository
 @DependsOn("tableCreator")
 public class ProfilePhotoRepositoryAdapter implements ProfilePhotoRepository {

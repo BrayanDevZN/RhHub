@@ -14,6 +14,7 @@ import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.stereotype.Component;
 
+/** Lê PDF (PDFBox) e DOCX; identifica o tipo pela assinatura do arquivo, não pelo nome ou cabeçalho. */
 @Component
 public class PdfDocxTextExtractor implements DocumentTextExtractor {
 

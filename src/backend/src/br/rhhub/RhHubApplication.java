@@ -11,6 +11,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
         "org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration",
         "org.springframework.boot.autoconfigure.r2dbc.R2dbcAutoConfiguration"
 })
+/** Ponto de entrada da API: sobe o Spring Boot (WebFlux). */
 @ConfigurationPropertiesScan
 public class RhHubApplication {
 

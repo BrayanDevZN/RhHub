@@ -5,6 +5,7 @@ import br.rhhub.domain.model.DeadLetterStatus;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+/** Porta de saída: guarda e consulta as mensagens do Kafka que falharam de vez (dead letters). */
 public interface DeadLetterRepository {
 
     /**
