@@ -31,7 +31,7 @@ Mais três peças de apoio: **PostgreSQL** (dados), **Redis** (cache, sessão, l
 O código do backend fica em `src/backend/src` (os pacotes Java são `br.rhhub.*`). A ideia central é que o **miolo do sistema não conhece tecnologia**: ele só conhece interfaces, chamadas de *portas*. Banco, Kafka, Redis, Google e IA são *adapters* plugados por fora.
 
 ```
- HTTP ──► application/controller ──► service ──► application/repository, integration, store  (interfaces)
+ HTTP ──► application/controller ──► service ──► infra/repository, integration, store  (interfaces)
           (controllers,       (regras)           ▲
            filtros)                              │ implementadas por
                                                  │
@@ -44,11 +44,11 @@ O código do backend fica em `src/backend/src` (os pacotes Java são `br.rhhub.*
 |---|---|
 | `domain/` | Modelos (`User`, `Vacancy`, `Resume`...), validações (`Rules`), etapas (`Stages`), JWT e política de acesso, erros de negócio |
 | `service/` | Regras de negócio, um serviço por assunto: `AuthService`, `ResumeService`, `ResumeStageService`, `VacancyService`... |
-| `application/controller/` | Rotas REST, uma classe por assunto (`AuthController`, `VacancyController`...) |
+| `application/controller/` | Onde as rotas começam: uma classe por assunto (`AuthController`, `VacancyController`...) |
 | `application/filter/` | Filtros de segurança, limite de requisições e autenticação |
 | `application/web/` | Apoio das rotas: erros padronizados (`ApiExceptionHandler`) e conversão para JSON (`Views`) |
-| `application/repository/`, `integration/`, `store/` | Interfaces do que o sistema precisa de fora: dados, serviços externos e Redis |
-| `application/usecase/` | O que os consumidores de fila chamam |
+| `infra/repository/`, `integration/`, `store/` | Interfaces do que o sistema precisa de fora: dados, serviços externos e Redis (as implementações ficam ao lado: `database`, `google`, `llm`, `redis`...) |
+| `service/usecase/` | O que os consumidores de fila chamam |
 | `infra/` | Implementações: `database`, `cache`, `redis`, `messaging` (Kafka), `llm`, `email`, `google`, `security`, `config` |
 
 **Vantagem prática:** dá para trocar PostgreSQL por SQLite (uso local), ou a IA por uma resposta fixa (`ENVIRONMENT=test`), sem mexer em nenhuma regra. Os testes usam versões em memória das portas (`tests/unit/service/Fakes.java`).

@@ -10,7 +10,7 @@ Todo acesso a dados é assíncrono (`Mono`/`Flux`).
 | `domain` | As **regras de negócio**: modelos, validações, erros e o token JWT. Não conhece banco, rede nem Spring. |
 | `adapter` | As **abstrações**: as interfaces que o resto do sistema usa para falar com o que é externo (repositórios, LLM etc.). |
 | `service` | **Junta as camadas**: orquestra domínio e adapters para cumprir cada caso de uso. |
-| `application` | **Usa as camadas e entrega as rotas**: controllers, schemas de entrada e saída, cookies e filtros. |
+| `application` | **Só onde a aplicação e as rotas começam**: controllers, filtros e apoio das rotas. |
 | `infra` | Código que **usa os dados externos**: conexão com o banco, chamada à LLM e leitura das variáveis de ambiente. Implementa os adapters. |
 
 Fluxo de uma requisição: `application` (rota) → `service` → `domain` + `adapter` (interface) → `infra` (implementação).
@@ -24,7 +24,7 @@ Fluxo de uma requisição: `application` (rota) → `service` → `domain` + `ad
 | `service` | **Pronta**: autenticação, conta do usuário, foto de perfil, vagas, candidaturas, administração e a análise com a IA. |
 | `application` | **Pronta**: rotas sob `/api` (controllers), filtros de login, de limite e de segurança, CORS e erros padronizados. |
 
-As interfaces dos adapters ficam em `application/repository`, `application/integration` e `application/store` (e os casos de uso dos consumers em `application/usecase`).
+As interfaces dos adapters ficam em `infra/repository`, `infra/integration` e `infra/store` (e os casos de uso dos consumers em `service/usecase`).
 
 ### Rotas
 
@@ -61,10 +61,10 @@ src/backend/
 │   │   ├── model/            User, Vacancy, Resume, ResumeFile, enums
 │   │   └── exception/        DomainException (Invalid, Unauthorized, Forbidden, NotFound, Conflict...)
 │   ├── service/              DeliverEmailService
-│   ├── application/usecase/  AnalyzeResume, DeliverEmail (casos de uso que os consumers chamam)
-│   ├── application/repository/   interfaces dos repositórios (UserRepository, VacancyRepository, ResumeRepository...)
-│   ├── application/integration/  interfaces de serviços de fora (AiProvider, EmailSender, EmailPublisher, GoogleIdentityProvider...)
-│   ├── application/store/        RateLimiter, RefreshTokenStore, VerificationCodeStore
+│   ├── service/usecase/      AnalyzeResume, DeliverEmail (casos de uso que os consumers chamam)
+│   ├── infra/repository/         interfaces dos repositórios (UserRepository, VacancyRepository, ResumeRepository...)
+│   ├── infra/integration/        interfaces de serviços de fora (AiProvider, EmailSender, EmailPublisher, GoogleIdentityProvider...)
+│   ├── infra/store/              RateLimiter, RefreshTokenStore, VerificationCodeStore
 │   └── infra/
 │       ├── config/           AppProperties (variáveis de ambiente), ClockConfig
 │       ├── database/
