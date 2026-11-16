@@ -17,7 +17,7 @@ Quem fala com o mundo de fora são os **adapters**, plugados por fora.
  domain/ (modelos e regras puras) é usado por todos e não depende de ninguém.
 ```
 
-Vantagem para explicar: dá para trocar PostgreSQL por SQLite, ou a IA por uma resposta fixa, sem mexer nas regras. Os testes usam versões em memória (`tests/support/service/Fakes.java`).
+Vantagem para explicar: dá para trocar PostgreSQL por SQLite, ou a IA por uma resposta fixa, sem mexer nas regras. Os testes usam versões em memória (`tests/unit/service/Fakes.java`).
 
 ## 2. Mapa de pastas
 
@@ -73,4 +73,4 @@ Vantagem para explicar: dá para trocar PostgreSQL por SQLite, ou a IA por uma r
 
 ## 7. Testes
 
-`./mvnw test` roda tudo. Separados em `unit`, `integration` e `functional` (pastas `tests/unit`, `tests/integration` e `tests/functional`; o que é compartilhado fica em `tests/support`).
+`./mvnw test` roda tudo. Separados em `unit`, `integration` e `functional` (pastas `tests/unit`, `tests/integration` e `tests/functional`: unit testa cada camada separada, integration testa camadas juntas e functional testa a aplicação como um todo).

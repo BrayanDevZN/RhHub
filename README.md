@@ -246,7 +246,7 @@ RhHub/
 │           ├── components/         # layout, sino, etapas, tabela de candidaturas, ui/
 │           └── lib/                # api.ts (cliente HTTP), auth, tipos, formatação
 ├── docs/                           # ARQUITETURA.md, modelagem-banco.svg e fluxo-do-sistema.svg
-├── tests/                          # unit/, integration/, functional/ e support/ (apoio compartilhado)
+├── tests/                          # unit/, integration/ e functional/
 ├── Dockerfile.Api · Dockerfile.Consumer · Dockerfile.kafka · Dockerfile.front
 ├── docker-compose.yml              # Postgres, Redis, Kafka, API, consumer e front
 ├── railway.*.json                  # configuração de cada serviço no Railway

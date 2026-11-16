@@ -48,7 +48,7 @@ O código do backend fica em `src/backend/src` (os pacotes Java são `br.rhhub.*
 | `application/port/out/` | Interfaces do que o sistema precisa de fora: `UserRepository`, `AiProvider`, `EmailSender`, `RateLimiter`... |
 | `infra/` | Implementações: `database`, `cache`, `redis`, `messaging` (Kafka), `llm`, `email`, `google`, `security`, `config` |
 
-**Vantagem prática:** dá para trocar PostgreSQL por SQLite (uso local), ou a IA por uma resposta fixa (`ENVIRONMENT=test`), sem mexer em nenhuma regra. Os testes usam versões em memória das portas (`tests/support/service/Fakes.java`).
+**Vantagem prática:** dá para trocar PostgreSQL por SQLite (uso local), ou a IA por uma resposta fixa (`ENVIRONMENT=test`), sem mexer em nenhuma regra. Os testes usam versões em memória das portas (`tests/unit/service/Fakes.java`).
 
 **Reativo (WebFlux):** todo método devolve `Mono` (zero ou um valor) ou `Flux` (vários). Nenhuma thread fica parada esperando banco ou rede, então poucos recursos atendem muitas requisições. Trabalho que bloqueia de verdade (hash BCrypt, envio ao Kafka) roda em threads separadas (`boundedElastic`).
 
@@ -115,10 +115,9 @@ Ficam em `tests/` na raiz do repositório, separados por categoria (tags do JUni
 
 | Pasta | O que cobre | Precisa de infraestrutura? |
 |---|---|---|
-| `tests/unit` | Regras, serviços, validações, cache | Não |
-| `tests/integration` | Banco (SQLite e PostgreSQL), Redis, Kafka embutido, cliente do Google e da IA, e-mail | Alguns (Redis, PostgreSQL) |
-| `tests/functional` | As rotas de ponta a ponta com filtros e cookies, o login com Google e o fluxo completo da análise | Kafka embutido |
-| `tests/support` | Apoio compartilhado: `Fakes`, `TestSupport`, anotações | |
+| `tests/unit` | Cada camada testada separada das outras (regras, serviços, validações, cache), com versões em memória no lugar do banco, da fila e da IA | Não |
+| `tests/integration` | Camadas testadas juntas, com a tecnologia de verdade: banco (SQLite e PostgreSQL), Redis, Kafka embutido, cliente do Google e da IA, e-mail | Alguns (Redis, PostgreSQL) |
+| `tests/functional` | A aplicação como um todo: as rotas de ponta a ponta com filtros e cookies, o login com Google e o fluxo completo da análise | Kafka embutido |
 
 O CI roda um job por categoria.
 

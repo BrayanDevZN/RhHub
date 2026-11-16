@@ -208,6 +208,7 @@ Generated: 2026-11-16 | 280 files | ~286.3K tokens if all read
 | tests/functional/application/web/GoogleCallbackTest.java | 189 | 2.5K | test |
 | tests/functional/application/web/WebApiTest.java | 620 | 9.5K | test |
 | tests/functional/flow/AnalysisFlowIntegrationTest.java | 374 | 4.7K | test |
+| tests/functional/testing/FunctionalTest.java | 20 | 162 | test |
 | tests/integration/flow/EmailEndToEndLiveTest.java | 196 | 2.3K | test |
 | tests/integration/flow/GroqLiveAnalysisTest.java | 193 | 2.5K | test |
 | tests/integration/infra/cache/RedisCacheStoreIntegrationTest.java | 79 | 748 | test |
@@ -223,17 +224,14 @@ Generated: 2026-11-16 | 280 files | ~286.3K tokens if all read
 | tests/integration/infra/messaging/TopicEnsurerIntegrationTest.java | 90 | 903 | test |
 | tests/integration/infra/redis/AuthStoresIntegrationTest.java | 119 | 1.3K | test |
 | tests/integration/infra/redis/RedisStoreIntegrationTest.java | 159 | 1.5K | test |
-| tests/support/infra/cache/MemoryCacheStore.java | 57 | 453 | test |
-| tests/support/infra/TestSupport.java | 57 | 627 | test |
-| tests/support/service/Fakes.java | 243 | 3.3K | test |
-| tests/support/testing/FunctionalTest.java | 20 | 162 | test |
-| tests/support/testing/IntegrationTest.java | 20 | 163 | test |
-| tests/support/testing/LiveTest.java | 21 | 166 | test |
-| tests/support/testing/UnitTest.java | 20 | 149 | test |
+| tests/integration/infra/TestSupport.java | 57 | 627 | test |
+| tests/integration/testing/IntegrationTest.java | 20 | 163 | test |
+| tests/integration/testing/LiveTest.java | 21 | 166 | test |
 | tests/unit/domain/AnalysisResultTest.java | 76 | 874 | test |
 | tests/unit/domain/AuthDomainTest.java | 123 | 1.5K | test |
 | tests/unit/domain/RulesTest.java | 68 | 800 | test |
 | tests/unit/infra/cache/CachedRepositoriesTest.java | 154 | 1.9K | test |
+| tests/unit/infra/cache/MemoryCacheStore.java | 57 | 453 | test |
 | tests/unit/infra/cache/QueryCacheTest.java | 113 | 1.1K | test |
 | tests/unit/infra/config/ApplicationYmlTest.java | 38 | 371 | test |
 | tests/unit/infra/config/WebPropertiesTest.java | 43 | 414 | test |
@@ -248,19 +246,21 @@ Generated: 2026-11-16 | 280 files | ~286.3K tokens if all read
 | tests/unit/infra/security/AuthConfigTest.java | 41 | 363 | test |
 | tests/unit/service/AnalyzeResumeServiceTest.java | 194 | 2.4K | test |
 | tests/unit/service/AuthServiceTest.java | 262 | 3.4K | test |
+| tests/unit/service/Fakes.java | 243 | 3.3K | test |
 | tests/unit/service/ManagementServicesTest.java | 334 | 5.0K | test |
 | tests/unit/service/NotificationServiceTest.java | 126 | 1.4K | test |
 | tests/unit/service/ProfileCompletionTest.java | 59 | 632 | test |
 | tests/unit/service/ResumeStageServiceTest.java | 148 | 1.6K | test |
 | tests/unit/service/VacancyExpirationTest.java | 87 | 1.0K | test |
+| tests/unit/testing/UnitTest.java | 20 | 149 | test |
 | .github/CONTRIBUTING.md | 38 | 400 | docs |
 | .github/PULL_REQUEST_TEMPLATE.md | 24 | 218 | docs |
-| docs/ARQUITETURA.md | 128 | 2.4K | docs |
+| docs/ARQUITETURA.md | 127 | 2.4K | docs |
 | DOCUMENTACAO.md | 851 | 12.7K | docs |
-| README.md | 366 | 5.6K | docs |
+| README.md | 366 | 5.5K | docs |
 | src/backend/GUIA_DO_BACKEND.md | 77 | 1.4K | docs |
 | src/backend/HISTORICO.md | 145 | 3.3K | docs |
-| src/backend/README.md | 289 | 5.5K | docs |
+| src/backend/README.md | 289 | 5.4K | docs |
 | src/backend/resources/prompt/resume_analysis.md | 342 | 6.7K | docs |
 | src/frontend/README.md | 33 | 320 | docs |
 | src/frontend/src/index.css | 569 | 8.6K | style |
@@ -289,7 +289,7 @@ Generated: 2026-11-16 | 280 files | ~286.3K tokens if all read
 - source: 184 files, ~144.1K tokens
 - config: 17 files, ~4.4K tokens
 - test: 48 files, ~75.5K tokens
-- docs: 10 files, ~38.4K tokens
+- docs: 10 files, ~38.5K tokens
 - style: 1 files, ~8.6K tokens
 - other: 20 files, ~15.2K tokens
 

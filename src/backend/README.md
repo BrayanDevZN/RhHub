@@ -77,7 +77,7 @@ src/backend/
 │       ├── messaging/        KafkaConfig, KafkaUrl, KafkaTopics, publishers, AnalysisConsumer, EmailConsumer, DeadLetterRecoverer
 │       └── llm/              OpenAiCompatibleProvider, FixedAiProvider, LlmConfig
 ├── resources/application.yml
-# testes: ../../tests/ (unit, integration, functional, support)
+# testes: ../../tests/ (unit, integration, functional)
 └── kafka/entrypoint.sh       usado pelo Dockerfile.kafka (na raiz do repositório)
 ```
 
