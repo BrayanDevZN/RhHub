@@ -506,8 +506,8 @@ body { background: #0a1024; color: #f7f9ff; }
 .rh-notif-unread .rh-notif-body strong { font-weight: 800; }
 .rh-notif-empty { padding: 28px 14px; text-align: center; font-size: 12px; color: #8793ae; }
 
-/* A barra fica acima da página, para o painel do sino e o menu da conta não ficarem atrás dos cartões. */
-.rh-topbar { position: relative; z-index: 30; }
+/* A barra do topo fica fixa ao rolar a página e acima dela, para o painel do sino e o menu da conta não ficarem atrás dos cartões. */
+.rh-topbar { position: sticky; top: 0; z-index: 30; }
 
 /* Correções do layout no celular. Mexem só em posição, tamanho e empilhamento; cores, fontes e raios continuam os mesmos. */
 .rh-shell { min-height: 100vh; min-height: 100dvh; }

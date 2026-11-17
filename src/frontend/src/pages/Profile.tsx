@@ -407,7 +407,7 @@ export default function Profile() {
   const { photoVersion } = useAuth()
 
   return (
-    <>
+    <div className="flex flex-col gap-6">
       <PageHeader title="Perfil" description="Seus dados, segurança e conta." />
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center gap-4">
@@ -430,7 +430,7 @@ export default function Profile() {
           </div>
         </CardHeader>
       </Card>
-      <Tabs defaultValue="dados">
+      <Tabs defaultValue="dados" className="gap-4">
         <TabsList>
           <TabsTrigger value="dados">Dados</TabsTrigger>
           <TabsTrigger value="conta">Conta</TabsTrigger>
@@ -444,6 +444,6 @@ export default function Profile() {
           <DangerZone />
         </TabsContent>
       </Tabs>
-    </>
+    </div>
   )
 }
