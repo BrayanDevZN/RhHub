@@ -6,6 +6,7 @@ import {
   SearchIcon, SparklesIcon, TrendingUpIcon,
 } from "lucide-react"
 import { StatusBadge } from "@/components/StatusBadge"
+import { Avatar, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import {
@@ -14,7 +15,7 @@ import {
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { Skeleton } from "@/components/ui/skeleton"
 import { api } from "@/lib/api"
-import { useCurrentUser } from "@/lib/auth"
+import { useAuth, useCurrentUser } from "@/lib/auth"
 import { formatDate } from "@/lib/format"
 import { useQuery } from "@/lib/use-query"
 import { cn } from "@/lib/utils"
@@ -140,6 +141,7 @@ const statusLegend: { status: ResumeStatus; label: string; color: string }[] = [
 
 export default function Dashboard() {
   const user = useCurrentUser()
+  const { photoVersion } = useAuth()
   const isAdmin = user.role === "admin"
   const { data } = useQuery(
     async () => {
@@ -167,7 +169,14 @@ export default function Dashboard() {
           <div className="mb-3 flex items-center gap-2 text-[11px] font-bold tracking-[0.15em] text-indigo-300">
             <span className="rh-dot block size-2 rounded-full bg-cyan-400 shadow-[0_0_0_4px_rgb(34_211_238/13%)]" /> VISÃO GERAL DO WORKSPACE
           </div>
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Olá, {firstName} <span className="align-middle text-2xl text-amber-400">✳</span></h1>
+          <div className="flex items-center gap-3 sm:gap-4">
+            {user.has_photo && (
+              <Avatar className="size-12 shrink-0 ring-2 ring-primary/40 sm:size-14">
+                <AvatarImage src={api.users.photoUrl(photoVersion)} alt={`Foto de ${user.name}`} />
+              </Avatar>
+            )}
+            <h1 className="min-w-0 text-3xl font-bold tracking-tight sm:text-4xl">Olá, {firstName} <span className="align-middle text-2xl text-amber-400">✳</span></h1>
+          </div>
           <p className="mt-2 text-sm text-muted-foreground">{isAdmin ? "Confira o panorama do seu processo seletivo." : "Aqui está um resumo da sua jornada profissional."}</p>
         </div>
         <Link to="/vagas" className={cn(buttonVariants({ size: "lg" }), "h-10 w-full gap-2 bg-linear-to-br from-indigo-400 to-violet-400 px-4 text-white shadow-lg shadow-indigo-500/20 hover:brightness-110 sm:w-auto")}>
