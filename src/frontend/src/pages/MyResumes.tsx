@@ -21,7 +21,7 @@ export default function MyResumes() {
         title="Minhas candidaturas"
         description="Acompanhe o status da análise de cada currículo enviado."
         actions={
-          <Button variant="outline" render={<Link to="/vagas" />}>
+          <Button variant="outline" nativeButton={false} render={<Link to="/vagas" />}>
             <BriefcaseBusinessIcon data-icon="inline-start" />
             Ver vagas
           </Button>

@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ReactNode } from "react"
-import { BriefcaseBusinessIcon } from "lucide-react"
+import { Brand } from "@/components/Brand"
 
 const Scene3D = lazy(() => import("@/components/Scene3D"))
 
@@ -13,12 +13,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
 
       <div className="relative mx-auto grid min-h-svh w-full max-w-6xl items-center gap-10 px-6 py-10 lg:grid-cols-2">
         <div className="hidden flex-col gap-6 lg:flex">
-          <div className="flex items-center gap-3">
-            <span className="rh-brand-mark">
-              <BriefcaseBusinessIcon className="size-[21px]" />
-            </span>
-            <span className="rh-brand-name">rh<span>hub</span><span className="rh-brand-period">.</span></span>
-          </div>
+          <Brand className="text-white" />
           <h1 className="text-4xl font-semibold tracking-tight text-white">
             Recrutamento com análise de currículos feita por IA.
           </h1>

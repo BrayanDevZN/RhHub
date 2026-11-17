@@ -1,8 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { BellIcon, CheckCheckIcon } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { api } from "@/lib/api"
 import { timeAgo } from "@/lib/format"
+import { cn } from "@/lib/utils"
 import type { AppNotification, Inbox } from "@/lib/types"
 
 const POLL_MS = 30_000
@@ -13,7 +17,6 @@ export function NotificationBell() {
   const [inbox, setInbox] = useState<Inbox>({ items: [], unread: 0 })
   const [open, setOpen] = useState(false)
   const [failed, setFailed] = useState(false)
-  const box = useRef<HTMLDivElement>(null)
 
   const load = useCallback(async () => {
     try {
@@ -37,29 +40,12 @@ export function NotificationBell() {
     }
   }, [load])
 
-  useEffect(() => {
-    if (!open) return
-    function onDown(event: MouseEvent) {
-      if (box.current && !box.current.contains(event.target as Node)) setOpen(false)
-    }
-    function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false)
-    }
-    document.addEventListener("mousedown", onDown)
-    document.addEventListener("keydown", onKey)
-    return () => {
-      document.removeEventListener("mousedown", onDown)
-      document.removeEventListener("keydown", onKey)
-    }
-  }, [open])
-
-  function toggle() {
-    const next = !open
+  function onOpenChange(next: boolean) {
     setOpen(next)
     if (next) void load()
   }
 
-  async function openItem(item: AppNotification) {
+  function openItem(item: AppNotification) {
     setOpen(false)
     if (!item.read) {
       setInbox((current) => ({
@@ -83,39 +69,52 @@ export function NotificationBell() {
   const label = inbox.unread > 0 ? `Notificações (${inbox.unread} não lidas)` : "Notificações"
 
   return (
-    <div className="rh-notif" ref={box}>
-      <button className="rh-top-icon" title="Notificações" aria-label={label} aria-expanded={open} onClick={toggle}>
-        <BellIcon className="size-[18px]" />
-        {inbox.unread > 0 && <b className="rh-notif-count">{inbox.unread > 9 ? "9+" : inbox.unread}</b>}
-      </button>
-      {open && (
-        <div className="rh-notif-panel" role="dialog" aria-label="Notificações">
-          <div className="rh-notif-head">
-            <strong>Notificações</strong>
-            <button type="button" onClick={readAll} disabled={inbox.unread === 0}>
-              <CheckCheckIcon className="size-3.5" /> Marcar todas como lidas
-            </button>
-          </div>
-          {inbox.items.length === 0 ? (
-            <p className="rh-notif-empty">{failed ? "Não foi possível carregar agora." : "Você não tem notificações."}</p>
-          ) : (
-            <ul>
-              {inbox.items.map((item) => (
-                <li key={item.id}>
-                  <button type="button" className={item.read ? "" : "rh-notif-unread"} onClick={() => openItem(item)}>
-                    <span className="rh-notif-dot" aria-hidden="true" />
-                    <span className="rh-notif-body">
-                      <strong>{item.title}</strong>
-                      <span>{item.message}</span>
-                      <small>{timeAgo(item.created_at)}</small>
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+    <Popover open={open} onOpenChange={onOpenChange}>
+      <PopoverTrigger
+        render={<Button variant="ghost" size="icon" className="relative" title="Notificações" aria-label={label} />}
+      >
+        <BellIcon />
+        {inbox.unread > 0 && (
+          <Badge className="absolute -top-0.5 -right-0.5 h-4 min-w-4 justify-center rounded-full px-1 text-[10px] leading-none">
+            {inbox.unread > 9 ? "9+" : inbox.unread}
+          </Badge>
+        )}
+      </PopoverTrigger>
+      <PopoverContent align="end" sideOffset={8} className="w-96 gap-0 p-0" aria-label="Notificações">
+        <div className="flex items-center justify-between gap-2 border-b px-3 py-2.5">
+          <strong className="text-sm font-semibold">Notificações</strong>
+          <Button type="button" variant="ghost" size="xs" onClick={readAll} disabled={inbox.unread === 0}>
+            <CheckCheckIcon data-icon="inline-start" /> Marcar todas como lidas
+          </Button>
         </div>
-      )}
-    </div>
+        {inbox.items.length === 0 ? (
+          <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+            {failed ? "Não foi possível carregar agora." : "Você não tem notificações."}
+          </p>
+        ) : (
+          <ul className="max-h-[min(380px,60vh)] overflow-y-auto p-1">
+            {inbox.items.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => openItem(item)}
+                  className="flex w-full items-start gap-3 rounded-md px-2.5 py-2 text-left outline-none transition-colors hover:bg-muted focus-visible:bg-muted"
+                >
+                  <span
+                    aria-hidden="true"
+                    className={cn("mt-1.5 size-2 shrink-0 rounded-full", item.read ? "bg-transparent" : "bg-primary")}
+                  />
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <strong className={cn("truncate text-sm", item.read ? "font-medium" : "font-semibold")}>{item.title}</strong>
+                    <span className="line-clamp-2 text-xs text-muted-foreground">{item.message}</span>
+                    <small className="text-[11px] text-muted-foreground/80">{timeAgo(item.created_at)}</small>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </PopoverContent>
+    </Popover>
   )
 }

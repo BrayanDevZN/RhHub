@@ -693,7 +693,7 @@ Quem está logado e abre `/login` vai para `/`; quem não está logado vai para 
 | Recurso | Status |
 | --- | --- |
 | Tema escuro com tokens semânticos do shadcn | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
-| Layout responsivo com barra lateral recolhível | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
+| Layout responsivo com barra lateral minimizável (shadcn Sidebar) | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 | Elemento 3D (three.js) nas telas de entrada (login e cadastro), carregado sob demanda | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 | Avisos (toast) de sucesso e erro | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 | Estados de carregamento (skeleton e spinner) e de lista vazia | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |

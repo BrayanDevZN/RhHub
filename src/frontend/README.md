@@ -11,7 +11,7 @@ Em produção o front é servido por **nginx**, que também repassa `/api` para 
 | React 19 + TypeScript | Interface e tipagem |
 | Vite 8 | Servidor de desenvolvimento e build |
 | React Router 7 | Rotas e proteção por sessão e por papel |
-| Tailwind CSS 4 | Estilo (plugin `@tailwindcss/vite`), mais o CSS próprio `rh-*` em `src/index.css` |
+| Tailwind CSS 4 | Estilo (plugin `@tailwindcss/vite`); só tokens de tema e animações ficam em `src/index.css` |
 | Base UI + componentes no estilo shadcn/ui | Componentes em `src/components/ui` (estilo `base-nova`, ícones `lucide-react`) |
 | Three.js (`@react-three/fiber` e `drei`) | A cena 3D das telas de entrada (login, cadastro), carregada sob demanda |
 | Oxlint | Lint |
@@ -87,7 +87,7 @@ src/frontend/
 └── src/
     ├── main.tsx              entrada: monta o <App />
     ├── App.tsx               providers e tabela de rotas (com os guardas de acesso)
-    ├── index.css             tokens de tema (claro e escuro) e as classes rh-* do layout
+    ├── index.css             tokens de tema (claro e escuro), visual do login e animações do painel
     ├── pages/                uma tela por rota
     ├── components/           peças compartilhadas (layout, sino, etapas, tabela de candidaturas...)
     │   └── ui/               componentes base no estilo shadcn/ui
@@ -146,12 +146,12 @@ O formato do JSON (snake_case, como em `vacancy_id` e `expires_at`) e as rotas e
 
 ## Estilo e componentes
 
-- **Tema.** Os tokens semânticos (cores, raios, modo escuro) ficam em `index.css`, nas camadas do Tailwind e do shadcn. O layout do app (barra lateral, topo, painel, cartões) usa as classes `rh-*` do mesmo arquivo.
+- **Tema.** Os tokens semânticos (cores, raios, modo escuro) ficam em `index.css`, nas camadas do Tailwind e do shadcn. O layout do app (barra lateral, topo, painel, cartões) é montado só com componentes shadcn (`Sidebar`, `Card`, `Badge`, `Breadcrumb`, `Popover`, `DropdownMenu`...) e utilitários do Tailwind; as únicas classes próprias são as animações `rh-rise`, `rh-bob`, `rh-drift`, `rh-pulse`, `rh-dot` e `rh-grow`, que respeitam "reduzir movimento".
 - **Componentes base** em `src/components/ui` seguem o shadcn/ui sobre o Base UI. Para trazer outro componente, use a CLI (`npx shadcn add <nome>`): ela lê o `components.json`. Prefira compor com o que já existe antes de criar um novo.
 - **Classes condicionais:** use `cn(...)` de `@/lib/utils`.
 - **Avisos** de sucesso e erro: `toast.add({ title, description, type })` (`components/ui/toast`).
 - **Cena 3D** (`Scene3D`): usa Three.js e só aparece nas telas de entrada (`AuthLayout`). É carregada por import dinâmico, então não pesa nas telas internas.
-- **Responsivo.** Abaixo de 740 px a barra lateral vira uma gaveta (abre pelo botão do topo, fecha com Esc, clique fora ou ao voltar para uma tela larga). A tabela de candidaturas vira cartões em telas estreitas. Ao mexer no layout, confira em tela de celular (320 a 430 px) e em desktop.
+- **Responsivo e barra lateral.** A barra lateral é o `Sidebar` do shadcn (`components/ui/sidebar.tsx`), montado em `components/AppLayout.tsx`. No desktop ela pode ser minimizada para só os ícones pelo botão do topo (ou com `Ctrl/Cmd + B`; a escolha fica salva em cookie) e mostra uma dica com o nome de cada item. Abaixo de 768 px ela vira uma gaveta (`Sheet`) que abre pelo mesmo botão e fecha ao navegar. A tabela de candidaturas vira cartões em telas estreitas. Ao mexer no layout, confira em tela de celular (320 a 430 px) e em desktop, com a barra aberta e minimizada.
 
 ## Build e produção
 
