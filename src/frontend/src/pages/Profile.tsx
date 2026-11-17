@@ -22,6 +22,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/components/ui/toast"
+import { ForgotPasswordDialog } from "@/components/ForgotPasswordDialog"
 import { PageHeader } from "@/components/PageHeader"
 import { api, errorMessage } from "@/lib/api"
 import { useAuth, useCurrentUser } from "@/lib/auth"
@@ -235,6 +236,47 @@ function Security() {
   )
 }
 
+/** Esqueceu a senha atual? O código vai para o e-mail da conta e a pessoa define uma nova. Só contas com senha. */
+function ResetPassword() {
+  const user = useCurrentUser()
+  const { setUser } = useAuth()
+  const navigate = useNavigate()
+
+  if (user.provider !== "local") return null
+
+  function handleReset() {
+    // Resetar a senha encerra as sessões: entra de novo com a nova.
+    setUser(null)
+    navigate("/login")
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Resetar senha</CardTitle>
+        <CardDescription>
+          Enviaremos um código para o seu e-mail, e você define uma nova senha. Depois disso, é preciso entrar de novo.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Field data-disabled>
+          <FieldLabel htmlFor="reset-password-email">E-mail da conta</FieldLabel>
+          <Input id="reset-password-email" value={user.email} disabled />
+        </Field>
+      </CardContent>
+      <CardFooter>
+        <ForgotPasswordDialog
+          defaultEmail={user.email}
+          lockEmail
+          triggerLabel="Resetar senha"
+          triggerRender={<Button type="button" variant="outline" />}
+          onReset={handleReset}
+        />
+      </CardFooter>
+    </Card>
+  )
+}
+
 function DangerZone() {
   const { setUser } = useAuth()
   const navigate = useNavigate()
@@ -390,16 +432,14 @@ export default function Profile() {
       <Tabs defaultValue="dados">
         <TabsList>
           <TabsTrigger value="dados">Dados</TabsTrigger>
-          <TabsTrigger value="seguranca">Segurança</TabsTrigger>
           <TabsTrigger value="conta">Conta</TabsTrigger>
         </TabsList>
-        <TabsContent value="dados">
+        <TabsContent value="dados" className="flex flex-col gap-6">
           <PersonalData />
-        </TabsContent>
-        <TabsContent value="seguranca">
           <Security />
         </TabsContent>
-        <TabsContent value="conta">
+        <TabsContent value="conta" className="flex flex-col gap-6">
+          <ResetPassword />
           <DangerZone />
         </TabsContent>
       </Tabs>

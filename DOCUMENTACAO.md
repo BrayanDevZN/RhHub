@@ -644,6 +644,7 @@ Código em `src/frontend` (guia de uso e estrutura em [`src/frontend/README.md`]
 | Editar idade e gênero | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 | Ligar e desligar o 2FA | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 | Trocar a senha (contas locais) | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
+| Resetar a senha pelo código enviado ao e-mail (aba Conta, contas locais) | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 | Excluir a conta com confirmação de senha | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 | Completar CPF, idade e gênero em contas Google | ![pronto](https://img.shields.io/badge/-pronto-brightgreen?style=flat-square) |
 
@@ -667,7 +668,7 @@ Código em `src/frontend` (guia de uso e estrutura em [`src/frontend/README.md`]
 | `/` | Painel | Logado |
 | `/vagas` | Vagas | Logado |
 | `/candidaturas` | Minhas candidaturas | Logado |
-| `/perfil` | Perfil (dados, segurança, conta) | Logado |
+| `/perfil` | Perfil: aba Dados (dados pessoais, 2FA e alterar senha) e aba Conta (resetar senha e excluir conta) | Logado |
 | `/admin/usuarios` | Gestão de usuários | Admin |
 | `/admin/candidaturas` | Todas as candidaturas | Admin |
 

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react"
+import { useState, type FormEvent, type ReactElement } from "react"
 import { CodeInput } from "@/components/CodeInput"
 import { Button } from "@/components/ui/button"
 import {
@@ -16,7 +16,24 @@ import { Spinner } from "@/components/ui/spinner"
 import { toast } from "@/components/ui/toast"
 import { api, errorMessage } from "@/lib/api"
 
-export function ForgotPasswordDialog({ defaultEmail }: { defaultEmail: string }) {
+type ForgotPasswordDialogProps = {
+  defaultEmail: string
+  /** Trava o campo de e-mail (usado no perfil, onde a conta já é a da pessoa logada). */
+  lockEmail?: boolean
+  /** Texto e botão que abrem o diálogo. Sem eles, aparece o link "Esqueci a senha" da tela de login. */
+  triggerLabel?: string
+  triggerRender?: ReactElement
+  /** Chamado depois que a senha foi trocada com sucesso. */
+  onReset?: () => void
+}
+
+export function ForgotPasswordDialog({
+  defaultEmail,
+  lockEmail = false,
+  triggerLabel = "Esqueci a senha",
+  triggerRender = <Button type="button" variant="link" size="sm" className="h-auto p-0" />,
+  onReset,
+}: ForgotPasswordDialogProps) {
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<"email" | "reset">("email")
   const [email, setEmail] = useState(defaultEmail)
@@ -46,6 +63,7 @@ export function ForgotPasswordDialog({ defaultEmail }: { defaultEmail: string })
         await api.auth.resetPassword(email, code, password)
         toast.add({ title: "Senha alterada", description: "Entre com a nova senha.", type: "success" })
         setOpen(false)
+        onReset?.()
       }
     } catch (error) {
       toast.add({ title: "Erro", description: errorMessage(error), type: "error" })
@@ -56,9 +74,7 @@ export function ForgotPasswordDialog({ defaultEmail }: { defaultEmail: string })
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger render={<Button type="button" variant="link" size="sm" className="h-auto p-0" />}>
-        Esqueci a senha
-      </DialogTrigger>
+      <DialogTrigger render={triggerRender}>{triggerLabel}</DialogTrigger>
       <DialogContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <DialogHeader>
@@ -73,7 +89,13 @@ export function ForgotPasswordDialog({ defaultEmail }: { defaultEmail: string })
             {step === "email" ? (
               <Field>
                 <FieldLabel htmlFor="reset-email">E-mail</FieldLabel>
-                <Input id="reset-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <Input
+                  id="reset-email"
+                  type="email"
+                  value={email}
+                  readOnly={lockEmail}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </Field>
             ) : (
               <>

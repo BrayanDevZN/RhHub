@@ -113,7 +113,7 @@ O alias `@` aponta para `src/`: importe com `@/lib/api`, `@/components/...`.
 | `/` | Painel: números e candidaturas recentes | Logado |
 | `/vagas` | Lista de vagas, detalhes, candidatura e (admin) criar, editar e excluir | Logado |
 | `/candidaturas` | Minhas candidaturas, resultado da IA e etapa atual | Logado |
-| `/perfil` | Dados, foto, 2FA, troca de senha e exclusão da conta | Logado |
+| `/perfil` | Aba Dados (dados pessoais, foto, 2FA e troca de senha) e aba Conta (resetar senha por código no e-mail e exclusão da conta) | Logado |
 | `/admin/usuarios` | Gestão de usuários e papéis | Admin |
 | `/admin/candidaturas` | Todas as candidaturas, com filtro por status e mudança de etapa | Admin |
 
