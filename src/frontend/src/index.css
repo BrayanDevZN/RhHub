@@ -566,3 +566,33 @@ body { background: #0a1024; color: #f7f9ff; }
 @media (max-width: 480px) {
   .rh-breadcrumb > span { display: none; }
 }
+
+/* Animações do painel. Só movimento (transform, opacity e sombra): cores e tamanhos continuam os mesmos. */
+.rh-hero-scene { position: absolute; inset: 0; z-index: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes rh-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes rh-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -9px; } }
+  @keyframes rh-drift { 0%, 100% { translate: 0 0; } 50% { translate: 14px -10px; } }
+  @keyframes rh-pulse-ring { 0%, 100% { opacity: .55; scale: 1; } 50% { opacity: 1; scale: 1.05; } }
+  @keyframes rh-dot { 0%, 100% { box-shadow: 0 0 0 4px rgb(34 211 238 / 13%); } 50% { box-shadow: 0 0 0 9px rgb(34 211 238 / 0%); } }
+
+  .rh-welcome-row, .rh-hero-copy { animation: rh-rise .6s ease-out backwards; }
+  .rh-hero { animation: rh-rise .7s ease-out .08s backwards; }
+  .rh-stat-card { animation: rh-rise .6s ease-out backwards; }
+  .rh-stat-card:nth-child(1) { animation-delay: .15s; }
+  .rh-stat-card:nth-child(2) { animation-delay: .23s; }
+  .rh-stat-card:nth-child(3) { animation-delay: .31s; }
+  .rh-stat-card:nth-child(4) { animation-delay: .39s; }
+  .rh-overview-grid > *, .rh-bottom-grid > * { animation: rh-rise .6s ease-out .3s backwards; }
+  .rh-activity-item, .rh-opportunity-row { animation: rh-rise .5s ease-out .45s backwards; }
+
+  .rh-panel-a { animation: rh-bob 5.5s ease-in-out infinite; }
+  .rh-panel-b { animation: rh-bob 6.5s ease-in-out -2.5s infinite; }
+  .rh-hero-center { animation: rh-bob 6s ease-in-out infinite; }
+  .rh-orb-a { animation: rh-drift 9s ease-in-out infinite; }
+  .rh-orb-b { animation: rh-drift 11s ease-in-out -4s infinite; }
+  .rh-ring-outer { animation: rh-pulse-ring 7s ease-in-out infinite; }
+  .rh-ring-inner { animation: rh-pulse-ring 7s ease-in-out -3.5s infinite; }
+  .rh-eyebrow-dot { animation: rh-dot 2.4s ease-in-out infinite; }
+  .rh-progress-stacked > span { transition: width .9s cubic-bezier(.2, .7, .2, 1); }
+}

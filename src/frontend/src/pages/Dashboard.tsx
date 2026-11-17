@@ -1,3 +1,4 @@
+import { lazy, Suspense, useEffect, useRef, useState, useSyncExternalStore } from "react"
 import { Link } from "react-router-dom"
 import {
   ArrowRightIcon, ArrowUpRightIcon, BriefcaseBusinessIcon, CheckCircle2Icon,
@@ -12,6 +13,59 @@ import { formatDate } from "@/lib/format"
 import { useQuery } from "@/lib/use-query"
 import type { ResumeStatus } from "@/lib/types"
 
+const Scene3D = lazy(() => import("@/components/Scene3D"))
+
+function useMediaQuery(query: string) {
+  return useSyncExternalStore(
+    (notify) => {
+      const mql = window.matchMedia(query)
+      mql.addEventListener("change", notify)
+      return () => mql.removeEventListener("change", notify)
+    },
+    () => window.matchMedia(query).matches,
+    () => false,
+  )
+}
+
+/** Faz o número subir até o valor novo (e de um valor para o outro quando a API atualiza). Sem animação se a pessoa pediu menos movimento. */
+function useCountUp(target: number | undefined) {
+  const [shown, setShown] = useState(0)
+  const from = useRef(0)
+  useEffect(() => {
+    if (target === undefined) return
+    const start = from.current
+    const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 700
+    const t0 = performance.now()
+    let frame = 0
+    const tick = (now: number) => {
+      const progress = duration === 0 ? 1 : Math.min(1, (now - t0) / duration)
+      const value = Math.round(start + (target - start) * (1 - Math.pow(1 - progress, 3)))
+      from.current = value
+      setShown(value)
+      if (progress < 1) frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [target])
+  return target === undefined ? undefined : shown
+}
+
+function HeroCenter() {
+  return <div className="rh-hero-center"><BriefcaseBusinessIcon className="size-16" strokeWidth={1.35} /></div>
+}
+
+/** Cena 3D do destaque, carregada sob demanda. No celular e com "reduzir movimento" fica o cartão estático. */
+function HeroScene() {
+  const wide = useMediaQuery("(min-width: 741px)")
+  const calm = useMediaQuery("(prefers-reduced-motion: reduce)")
+  if (!wide || calm) return <HeroCenter />
+  return (
+    <Suspense fallback={<HeroCenter />}>
+      <Scene3D className="rh-hero-scene pointer-events-none" />
+    </Suspense>
+  )
+}
+
 function StatCard({ label, count, icon: Icon, color, caption }: {
   label: string
   count: number | undefined
@@ -19,13 +73,14 @@ function StatCard({ label, count, icon: Icon, color, caption }: {
   color: "violet" | "blue" | "amber" | "green"
   caption: string
 }) {
+  const shown = useCountUp(count)
   return (
     <article className="rh-stat-card">
       <div className="flex items-start justify-between">
         <div className={`rh-stat-icon rh-stat-${color}`}><Icon className="size-5" strokeWidth={2} /></div>
         <span className="rh-stat-trend"><TrendingUpIcon className="size-3.5" /> Agora</span>
       </div>
-      <p className="rh-stat-value">{count === undefined ? <Skeleton className="h-10 w-14" /> : count.toLocaleString("pt-BR")}</p>
+      <p className="rh-stat-value">{shown === undefined ? <Skeleton className="h-10 w-14" /> : shown.toLocaleString("pt-BR")}</p>
       <h3 className="rh-stat-label">{label}</h3>
       <p className="rh-stat-caption">{caption}</p>
     </article>
@@ -82,7 +137,7 @@ export default function Dashboard() {
           <div className="rh-orb rh-orb-a" /><div className="rh-orb rh-orb-b" />
           <div className="rh-floating-panel rh-panel-a"><span className="rh-floating-icon"><CheckCircle2Icon className="size-4" /></span><span><strong>Processo inteligente</strong><small>Triagem com IA</small></span></div>
           <div className="rh-floating-panel rh-panel-b"><BriefcaseBusinessIcon className="size-5" /><span>Novas oportunidades</span><ArrowUpRightIcon className="size-3.5" /></div>
-          <div className="rh-hero-center"><BriefcaseBusinessIcon className="size-16" strokeWidth={1.35} /></div>
+          <HeroScene />
         </div>
       </section>
 
