@@ -236,13 +236,12 @@ function Security() {
   )
 }
 
-/** Esqueceu a senha atual? O código vai para o e-mail da conta e a pessoa define uma nova. Só contas com senha. */
+/** Esqueceu a senha atual? O código vai para o e-mail da conta e a pessoa define uma nova. Conta do Google não tem senha. */
 function ResetPassword() {
   const user = useCurrentUser()
   const { setUser } = useAuth()
   const navigate = useNavigate()
-
-  if (user.provider !== "local") return null
+  const isGoogle = user.provider === "google"
 
   function handleReset() {
     // Resetar a senha encerra as sessões: entra de novo com a nova.
@@ -255,7 +254,9 @@ function ResetPassword() {
       <CardHeader>
         <CardTitle>Resetar senha</CardTitle>
         <CardDescription>
-          Enviaremos um código para o seu e-mail, e você define uma nova senha. Depois disso, é preciso entrar de novo.
+          {isGoogle
+            ? "Sua conta entra pelo Google e não tem senha para resetar."
+            : "Enviaremos um código para o seu e-mail, e você define uma nova senha. Depois disso, é preciso entrar de novo."}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -269,7 +270,7 @@ function ResetPassword() {
           defaultEmail={user.email}
           lockEmail
           triggerLabel="Resetar senha"
-          triggerRender={<Button type="button" variant="outline" />}
+          triggerRender={<Button type="button" variant="outline" disabled={isGoogle} />}
           onReset={handleReset}
         />
       </CardFooter>
